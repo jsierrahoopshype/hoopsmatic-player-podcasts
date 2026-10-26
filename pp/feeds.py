@@ -33,19 +33,18 @@ def feed_urls(src):
 
 
 def http_get(url, timeout=30, tries=3):
+    """GET with retries. A 404 is retried too: from cloud servers (GitHub's
+    included) YouTube answers feeds with spurious 404s."""
     last = None
     for i in range(tries):
         try:
             req = urllib.request.Request(url, headers={"User-Agent": UA})
             with urllib.request.urlopen(req, timeout=timeout) as r:
                 return r.read()
-        except urllib.error.HTTPError as e:
-            if e.code == 404:
-                raise
+        except Exception as e:
             last = e
-        except Exception as e:  # network hiccup: retry
-            last = e
-        time.sleep(2 * (i + 1))
+        if i < tries - 1:
+            time.sleep(3 * (i + 1))
     raise last
 
 

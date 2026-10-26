@@ -16,8 +16,11 @@ HoopsMatic Worker). No API keys anywhere.
 2. `python -m pp daily` reads every show's public feed (the long-form-only
    `UULF…` playlist feed, falling back to the plain channel feed): exact views,
    likes and publish times for the latest 15 uploads. Saved to
-   `data/snapshots/YYYY-MM-DD.json` and merged into `data/videos/`. Uploads whose
-   length is still unknown get a short listing to fill it in.
+   `data/snapshots/YYYY-MM-DD.json` and merged into `data/videos/`. From
+   GitHub's servers YouTube often answers feeds with a 404; a source whose feed
+   still fails after retries gets a short yt-dlp listing of its latest 30
+   uploads instead (rounded views, no likes; marked `"feed": "yt-dlp"` in the
+   snapshot). Uploads whose length is still unknown get the same short listing.
 3. Tests, then `python -m pp build` writes the site to `site/`, downloads any
    new thumbnails into `data/thumbs/`, updates `data/ranks.json`,
    `data/excluded.json` and `data/sitemap-state.json`, and the site is deployed.
