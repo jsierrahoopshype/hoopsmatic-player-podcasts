@@ -1,8 +1,10 @@
 """Daily and weekly collection.
 
 daily():  every source's public feed -> data/snapshots/<date>.json and the
-          catalog; then a short yt-dlp listing (latest 30 uploads) only for
-          sources with uploads whose length is still unknown.
+          catalog. A source whose feed fails (YouTube answers feeds from cloud
+          servers with spurious 404s) gets a short yt-dlp listing of its latest
+          30 uploads instead: rounded views, no likes. Then the same short
+          listing for sources with uploads whose length is still unknown.
 weekly(): full yt-dlp listing of every source (every past upload's length,
           rounded views and estimated date) plus subscriber counts. Also the
           one-time backfill. Never raises: a blocked run is recorded in
@@ -30,18 +32,22 @@ def daily(now=None, fill_lengths=True):
     shows = roster.load_roster()
     srcs = roster.sources(shows)
 
-    with ThreadPoolExecutor(max_workers=6) as ex:
+    with ThreadPoolExecutor(max_workers=3) as ex:
         results = dict(zip(srcs, ex.map(feeds.fetch_source, srcs.values())))
 
     snap_path = config.SNAPSHOTS_DIR / (day + ".json")
     snap = load_json(snap_path, {"date": day, "sources": {}})
     ok = failed = 0
+    fallback = 0
     for sid, res in results.items():
         if not res["ok"]:
             failed += 1
             _log("feed failed:", sid, res["error"])
-            # keep whatever an earlier run today already got
-            snap["sources"].setdefault(sid, {"ok": False, "error": res["error"], "videos": {}})
+            if _listing_fallback(sid, srcs[sid], snap, now, day, res["error"]):
+                fallback += 1
+            else:
+                # keep whatever an earlier run today already got
+                snap["sources"].setdefault(sid, {"ok": False, "error": res["error"], "videos": {}})
             continue
         ok += 1
         snap["sources"][sid] = {
@@ -60,12 +66,38 @@ def daily(now=None, fill_lengths=True):
     save_json(snap_path, snap, line_per_key="sources")
 
     st = _status()
-    st["feeds"] = {"last_run": snap["fetched_at"], "ok": ok, "failed": failed}
+    st["feeds"] = {"last_run": snap["fetched_at"], "ok": ok, "failed": failed, "listing_fallback": fallback}
     save_json(config.STATUS_FILE, st)
-    _log("feeds: %d ok, %d failed" % (ok, failed))
+    _log("feeds: %d ok, %d failed (%d covered by a short listing)" % (ok, failed, fallback))
 
     if fill_lengths:
         fill_unknown_lengths(srcs, now)
+
+
+def _listing_fallback(sid, src, snap, now, day, feed_error):
+    """Latest 30 uploads through yt-dlp for a source whose feed failed.
+    Writes the snapshot entry and merges into the catalog; False if it fails too."""
+    cat = catalog.load(sid, src)
+    got = {}
+    for tab, url in ytdlp_fetch.tab_urls(src):
+        meta, entries, err = ytdlp_fetch.list_tab(url, playlistend=30)
+        if entries:
+            est = ytdlp_fetch.estimate_dates(entries, cat["videos"], now)
+            catalog.merge_listing(cat, entries, est, tab, day)
+            for e in entries:
+                v = cat["videos"][e["id"]]
+                got[e["id"]] = {"published": v.get("published"), "views": e.get("views"), "likes": None,
+                                "title": e.get("title")}
+        if err and not entries:
+            break
+    if not got:
+        return False
+    catalog.save(cat)
+    old = snap["sources"].get(sid)
+    if old and old.get("ok") and old.get("feed") in ("UULF", "channel", "playlist"):
+        return True   # an earlier run today already got the exact feed numbers
+    snap["sources"][sid] = {"ok": True, "feed": "yt-dlp", "feed_error": feed_error[:200], "videos": got}
+    return True
 
 
 def fill_unknown_lengths(srcs, now):
