@@ -295,5 +295,7 @@ table.lb.static tbody tr{cursor:default}
   .eow{flex-direction:column;align-items:stretch}
   .th.big{width:100%;height:auto;aspect-ratio:16/9}
   .hide-s{display:none}
+  table.lb.static td,table.lb.static th{padding:.5rem .4rem;white-space:normal}
+  table.lb.static td{font-size:.78rem}
   .stat-card .num{font-size:1.15rem}
 }
