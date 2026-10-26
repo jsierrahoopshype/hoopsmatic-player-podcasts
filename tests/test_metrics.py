@@ -49,3 +49,14 @@ def test_rank_order_and_changes():
     hist = {"2026-10-19": {"a": 1, "b": 2}, "2026-10-25": {"a": 3}}
     ch = metrics.rank_changes(ranked, hist, "2026-10-26")
     assert ch == {"b": 1, "c": "NEW", "a": -2}
+
+
+def test_podcasts_and_player_channels_rank_separately():
+    stats = [{"slug": "p1", "type": "podcast", "status": "ranked", "momentum": 10, "typical": 1},
+             {"slug": "c1", "type": "player_channel", "status": "ranked", "momentum": 99, "typical": 1},
+             {"slug": "p2", "type": "podcast", "status": "ranked", "momentum": 30, "typical": 1},
+             {"slug": "c2", "type": "player_channel", "status": "ranked", "momentum": 5, "typical": 1}]
+    pods = metrics.rank_shows(stats, "podcast")
+    chans = metrics.rank_shows(stats, "player_channel")
+    assert [(s["slug"], s["rank"]) for s in pods] == [("p2", 1), ("p1", 2)]
+    assert [(s["slug"], s["rank"]) for s in chans] == [("c1", 1), ("c2", 2)]

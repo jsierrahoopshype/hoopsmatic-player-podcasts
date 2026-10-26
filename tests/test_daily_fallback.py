@@ -5,7 +5,8 @@ from tests.helpers import NOW
 
 
 def test_failed_feed_falls_back_to_short_listing(tmp_path, monkeypatch):
-    roster = {"shows": [{"slug": "s", "name": "S", "channel_id": "UCabc", "hosts": [], "youtube_url": "u"}]}
+    roster = {"shows": [{"slug": "s", "name": "S", "channel_id": "UCabc", "hosts": [], "youtube_url": "u",
+                          "type": "podcast"}]}
     (tmp_path / "channels.json").write_text(json.dumps(roster))
     monkeypatch.setattr(config, "CHANNELS_FILE", tmp_path / "channels.json")
     monkeypatch.setattr(config, "VIDEOS_DIR", tmp_path / "videos")

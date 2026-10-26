@@ -13,38 +13,38 @@ def test_active_needs_a_full_episode_in_90_days():
     assert not metrics.is_active(metrics.show_videos(SHOW, cat(vid(2, 10, duration=600), vid(120, 10))), NOW)
 
 
-def test_dormant_and_ranked_status():
-    assert stats(vid(120, 1000), vid(200, 500))["status"] == "dormant"
-    assert stats(vid(120, 1000))["last_episode"].startswith("2026-06-28")
-    assert stats(vid(10, 1000), vid(40, 500))["status"] == "ranked"
+def test_four_full_episodes_in_90_days_is_ranked():
+    assert stats(vid(5, 10), vid(20, 10), vid(50, 10), vid(89, 10))["status"] == "ranked"
+    # three in 90 days and nothing older: dormant
+    assert stats(vid(5, 10), vid(20, 10), vid(50, 10))["status"] == "dormant"
 
 
-def test_real_show_rule_most_uploads_are_full_episodes():
-    # 2 full, 3 clips in 90 days: not a real show
-    s = stats(vid(1, 10), vid(2, 10), vid(3, 10, duration=500), vid(4, 10, duration=500), vid(5, 10, duration=500))
-    assert s["status"] == "excluded"
-    assert "2 of its 5" in s["reason"]
-    # 3 full, 2 clips: real show
-    s = stats(vid(1, 10), vid(2, 10), vid(3, 10), vid(4, 10, duration=500), vid(5, 10, duration=500))
-    assert s["status"] == "ranked"
-    # exactly half is not "most"
-    s = stats(vid(1, 10), vid(2, 10, duration=500))
-    assert s["status"] == "excluded"
+def test_one_to_three_in_90_days_needs_four_in_180():
+    # 1 in 90 days, 4 in 180: ranked
+    assert stats(vid(10, 10), vid(100, 10), vid(120, 10), vid(170, 10))["status"] == "ranked"
+    # 2 in 90 days, 3 in 180: dormant
+    assert stats(vid(10, 10), vid(30, 10), vid(170, 10))["status"] == "dormant"
+    # the 180-day count stops at 180 days
+    assert stats(vid(10, 10), vid(100, 10), vid(120, 10), vid(185, 10))["status"] == "dormant"
 
 
-def test_shorts_do_not_count_against_real_show():
-    s = stats(vid(1, 10), vid(2, 10, duration=30), vid(3, 10, duration=None, tab="shorts"))
-    assert s["status"] == "ranked"
-    assert (s["full_90"], s["long_90"]) == (1, 1)
+def test_none_in_90_days_is_dormant_even_with_many_older():
+    s = stats(*[vid(d, 10) for d in (95, 100, 110, 120, 130, 150)])
+    assert s["status"] == "dormant"
+    assert s["last_episode"].startswith("2026-07-23")
+
+
+def test_clips_no_longer_matter():
+    # 4 full episodes and 40 clips: ranked (the old clips-versus-episodes rule is gone)
+    clips = [vid(d % 89 + 1, 10, duration=600) for d in range(40)]
+    assert stats(vid(1, 10), vid(2, 10), vid(3, 10), vid(4, 10), *clips)["status"] == "ranked"
 
 
 def test_no_full_episodes_ever_is_excluded():
-    assert stats(vid(3, 10, duration=300))["status"] == "excluded"
+    s = stats(vid(3, 10, duration=300), vid(4, 10, duration=40))
+    assert s["status"] == "excluded"
+    assert s["reason"].startswith("No full-length episodes")
 
 
-def test_minutes_basis_weighs_uploads_by_length():
-    v = metrics.show_videos(SHOW, cat(vid(1, 10, duration=3600), vid(2, 10, duration=600), vid(3, 10, duration=600),
-                                      vid(4, 10, duration=600)))
-    assert not metrics.is_real_show(v, NOW, basis="uploads")      # 1 of 4 uploads
-    assert metrics.is_real_show(v, NOW, basis="minutes")          # 60 of 90 minutes
-    assert metrics.real_show_counts(v, NOW, basis="minutes") == (60, 90)
+def test_pending_length_counts_as_a_full_episode():
+    assert stats(vid(1, 10), vid(2, 10), vid(3, 10), vid(0.5, 10, duration=None, tab="feed"))["status"] == "ranked"

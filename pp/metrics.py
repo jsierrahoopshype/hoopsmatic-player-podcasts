@@ -1,4 +1,4 @@
-"""Video types, the active / real-show rules, and every number on the pages.
+"""Video types, the ranked / dormant rule, and every number on the pages.
 
 Everything here is a pure function of the catalog, so tests can feed it small
 hand-made inputs.
@@ -90,30 +90,24 @@ def likes_per_1k(videos, now):
 
 
 def is_active(videos, now):
-    """Active: at least one full episode in the last 90 days."""
+    """At least one full episode in the last 90 days."""
     return bool(within(episodes(videos), now, config.TYPICAL_DAYS))
 
 
-def real_show_counts(videos, now, basis=None):
-    """(full episodes, long-form uploads) in the last 90 days, counted in
-    videos or, with basis "minutes", in minutes. Shorts are left out: a
-    channel's Shorts tab carries no upload dates, so they cannot be placed in
-    a 90-day window. A length still pending counts as 20 minutes."""
-    basis = basis or config.REAL_SHOW_BASIS
-    recent = [v for v in within(videos, now, config.TYPICAL_DAYS)
-              if video_type(v.get("duration"), v.get("tab")) != SHORT]
-    full = [v for v in recent if counts_as_episode(v)]
-    if basis == "minutes":
-        mins = lambda vs: int(round(sum((v.get("duration") or config.FULL_MIN) for v in vs) / 60.0))
-        return mins(full), mins(recent)
-    return len(full), len(recent)
+def ranking_status(videos, now):
+    """"ranked", "dormant" or "excluded" for one show's videos.
 
-
-def is_real_show(videos, now, basis=None):
-    """Real show: most (more than half) of the uploads in the last 90 days are
-    full episodes."""
-    full, total = real_show_counts(videos, now, basis)
-    return total > 0 and full * 2 > total
+    Ranked: 4+ full episodes in the last 90 days, or 1 to 3 in the last 90
+    days with 4+ in the last 180. Any other show with a full episode on record
+    is dormant; a show with no full episode at all is excluded."""
+    eps = episodes(videos)
+    if not eps:
+        return "excluded"
+    n90 = len(within(eps, now, config.TYPICAL_DAYS))
+    n180 = len(within(eps, now, config.LONG_DAYS))
+    if n90 >= config.RANKED_MIN_EPISODES or (n90 >= 1 and n180 >= config.RANKED_MIN_EPISODES):
+        return "ranked"
+    return "dormant"
 
 
 def subscriber_stats(history, today):
@@ -138,21 +132,11 @@ def show_stats(show, cat, now, subs_history=None, shared=False):
     eps = episodes(vids)
     eps90 = within(eps, now, config.TYPICAL_DAYS)
     med = typical(vids, now)
-    full90, long90 = real_show_counts(vids, now)
     last_ep = max((v["published"] for v in eps), default=None)
     subs, subs_raw, subs_pct = (None, None, None) if shared else subscriber_stats(subs_history or {}, now.date().isoformat())
 
-    if not eps:
-        status, reason = "excluded", "No full-length episodes (20+ minutes) found."
-    elif not eps90:
-        status, reason = "dormant", None
-    elif not (long90 and full90 * 2 > long90):
-        status = "excluded"
-        unit = "minutes of uploads" if config.REAL_SHOW_BASIS == "minutes" else "uploads"
-        reason = ("Only %d of its %d %s in the last 90 days are full episodes (20+ minutes); "
-                  "the rest are clips." % (full90, long90, unit))
-    else:
-        status, reason = "ranked", None
+    status = ranking_status(vids, now)
+    reason = "No full-length episodes (20+ minutes) found." if status == "excluded" else None
 
     scored = []
     for v in eps:
@@ -161,6 +145,7 @@ def show_stats(show, cat, now, subs_history=None, shared=False):
 
     return {
         "slug": show["slug"],
+        "type": show.get("type", "podcast"),
         "status": status,
         "reason": reason,
         "momentum": momentum(vids, now),
@@ -171,16 +156,17 @@ def show_stats(show, cat, now, subs_history=None, shared=False):
         "subs": subs,
         "subs_change": subs_raw,
         "subs_change_pct": subs_pct,
-        "full_90": full90,
-        "long_90": long90,
+        "episodes_180": len(within(eps, now, config.LONG_DAYS)),
         "last_episode": last_ep,
         "episodes": scored,
     }
 
 
-def rank_shows(stats):
-    """Ranked shows by momentum (ties: typical episode), rank 1 first."""
-    ranked = [s for s in stats if s["status"] == "ranked"]
+def rank_shows(stats, kind=None):
+    """Ranked shows by momentum (ties: typical episode), rank 1 first. With
+    kind, only shows of that type ("podcast" or "player_channel"): each type
+    has its own ranking."""
+    ranked = [s for s in stats if s["status"] == "ranked" and (kind is None or s.get("type") == kind)]
     ranked.sort(key=lambda s: (-s["momentum"], -(s["typical"] or 0), s["slug"]))
     for i, s in enumerate(ranked, 1):
         s["rank"] = i
