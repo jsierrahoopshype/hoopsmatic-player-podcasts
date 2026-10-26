@@ -1,48 +1,22 @@
 {
   "feeds": {
-    "failed": 0,
-    "last_run": "2026-10-26T22:33:07Z",
-    "ok": 66
+    "failed": 63,
+    "last_run": "2026-10-26T22:47:54Z",
+    "ok": 3
   },
   "length_fill": {
     "errors": [],
-    "last_run": "2026-10-26T22:33:07Z",
+    "last_run": "2026-10-26T22:47:54Z",
     "sources_tried": 0,
     "videos_filled": 0
   },
   "ytdlp": {
     "blocked": false,
-    "errors": [
-      {
-        "error": "videos: UCqwKvfByZqmdC2jaFcUPcvQ page 11: Unable to download API page: HTTP Error 403: Forbidden (caused by <HTTPError 403: Forbidden>)",
-        "source": "UCqwKvfByZqmdC2jaFcUPcvQ",
-        "uploads_read": 330
-      },
-      {
-        "error": "videos: UCAvjYgmwadC682OoC4Cc6TQ page 49: Unable to download API page: HTTP Error 403: Forbidden (caused by <HTTPError 403: Forbidden>)",
-        "source": "UCAvjYgmwadC682OoC4Cc6TQ",
-        "uploads_read": 1470
-      },
-      {
-        "error": "videos: UCBNqqomXKPSWvcQDXOkRvRA page 16: Unable to download API page: HTTP Error 403: Forbidden (caused by <HTTPError 403: Forbidden>)",
-        "source": "UCBNqqomXKPSWvcQDXOkRvRA",
-        "uploads_read": 480
-      },
-      {
-        "error": "videos: UCYYTsni8rBjKzBPGu3-Q8LA page 14: Unable to download API page: HTTP Error 403: Forbidden (caused by <HTTPError 403: Forbidden>)",
-        "source": "UCYYTsni8rBjKzBPGu3-Q8LA",
-        "uploads_read": 420
-      },
-      {
-        "error": "videos: UCaytb_OvJzlxDG-dKwoHbMw page 1: Unable to download API page: HTTP Error 403: Forbidden (caused by <HTTPError 403: Forbidden>)",
-        "source": "UCaytb_OvJzlxDG-dKwoHbMw",
-        "uploads_read": 30
-      }
-    ],
+    "errors": [],
     "last_attempt": "2026-10-26",
     "last_ok": "2026-10-26",
-    "seconds": 509,
-    "sources_ok": 50,
-    "sources_with_errors": 5
+    "seconds": 583,
+    "sources_ok": 66,
+    "sources_with_errors": 0
   }
 }
