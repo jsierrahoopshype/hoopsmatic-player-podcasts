@@ -1,0 +1,777 @@
+{
+  "_about": "Roster for hoopsmatic.com/player-podcasts. One record per show. channel_id is the YouTube channel; playlist_id (optional) collects a show from one playlist on a shared channel; title_filter (optional, case-insensitive regex) keeps only the videos whose title matches include and not exclude, so one channel can feed several shows. shared_channel hides channel subscriber numbers, which belong to the whole channel.",
+  "not_ranked": [
+    {
+      "name": "The Jon Krawczynski Show",
+      "channel_id": "UCU-lnpYCrS_VoOykonK5L7Q",
+      "reason": "Host is a reporter, not a player (from hoopshype-yt-quotes)."
+    },
+    {
+      "name": "Dalton Johnson",
+      "channel_id": "UCP8K9hsr8BdtBUtnehqT2ww",
+      "reason": "Host is a reporter, not a player (from hoopshype-yt-quotes)."
+    },
+    {
+      "name": "NBA on ESPN",
+      "channel_id": "UCVSSpcmZD2PwPBqb8yKQKBA",
+      "reason": "Network channel, not a podcast (from hoopshype-yt-quotes)."
+    },
+    {
+      "name": "Sports Illustrated",
+      "channel_id": "UCPAt6z5uX_c5Eo_cSNROzYw",
+      "reason": "Network channel, not a podcast (from hoopshype-yt-quotes)."
+    },
+    {
+      "name": "Brice Butler Studios",
+      "channel_id": "UC2LN6jZKycy3FjmAU1tKivg",
+      "reason": "Host Brice Butler is a former NFL player, not an NBA player (from hoopshype-yt-quotes)."
+    },
+    {
+      "name": "Kyrie LIVE",
+      "channel_id": "UCllPn98H4a079UMrahK7hhw",
+      "reason": "Cut list (Kyrie Irving)."
+    },
+    {
+      "name": "The Zach Lowe Show",
+      "channel_id": "UCS5fdgvuA-fCPZQsk0unKnw",
+      "reason": "Cut list."
+    },
+    {
+      "name": "Jaylen Brown",
+      "channel_id": "UCelmZalfinXZQP7dXw0ZauQ",
+      "reason": "Cut list."
+    }
+  ],
+  "shows": [
+    {
+      "slug": "straight-to-cam",
+      "name": "Straight to Cam",
+      "hosts": [
+        "Cameron Brink",
+        "Sydel Curry-Lee"
+      ],
+      "channel_id": "UC4uXDQzZG_WNeIyJQEsZcNA",
+      "youtube_url": "https://www.youtube.com/channel/UC4uXDQzZG_WNeIyJQEsZcNA",
+      "origin": "keep list"
+    },
+    {
+      "slug": "catch12",
+      "name": "Catch12",
+      "hosts": [
+        "Ja Morant"
+      ],
+      "channel_id": "UC4p0nlqdUlocfv--48-15Lg",
+      "youtube_url": "https://www.youtube.com/channel/UC4p0nlqdUlocfv--48-15Lg",
+      "origin": "keep list"
+    },
+    {
+      "slug": "rogue-bogues",
+      "name": "Rogue Bogues",
+      "hosts": [
+        "Andrew Bogut"
+      ],
+      "channel_id": "UCvy0Lw9TcvSAQnTzj62aOUA",
+      "youtube_url": "https://www.youtube.com/channel/UCvy0Lw9TcvSAQnTzj62aOUA",
+      "origin": "keep list"
+    },
+    {
+      "slug": "on-the-haus",
+      "name": "On The Haus Podcast",
+      "hosts": [
+        "Sam Hauser",
+        "Joey Hauser",
+        "Dave Hauser"
+      ],
+      "channel_id": "UCqbroTPGO_SaLJB_TI4zztg",
+      "youtube_url": "https://www.youtube.com/channel/UCqbroTPGO_SaLJB_TI4zztg",
+      "origin": "keep list"
+    },
+    {
+      "slug": "straight-game",
+      "name": "Straight Game Podcast",
+      "hosts": [
+        "Mike Bibby",
+        "Eddie House",
+        "Ty Ellis"
+      ],
+      "channel_id": "UCuhRRUv5bBdVRU6uExsd24w",
+      "youtube_url": "https://www.youtube.com/channel/UCuhRRUv5bBdVRU6uExsd24w",
+      "origin": "keep list"
+    },
+    {
+      "slug": "all-the-smoke",
+      "name": "All the Smoke",
+      "hosts": [
+        "Matt Barnes",
+        "Stephen Jackson"
+      ],
+      "channel_id": "UC2ozVs4pg2K3uFLw6-0ayCQ",
+      "youtube_url": "https://www.youtube.com/channel/UC2ozVs4pg2K3uFLw6-0ayCQ",
+      "origin": "keep list"
+    },
+    {
+      "slug": "white-noise",
+      "name": "White Noise Podcast",
+      "hosts": [
+        "Derrick White",
+        "Alex Welsh"
+      ],
+      "channel_id": "UC7HDMexhX9XlWqa8Y1n1SJQ",
+      "youtube_url": "https://www.youtube.com/channel/UC7HDMexhX9XlWqa8Y1n1SJQ",
+      "origin": "keep list"
+    },
+    {
+      "slug": "boardroom",
+      "name": "Boardroom",
+      "hosts": [
+        "Kevin Durant",
+        "Rich Kleiman"
+      ],
+      "channel_id": "UCB_4C2Gl7Zfg4uBXk_AcWwA",
+      "youtube_url": "https://www.youtube.com/channel/UCB_4C2Gl7Zfg4uBXk_AcWwA",
+      "origin": "keep list",
+      "title_filter": {
+        "exclude": "\\bETCs\\b"
+      },
+      "shared_channel": true,
+      "note": "Same channel as The ETCs with Kevin Durant; ETCs episodes are left out of this show."
+    },
+    {
+      "slug": "the-etcs",
+      "name": "The ETCs with Kevin Durant",
+      "hosts": [
+        "Kevin Durant",
+        "Eddie Gonzalez"
+      ],
+      "channel_id": "UCB_4C2Gl7Zfg4uBXk_AcWwA",
+      "youtube_url": "https://www.youtube.com/channel/UCB_4C2Gl7Zfg4uBXk_AcWwA",
+      "origin": "keep list",
+      "title_filter": {
+        "include": "\\bETCs\\b"
+      },
+      "shared_channel": true,
+      "note": "Lives on the Boardroom channel; only videos with \"ETCs\" in the title count."
+    },
+    {
+      "slug": "podcast-p",
+      "name": "Podcast P with Paul George",
+      "hosts": [
+        "Paul George"
+      ],
+      "channel_id": "UC_MXNS3qkraCAEebdScjAPA",
+      "youtube_url": "https://www.youtube.com/channel/UC_MXNS3qkraCAEebdScjAPA",
+      "origin": "keep list"
+    },
+    {
+      "slug": "kyle-kuzma",
+      "name": "Kyle Kuzma",
+      "hosts": [
+        "Kyle Kuzma"
+      ],
+      "channel_id": "UC_RyUOQqh3W77giXrbGKVGg",
+      "youtube_url": "https://www.youtube.com/channel/UC_RyUOQqh3W77giXrbGKVGg",
+      "origin": "keep list"
+    },
+    {
+      "slug": "andre-drummond",
+      "name": "Andre Drummond",
+      "hosts": [
+        "Andre Drummond"
+      ],
+      "channel_id": "UCFpuYxEexZvdaFQQf3Vloqg",
+      "youtube_url": "https://www.youtube.com/channel/UCFpuYxEexZvdaFQQf3Vloqg",
+      "origin": "keep list",
+      "note": "ID on the original list had a typo (EEx); this is the channel @AndreDrummond resolves to."
+    },
+    {
+      "slug": "dwyane-wade",
+      "name": "Dwyane Wade",
+      "hosts": [
+        "Dwyane Wade"
+      ],
+      "channel_id": "UCrlL3lECKmzkcYK8S6cW2Eg",
+      "youtube_url": "https://www.youtube.com/channel/UCrlL3lECKmzkcYK8S6cW2Eg",
+      "origin": "keep list"
+    },
+    {
+      "slug": "thanalysis",
+      "name": "Thanalysis Show",
+      "hosts": [
+        "Thanasis Antetokounmpo"
+      ],
+      "channel_id": "UCUqIXubCV7gcDJ-QZrdYRbw",
+      "youtube_url": "https://www.youtube.com/channel/UCUqIXubCV7gcDJ-QZrdYRbw",
+      "origin": "keep list"
+    },
+    {
+      "slug": "out-the-mud",
+      "name": "Out The Mud Podcast",
+      "hosts": [
+        "Zach Randolph",
+        "Tony Allen"
+      ],
+      "channel_id": "UCqwKvfByZqmdC2jaFcUPcvQ",
+      "youtube_url": "https://www.youtube.com/channel/UCqwKvfByZqmdC2jaFcUPcvQ",
+      "origin": "keep list"
+    },
+    {
+      "slug": "inside-the-green-room",
+      "name": "Inside the Green Room",
+      "hosts": [
+        "Danny Green"
+      ],
+      "channel_id": "UCVKTjJgaohHuJTtNjXCKazw",
+      "youtube_url": "https://www.youtube.com/channel/UCVKTjJgaohHuJTtNjXCKazw",
+      "origin": "keep list"
+    },
+    {
+      "slug": "run-it-back",
+      "name": "Run It Back",
+      "hosts": [
+        "Michelle Beadle",
+        "Lou Williams",
+        "Chandler Parsons",
+        "DeMarcus Cousins"
+      ],
+      "channel_id": "UCwZo_mDI4fOIp-g18kinGBw",
+      "youtube_url": "https://www.youtube.com/channel/UCwZo_mDI4fOIp-g18kinGBw",
+      "origin": "keep list"
+    },
+    {
+      "slug": "jared-mccain",
+      "name": "Jared McCain",
+      "hosts": [
+        "Jared McCain"
+      ],
+      "channel_id": "UC5VYF0LHox2_7Ql2pKihqCQ",
+      "youtube_url": "https://www.youtube.com/channel/UC5VYF0LHox2_7Ql2pKihqCQ",
+      "origin": "keep list"
+    },
+    {
+      "slug": "roommates",
+      "name": "Roommates Show",
+      "hosts": [
+        "Jalen Brunson",
+        "Josh Hart",
+        "Matt Hillman"
+      ],
+      "channel_id": "UC1N15bwJCPFHjEsun1epfmw",
+      "youtube_url": "https://www.youtube.com/channel/UC1N15bwJCPFHjEsun1epfmw",
+      "origin": "keep list"
+    },
+    {
+      "slug": "jalen-williams",
+      "name": "Jalen Williams",
+      "hosts": [
+        "Jalen Williams"
+      ],
+      "channel_id": "UCalFuU3MOWE39CS6SbfOUgA",
+      "youtube_url": "https://www.youtube.com/channel/UCalFuU3MOWE39CS6SbfOUgA",
+      "origin": "keep list"
+    },
+    {
+      "slug": "nigel-hayes-davis",
+      "name": "Nigel Hayes-Davis",
+      "hosts": [
+        "Nigel Hayes-Davis"
+      ],
+      "channel_id": "UCZv6u7QVz-c8UoiJOMb2oyg",
+      "youtube_url": "https://www.youtube.com/channel/UCZv6u7QVz-c8UoiJOMb2oyg",
+      "origin": "keep list"
+    },
+    {
+      "slug": "tyler-herro",
+      "name": "Tyler Herro",
+      "hosts": [
+        "Tyler Herro"
+      ],
+      "channel_id": "UCd6K_nXCeWBk8YDwja0PPZg",
+      "youtube_url": "https://www.youtube.com/channel/UCd6K_nXCeWBk8YDwja0PPZg",
+      "origin": "keep list"
+    },
+    {
+      "slug": "kg-certified",
+      "name": "KG Certified",
+      "hosts": [
+        "Kevin Garnett",
+        "Paul Pierce"
+      ],
+      "channel_id": "UCa9W_cPwwbDlwBwHOd1YWoQ",
+      "youtube_url": "https://www.youtube.com/channel/UCa9W_cPwwbDlwBwHOd1YWoQ",
+      "origin": "keep list"
+    },
+    {
+      "slug": "the-ogs",
+      "name": "The OGs",
+      "hosts": [
+        "Udonis Haslem",
+        "Mike Miller"
+      ],
+      "channel_id": "UCrUJ2hRTGLEaozZZ8cp5u0A",
+      "youtube_url": "https://www.youtube.com/channel/UCrUJ2hRTGLEaozZZ8cp5u0A",
+      "origin": "keep list"
+    },
+    {
+      "slug": "club-520",
+      "name": "Club 520 Podcast",
+      "hosts": [
+        "Jeff Teague",
+        "B Hen"
+      ],
+      "channel_id": "UCoA3lm9UTWDWK8Z1kcoWQcA",
+      "youtube_url": "https://www.youtube.com/channel/UCoA3lm9UTWDWK8Z1kcoWQcA",
+      "origin": "keep list"
+    },
+    {
+      "slug": "victor-oladipo",
+      "name": "Victor Oladipo",
+      "hosts": [
+        "Victor Oladipo"
+      ],
+      "channel_id": "UCf5fcEALUCA53oUW3mc8tiQ",
+      "youtube_url": "https://www.youtube.com/channel/UCf5fcEALUCA53oUW3mc8tiQ",
+      "origin": "keep list"
+    },
+    {
+      "slug": "to-the-baha",
+      "name": "To The Baha",
+      "hosts": [
+        "Theo Pinson",
+        "Raymond Felton",
+        "Charlie Villanueva"
+      ],
+      "channel_id": "UCU50K9xm-5_qbzwjMRr9A8w",
+      "youtube_url": "https://www.youtube.com/channel/UCU50K9xm-5_qbzwjMRr9A8w",
+      "origin": "keep list"
+    },
+    {
+      "slug": "mind-the-game",
+      "name": "Mind the Game",
+      "hosts": [
+        "LeBron James",
+        "Steve Nash"
+      ],
+      "channel_id": "UC6L_LBqoKZXFa4WxHox5iCw",
+      "youtube_url": "https://www.youtube.com/channel/UC6L_LBqoKZXFa4WxHox5iCw",
+      "origin": "keep list"
+    },
+    {
+      "slug": "ball-in-the-family",
+      "name": "Ball in the Family Podcast",
+      "hosts": [
+        "Lonzo Ball",
+        "LiAngelo Ball"
+      ],
+      "channel_id": "UCxclESttS8hoRMd6cIYGgeA",
+      "youtube_url": "https://www.youtube.com/channel/UCxclESttS8hoRMd6cIYGgeA",
+      "origin": "keep list",
+      "note": "Listed as TheWAEShow on the original list; the channel is now Ball in the Family."
+    },
+    {
+      "slug": "arenas-network",
+      "name": "The Arenas Network",
+      "hosts": [
+        "Gilbert Arenas"
+      ],
+      "channel_id": "UCuJ6CSQLBNb0nUvOn-s4aSA",
+      "youtube_url": "https://www.youtube.com/channel/UCuJ6CSQLBNb0nUvOn-s4aSA",
+      "origin": "keep list"
+    },
+    {
+      "slug": "damian-lillard",
+      "name": "Damian Lillard",
+      "hosts": [
+        "Damian Lillard"
+      ],
+      "channel_id": "UCIhTfcMzbR5wyNeh57ju0ug",
+      "youtube_url": "https://www.youtube.com/channel/UCIhTfcMzbR5wyNeh57ju0ug",
+      "origin": "keep list"
+    },
+    {
+      "slug": "knuckleheads",
+      "name": "Knuckleheads",
+      "hosts": [
+        "Quentin Richardson",
+        "Darius Miles"
+      ],
+      "channel_id": "UCLqzKYd1tST9lRPbEUoH5Hg",
+      "youtube_url": "https://www.youtube.com/channel/UCLqzKYd1tST9lRPbEUoH5Hg",
+      "origin": "keep list"
+    },
+    {
+      "slug": "the-big-podcast",
+      "name": "The Big Podcast with Shaq",
+      "hosts": [
+        "Shaquille O'Neal"
+      ],
+      "channel_id": "UCIOXmaExi4DjLHGyGvnu3bw",
+      "youtube_url": "https://www.youtube.com/channel/UCIOXmaExi4DjLHGyGvnu3bw",
+      "origin": "keep list"
+    },
+    {
+      "slug": "road-trippin",
+      "name": "Road Trippin'",
+      "hosts": [
+        "Richard Jefferson",
+        "Channing Frye",
+        "Allie Clifton"
+      ],
+      "channel_id": "UCSes4X8uDrpc4X46hJKjejg",
+      "youtube_url": "https://www.youtube.com/channel/UCSes4X8uDrpc4X46hJKjejg",
+      "origin": "keep list"
+    },
+    {
+      "slug": "demar-derozan",
+      "name": "DeMar DeRozan",
+      "hosts": [
+        "DeMar DeRozan"
+      ],
+      "channel_id": "UCfHG9GrqjYaEdPkrRi9LiBA",
+      "youtube_url": "https://www.youtube.com/channel/UCfHG9GrqjYaEdPkrRi9LiBA",
+      "origin": "keep list"
+    },
+    {
+      "slug": "run-your-race",
+      "name": "Run Your Race",
+      "hosts": [
+        "Theo Pinson",
+        "AJ Richardson"
+      ],
+      "channel_id": "UCIuKoa1AIiLTiXo0v69gTRg",
+      "youtube_url": "https://www.youtube.com/channel/UCIuKoa1AIiLTiXo0v69gTRg",
+      "origin": "keep list"
+    },
+    {
+      "slug": "the-backyard",
+      "name": "The Backyard Podcast",
+      "hosts": [
+        "D'Angelo Russell",
+        "Logan Linkmeyer"
+      ],
+      "channel_id": "UCxHKsrkqNr-lQ04gTj9IGgw",
+      "youtube_url": "https://www.youtube.com/channel/UCxHKsrkqNr-lQ04gTj9IGgw",
+      "origin": "keep list",
+      "note": "The ID on the original list (UC_a6c3KLo9reMOqn2pbvMqg) is The Basement Yard, an unrelated show; this is D'Angelo Russell's channel from hoopshype-yt-quotes."
+    },
+    {
+      "slug": "anthony-edwards",
+      "name": "Anthony Edwards",
+      "hosts": [
+        "Anthony Edwards"
+      ],
+      "channel_id": "UCFEiKlkFpJBISr1paTLW8Vg",
+      "youtube_url": "https://www.youtube.com/channel/UCFEiKlkFpJBISr1paTLW8Vg",
+      "origin": "keep list"
+    },
+    {
+      "slug": "curious-mike",
+      "name": "Curious Mike",
+      "hosts": [
+        "Michael Porter Jr."
+      ],
+      "channel_id": "UC3ZStupBLNVY4wVVOn7-e3w",
+      "youtube_url": "https://www.youtube.com/channel/UC3ZStupBLNVY4wVVOn7-e3w",
+      "origin": "keep list"
+    },
+    {
+      "slug": "above-the-rim",
+      "name": "Above The Rim with DH12",
+      "hosts": [
+        "Dwight Howard"
+      ],
+      "channel_id": "UCODlrQzQGttxpYglzmoOaEA",
+      "youtube_url": "https://www.youtube.com/channel/UCODlrQzQGttxpYglzmoOaEA",
+      "origin": "keep list"
+    },
+    {
+      "slug": "trae-young",
+      "name": "Trae Young",
+      "hosts": [
+        "Trae Young"
+      ],
+      "channel_id": "UCwr3hqUDuO4D4szLkjeVlrA",
+      "youtube_url": "https://www.youtube.com/channel/UCwr3hqUDuO4D4szLkjeVlrA",
+      "origin": "keep list"
+    },
+    {
+      "slug": "old-man-and-the-three",
+      "name": "The Old Man and The Three",
+      "hosts": [
+        "Cam Johnson",
+        "Tommy Alter"
+      ],
+      "channel_id": "UCbPY1Efha9VPRBYW2x1M16A",
+      "youtube_url": "https://www.youtube.com/channel/UCbPY1Efha9VPRBYW2x1M16A",
+      "origin": "keep list"
+    },
+    {
+      "slug": "hoopin-n-hollerin",
+      "name": "Hoopin' N Hollerin'",
+      "hosts": [
+        "Jason Williams",
+        "Rone"
+      ],
+      "channel_id": "UCIlXFWq4v1CymTFBBgQ589Q",
+      "youtube_url": "https://www.youtube.com/channel/UCIlXFWq4v1CymTFBBgQ589Q",
+      "origin": "keep list",
+      "note": "Formerly The Pat Bev Pod (Barstool)."
+    },
+    {
+      "slug": "dawg-talk",
+      "name": "The Dawg Talk Podcast",
+      "hosts": [
+        "Kentavious Caldwell-Pope",
+        "Jordan McGruder"
+      ],
+      "channel_id": "UCBIPGMEJ72kaL9QHw3xUvuw",
+      "youtube_url": "https://www.youtube.com/channel/UCBIPGMEJ72kaL9QHw3xUvuw",
+      "origin": "keep list"
+    },
+    {
+      "slug": "big-wos-show",
+      "name": "The Big Wos Show",
+      "hosts": [
+        "Wosny Lambre"
+      ],
+      "channel_id": "UC-Ovj3qDVxBAOWX3kwzOVRw",
+      "youtube_url": "https://www.youtube.com/channel/UC-Ovj3qDVxBAOWX3kwzOVRw",
+      "origin": "keep list",
+      "note": "Listed as No Fouls Given on the original list; the channel is now The Big Wos Show."
+    },
+    {
+      "slug": "gils-arena",
+      "name": "Gil's Arena",
+      "hosts": [
+        "Gilbert Arenas",
+        "Kenyon Martin",
+        "Josiah Johnson"
+      ],
+      "channel_id": "UCAvjYgmwadC682OoC4Cc6TQ",
+      "youtube_url": "https://www.youtube.com/channel/UCAvjYgmwadC682OoC4Cc6TQ",
+      "origin": "keep list"
+    },
+    {
+      "slug": "draymond-green-show",
+      "name": "The Draymond Green Show",
+      "hosts": [
+        "Draymond Green",
+        "Baron Davis"
+      ],
+      "channel_id": "UCBNqqomXKPSWvcQDXOkRvRA",
+      "youtube_url": "https://www.youtube.com/channel/UCBNqqomXKPSWvcQDXOkRvRA",
+      "origin": "keep list",
+      "note": "Checked: the show posts on its own channel, not The Volume's, so no title filter is needed."
+    },
+    {
+      "slug": "point-game",
+      "name": "Point Game",
+      "hosts": [
+        "Isaiah Thomas"
+      ],
+      "channel_id": "UCemwSsWl4rg313rUCBcDiJw",
+      "youtube_url": "https://www.youtube.com/channel/UCemwSsWl4rg313rUCBcDiJw",
+      "origin": "keep list"
+    },
+    {
+      "slug": "gimme-the-hot-sauce",
+      "name": "Gimme The Hot Sauce",
+      "hosts": [
+        "Stacey King"
+      ],
+      "channel_id": "UCYYTsni8rBjKzBPGu3-Q8LA",
+      "youtube_url": "https://www.youtube.com/channel/UCYYTsni8rBjKzBPGu3-Q8LA",
+      "origin": "keep list"
+    },
+    {
+      "slug": "aj-dybantsa",
+      "name": "AJ Dybantsa",
+      "hosts": [
+        "AJ Dybantsa"
+      ],
+      "channel_id": "UCNGuP7AKOZ9yi7x5SDiCOjg",
+      "youtube_url": "https://www.youtube.com/channel/UCNGuP7AKOZ9yi7x5SDiCOjg",
+      "origin": "keep list"
+    },
+    {
+      "slug": "richard-jefferson",
+      "name": "The Richard Show",
+      "hosts": [
+        "Richard Jefferson"
+      ],
+      "channel_id": "UCA95kYjGqDgRziNA7sJZBag",
+      "youtube_url": "https://www.youtube.com/channel/UCA95kYjGqDgRziNA7sJZBag",
+      "origin": "keep list"
+    },
+    {
+      "slug": "7pm-in-brooklyn",
+      "name": "7PM in Brooklyn",
+      "hosts": [
+        "Carmelo Anthony",
+        "The Kid Mero"
+      ],
+      "channel_id": "UCT3wF21Qx0d0HmuiCzji8Lg",
+      "youtube_url": "https://www.youtube.com/channel/UCT3wF21Qx0d0HmuiCzji8Lg",
+      "origin": "keep list"
+    },
+    {
+      "slug": "game-recognize-game",
+      "name": "Game Recognize Game",
+      "hosts": [
+        "Breanna Stewart",
+        "Myles Turner"
+      ],
+      "channel_id": "UCe4l0wTSq_Tvva_bBTMkiXQ",
+      "youtube_url": "https://www.youtube.com/channel/UCe4l0wTSq_Tvva_bBTMkiXQ",
+      "origin": "hoopshype-yt-quotes"
+    },
+    {
+      "slug": "ayo-dosunmu",
+      "name": "Ayo Dosunmu",
+      "hosts": [
+        "Ayo Dosunmu"
+      ],
+      "channel_id": "UCnD-vTb2QeSMsXdE360Ec1A",
+      "youtube_url": "https://www.youtube.com/channel/UCnD-vTb2QeSMsXdE360Ec1A",
+      "origin": "hoopshype-yt-quotes"
+    },
+    {
+      "slug": "cousins",
+      "name": "Cousins",
+      "hosts": [
+        "Vince Carter",
+        "Tracy McGrady"
+      ],
+      "channel_id": "UCI5av_J_zb7S90XrucOfH0w",
+      "youtube_url": "https://www.youtube.com/channel/UCI5av_J_zb7S90XrucOfH0w",
+      "origin": "hoopshype-yt-quotes"
+    },
+    {
+      "slug": "fred-vanvleet",
+      "name": "Fred VanVleet",
+      "hosts": [
+        "Fred VanVleet"
+      ],
+      "channel_id": "UCDO3XAwii1n-i_mTeVw3evA",
+      "youtube_url": "https://www.youtube.com/channel/UCDO3XAwii1n-i_mTeVw3evA",
+      "origin": "hoopshype-yt-quotes"
+    },
+    {
+      "slug": "shump-street",
+      "name": "Shump Street",
+      "hosts": [
+        "Iman Shumpert"
+      ],
+      "channel_id": "UCF2-UNMBDl0QgdXf_WgPxLA",
+      "youtube_url": "https://www.youtube.com/channel/UCF2-UNMBDl0QgdXf_WgPxLA",
+      "origin": "hoopshype-yt-quotes"
+    },
+    {
+      "slug": "gogis-garage",
+      "name": "Gogis Garage",
+      "hosts": [],
+      "channel_id": "UCejLJNSsAjPnQOR7SKuqc8g",
+      "youtube_url": "https://www.youtube.com/channel/UCejLJNSsAjPnQOR7SKuqc8g",
+      "origin": "hoopshype-yt-quotes"
+    },
+    {
+      "slug": "tyrese-haliburton",
+      "name": "Tyrese Haliburton",
+      "hosts": [
+        "Tyrese Haliburton"
+      ],
+      "channel_id": "UCErehpciG-VEIWfd72ZDXsg",
+      "youtube_url": "https://www.youtube.com/channel/UCErehpciG-VEIWfd72ZDXsg",
+      "origin": "hoopshype-yt-quotes"
+    },
+    {
+      "slug": "giannis-antetokounmpo",
+      "name": "Giannis Antetokounmpo",
+      "hosts": [
+        "Giannis Antetokounmpo"
+      ],
+      "channel_id": "UCrMiMJMUSjELs0jb1vtTiAg",
+      "youtube_url": "https://www.youtube.com/channel/UCrMiMJMUSjELs0jb1vtTiAg",
+      "origin": "hoopshype-yt-quotes"
+    },
+    {
+      "slug": "davion-mitchell",
+      "name": "Davion Mitchell",
+      "hosts": [
+        "Davion Mitchell"
+      ],
+      "channel_id": "UCi1HRyhAYBowd1OXVvNea8w",
+      "youtube_url": "https://www.youtube.com/channel/UCi1HRyhAYBowd1OXVvNea8w",
+      "origin": "hoopshype-yt-quotes"
+    },
+    {
+      "slug": "jaylen-clark",
+      "name": "Jaylen Clark",
+      "hosts": [
+        "Jaylen Clark"
+      ],
+      "channel_id": "UC1Mh22hsS7Fs1TrQtIdlTDw",
+      "youtube_url": "https://www.youtube.com/channel/UC1Mh22hsS7Fs1TrQtIdlTDw",
+      "origin": "hoopshype-yt-quotes"
+    },
+    {
+      "slug": "lebron-james",
+      "name": "LeBron James",
+      "hosts": [
+        "LeBron James"
+      ],
+      "channel_id": "UCV9dV3DcAZWGnT2yFNKxStA",
+      "youtube_url": "https://www.youtube.com/channel/UCV9dV3DcAZWGnT2yFNKxStA",
+      "origin": "hoopshype-yt-quotes"
+    },
+    {
+      "slug": "pat-bev-show",
+      "name": "The Pat Bev Show",
+      "hosts": [
+        "Patrick Beverley"
+      ],
+      "channel_id": "UCsfbCkSEMyCRDKQOtEvtiIQ",
+      "youtube_url": "https://www.youtube.com/channel/UCsfbCkSEMyCRDKQOtEvtiIQ",
+      "origin": "added",
+      "note": "Beverley's own channel. The old Pat Bev Pod channel is now Hoopin' N Hollerin' (already listed)."
+    },
+    {
+      "slug": "point-forward",
+      "name": "Point Forward",
+      "hosts": [
+        "Andre Iguodala",
+        "Evan Turner"
+      ],
+      "channel_id": "UCDEA1ZnPxXWJNJ_VFQ0aCfQ",
+      "youtube_url": "https://www.youtube.com/channel/UCDEA1ZnPxXWJNJ_VFQ0aCfQ",
+      "origin": "added"
+    },
+    {
+      "slug": "off-guard",
+      "name": "Off Guard with Austin Rivers",
+      "hosts": [
+        "Austin Rivers"
+      ],
+      "channel_id": "UCFw3-5NBx1XJTaF0TPcK8iQ",
+      "youtube_url": "https://www.youtube.com/playlist?list=PLUTe2YwR56Zuf3N8SUI89jbJdDWkI76i0",
+      "origin": "added",
+      "playlist_id": "PLUTe2YwR56Zuf3N8SUI89jbJdDWkI76i0",
+      "title_filter": {
+        "include": "Off Guard"
+      },
+      "shared_channel": true,
+      "note": "Lives on the NBA on NBC channel; collected from its \"Off Guard with Austin Rivers (FULL EPISODES)\" playlist."
+    },
+    {
+      "slug": "the-long-shot",
+      "name": "The Long Shot",
+      "hosts": [
+        "Duncan Robinson",
+        "Davis Reid"
+      ],
+      "channel_id": "UCaytb_OvJzlxDG-dKwoHbMw",
+      "youtube_url": "https://www.youtube.com/channel/UCaytb_OvJzlxDG-dKwoHbMw",
+      "origin": "added",
+      "note": "Posted on Duncan Robinson's own channel."
+    }
+  ]
+}
