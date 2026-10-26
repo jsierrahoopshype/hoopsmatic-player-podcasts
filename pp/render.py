@@ -101,7 +101,8 @@ def head(title, desc, url, assets_v, extra=""):
 
 
 def tabs(active):
-    items = [("rankings", "Rankings", B + "/"), ("most-watched", "Most watched", B + "/most-watched/"),
+    items = [("rankings", "Rankings", B + "/"), ("player-channels", "Player channels", B + "/player-channels/"),
+             ("most-watched", "Most watched", B + "/most-watched/"),
              ("dormant", "Dormant", B + "/dormant/")]
     return '<nav class="tabs">' + "".join(
         '<a href="%s"%s>%s</a>' % (href, ' class="active"' if k == active else "", label)
@@ -190,9 +191,9 @@ def hosts_line(show):
 
 # ── pages ──
 
-def leaderboard(ctx):
+def leaderboard(ctx, ranked=None):
     rows, cards = [], []
-    for s in ctx["ranked"]:
+    for s in (ctx["ranked"] if ranked is None else ranked):
         show = ctx["shows"][s["slug"]]
         ch = ctx["changes"].get(s["slug"]) if ctx["changes"] else None
         shared = ctx["shared"][s["slug"]]
@@ -268,6 +269,9 @@ def index_page(ctx):
                     'their show\'s typical views.</p></section>\n')
     body.append('<section class="block"><div class="block-head"><h2>Rankings</h2></div>')
     body.append(leaderboard(ctx))
+    body.append('<p class="hint-below">Players\' personal channels (vlogs, behind the scenes, highlights) are '
+                'ranked separately: <a href="%s/player-channels/">%d player channels</a>.</p>'
+                % (B, len(ctx["ranked_pc"])))
     body.append("</section>\n")
     body.append(method_html(ctx))
     ld = {"@context": "https://schema.org", "@type": "ItemList", "name": "NBA Player Podcasts by YouTube views",
@@ -288,9 +292,10 @@ def method_html(ctx):
             'A breakout is an episode with at least 5 times its show\'s typical views. Likes per 1K is likes per '
             '1,000 views on recent full episodes. Subscribers come from YouTube\'s public (rounded) counts; shows '
             'that share a channel with another show say "shared". %s</p>'
-            '<p>A show needs at least one full episode in the last 90 days to be ranked; the rest are listed as '
-            '<a href="%s/dormant/">dormant</a>. Channels where most uploads are clips rather than full episodes '
-            'are not ranked.</p></section>\n' % (rc, B))
+            '<p>A show is ranked with at least 4 full episodes in the last 90 days, or 1 to 3 in the last 90 days '
+            'and at least 4 in the last 180. The rest are listed as <a href="%s/dormant/">dormant</a> until they '
+            'post again. Podcasts and players\' personal channels are ranked separately, with the same numbers '
+            'and rules.</p></section>\n' % (rc, B))
 
 
 def most_watched_page(ctx):
@@ -327,27 +332,57 @@ def most_watched_page(ctx):
                 "most-watched", "".join(body))
 
 
+def _dormant_table(rows, ctx):
+    out = ['<div class="dirtable"><table class="lb static"><thead><tr><th class="left">Show</th>'
+           '<th>Last full episode</th><th class="hide-s">Full episodes</th><th>Channel</th></tr></thead><tbody>']
+    for s in rows:
+        show = ctx["shows"][s["slug"]]
+        out.append('<tr><td class="name"><a class="q" href="%s">%s</a><span class="ev">%s</span></td>'
+                   '<td>%s</td><td class="hide-s">%d</td>'
+                   '<td><a href="%s" target="_blank" rel="noopener">YouTube</a></td></tr>'
+                   % (show_url(show["slug"]), e(show["name"]), e(hosts_line(show)),
+                      fmt_date(s["last_episode"]), len(s["episodes"]), e(show["youtube_url"])))
+    out.append("</tbody></table></div>")
+    return "".join(out)
+
+
 def dormant_page(ctx):
     url = config.SITE_BASE + "/dormant/"
     body = ['<div class="hdr"><h1>Dormant NBA player podcasts</h1></div>\n'
-            '<p class="subtitle">Shows with no full episode on YouTube in the last 90 days. They return to the '
-            'rankings with their next full episode. %s</p>\n' % stamp(ctx)]
+            '<p class="subtitle">Shows without enough recent full episodes to be ranked: fewer than 4 in the last '
+            '90 days and fewer than 4 in the last 180, or none in the last 90. They return to the rankings when '
+            'they post again. %s</p>\n' % stamp(ctx)]
+    pods = [s for s in ctx["dormant"] if s["type"] == "podcast"]
+    chans = [s for s in ctx["dormant"] if s["type"] == "player_channel"]
     if not ctx["dormant"]:
         body.append('<div class="empty">No dormant shows right now.</div>')
-    else:
-        body.append('<div class="dirtable"><table class="lb static"><thead><tr><th class="left">Show</th>'
-                    '<th>Last full episode</th><th class="hide-s">Full episodes</th><th>Channel</th></tr></thead><tbody>')
-        for s in ctx["dormant"]:
-            show = ctx["shows"][s["slug"]]
-            body.append('<tr><td class="name"><a class="q" href="%s">%s</a><span class="ev">%s</span></td>'
-                        '<td>%s</td><td class="hide-s">%d</td>'
-                        '<td><a href="%s" target="_blank" rel="noopener">YouTube</a></td></tr>'
-                        % (show_url(show["slug"]), e(show["name"]), e(hosts_line(show)),
-                           fmt_date(s["last_episode"]), len(s["episodes"]), e(show["youtube_url"])))
-        body.append("</tbody></table></div>")
-    names = ", ".join(ctx["shows"][s["slug"]]["name"] for s in ctx["dormant"][:4])
-    desc = "NBA player podcasts with no full YouTube episode in the last 90 days" + (": " + names + "." if names else ".")
+    for label, rows in (("Podcasts", pods), ("Player channels", chans)):
+        if rows:
+            body.append('<section class="block"><div class="block-head"><h2>%s</h2></div>%s</section>\n'
+                        % (label, _dormant_table(rows, ctx)))
+    names = ", ".join(ctx["shows"][s["slug"]]["name"] for s in pods[:4])
+    desc = "NBA player podcasts without enough recent full YouTube episodes to be ranked" + (": " + names + "." if names else ".")
     return page("Dormant NBA Player Podcasts | HoopsMatic", desc, url, ctx["assets_v"], "dormant", "".join(body))
+
+
+def player_channels_page(ctx):
+    url = config.SITE_BASE + "/player-channels/"
+    top = ", ".join(ctx["shows"][s["slug"]]["name"] for s in ctx["ranked_pc"][:3])
+    desc = ("NBA players' personal YouTube channels (vlogs, behind the scenes, highlights) ranked by views on "
+            "videos of 20 minutes or longer from the last 30 days" + (". Top right now: %s." % top if top else "."))
+    body = ['<div class="hdr"><h1>NBA player YouTube channels</h1></div>\n'
+            '<p class="subtitle">%d players\' personal channels (vlogs, behind the scenes, highlights rather than '
+            'a recurring show), ranked like the <a href="%s/">podcasts</a>: by YouTube views on videos of 20 '
+            'minutes or longer posted in the last 30 days. %s</p>\n' % (len(ctx["ranked_pc"]), B, stamp(ctx))]
+    if ctx["ranked_pc"]:
+        body.append('<section class="block"><div class="block-head"><h2>Rankings</h2></div>')
+        body.append(leaderboard(ctx, ctx["ranked_pc"]))
+        body.append("</section>\n")
+    else:
+        body.append('<div class="empty">No player channels ranked right now.</div>')
+    body.append(method_html(ctx))
+    return page("NBA Player YouTube Channels Ranked by Views | HoopsMatic", desc, url, ctx["assets_v"],
+                "player-channels", "".join(body))
 
 
 def chart_svg(eps, med):
@@ -386,8 +421,11 @@ def show_page(ctx, s):
     eps = s["episodes"]
     if s["status"] == "ranked":
         ch = ctx["changes"].get(s["slug"]) if ctx["changes"] else None
-        status = 'Ranked <strong>No. %d</strong> of %d by 30-day views%s' % (
-            s["rank"], len(ctx["ranked"]), (" " + change_html(ch)) if ch not in (None, 0) else "")
+        pc = s["type"] == "player_channel"
+        status = 'Ranked <strong>No. %d</strong> of %d %s by 30-day views%s' % (
+            s["rank"], len(ctx["ranked_pc"] if pc else ctx["ranked"]),
+            '<a href="%s/player-channels/">player channels</a>' % B if pc else "podcasts",
+            (" " + change_html(ch)) if ch not in (None, 0) else "")
     else:
         status = "Dormant: last full episode %s" % fmt_date(s["last_episode"])
     hosts = hosts_line(show)

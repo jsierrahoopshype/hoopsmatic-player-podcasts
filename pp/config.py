@@ -25,15 +25,15 @@ SHORT_MAX = 60          # under 1 minute: Short
 FULL_MIN = 20 * 60      # 20 minutes and up: full episode; anything between is a clip
 
 MOMENTUM_DAYS = 30      # main ranking: views on full episodes posted in the last 30 days
-TYPICAL_DAYS = 90       # median window, episodes-per-month window, active and real-show windows
+TYPICAL_DAYS = 90       # median window, episodes-per-month window, ranked window
 WEEK_DAYS = 7
-BREAKOUT_X = 5.0
-# Real-show rule: "more than half of the last 90 days' uploads are full
-# episodes". "uploads" counts videos (the rule as specified); "minutes" weighs
-# each upload by its length instead, which keeps podcasts that post many short
-# clips of each episode (Club 520, All the Smoke) in the rankings.
-REAL_SHOW_BASIS = "uploads"        # an episode at 5x its show's median or more is a breakout
+BREAKOUT_X = 5.0        # an episode at 5x its show's median or more is a breakout
+# Ranked: at least 4 full episodes in the last 90 days, or 1 to 3 in the last
+# 90 days with at least 4 in the last 180. Otherwise Dormant (no full episode
+# ever: excluded).
+RANKED_MIN_EPISODES = 4
+LONG_DAYS = 180
 SEASON_START = date(2026, 10, 1)
 
 # Slugs a show may never take: they are pages or folders of their own.
-RESERVED_SLUGS = {"most-watched", "dormant", "thumbs", "assets", "sitemap.xml", "404.html", "index.html"}
+RESERVED_SLUGS = {"most-watched", "dormant", "player-channels", "thumbs", "assets", "sitemap.xml", "404.html", "index.html"}

@@ -1,5 +1,5 @@
 {
-  "_about": "Roster for hoopsmatic.com/player-podcasts. One record per show. channel_id is the YouTube channel; playlist_id (optional) collects a show from one playlist on a shared channel; title_filter (optional, case-insensitive regex) keeps only the videos whose title matches include and not exclude, so one channel can feed several shows. shared_channel hides channel subscriber numbers, which belong to the whole channel.",
+  "_about": "Roster for hoopsmatic.com/player-podcasts. One record per show. channel_id is the YouTube channel; playlist_id (optional) collects a show from one playlist on a shared channel; title_filter (optional, case-insensitive regex) keeps only the videos whose title matches include and not exclude, so one channel can feed several shows. shared_channel hides channel subscriber numbers, which belong to the whole channel. type is \"podcast\" (a recurring show with episodes or guests: main rankings) or \"player_channel\" (a player's personal channel of vlogs, behind-the-scenes and highlights: ranked separately on /player-podcasts/player-channels/).",
   "not_ranked": [
     {
       "name": "The Jon Krawczynski Show",
@@ -52,7 +52,8 @@
       ],
       "channel_id": "UC4uXDQzZG_WNeIyJQEsZcNA",
       "youtube_url": "https://www.youtube.com/channel/UC4uXDQzZG_WNeIyJQEsZcNA",
-      "origin": "keep list"
+      "origin": "keep list",
+      "type": "podcast"
     },
     {
       "slug": "catch12",
@@ -62,7 +63,8 @@
       ],
       "channel_id": "UC4p0nlqdUlocfv--48-15Lg",
       "youtube_url": "https://www.youtube.com/channel/UC4p0nlqdUlocfv--48-15Lg",
-      "origin": "keep list"
+      "origin": "keep list",
+      "type": "podcast"
     },
     {
       "slug": "rogue-bogues",
@@ -72,7 +74,8 @@
       ],
       "channel_id": "UCvy0Lw9TcvSAQnTzj62aOUA",
       "youtube_url": "https://www.youtube.com/channel/UCvy0Lw9TcvSAQnTzj62aOUA",
-      "origin": "keep list"
+      "origin": "keep list",
+      "type": "podcast"
     },
     {
       "slug": "on-the-haus",
@@ -84,7 +87,8 @@
       ],
       "channel_id": "UCqbroTPGO_SaLJB_TI4zztg",
       "youtube_url": "https://www.youtube.com/channel/UCqbroTPGO_SaLJB_TI4zztg",
-      "origin": "keep list"
+      "origin": "keep list",
+      "type": "podcast"
     },
     {
       "slug": "straight-game",
@@ -96,7 +100,8 @@
       ],
       "channel_id": "UCuhRRUv5bBdVRU6uExsd24w",
       "youtube_url": "https://www.youtube.com/channel/UCuhRRUv5bBdVRU6uExsd24w",
-      "origin": "keep list"
+      "origin": "keep list",
+      "type": "podcast"
     },
     {
       "slug": "all-the-smoke",
@@ -107,7 +112,8 @@
       ],
       "channel_id": "UC2ozVs4pg2K3uFLw6-0ayCQ",
       "youtube_url": "https://www.youtube.com/channel/UC2ozVs4pg2K3uFLw6-0ayCQ",
-      "origin": "keep list"
+      "origin": "keep list",
+      "type": "podcast"
     },
     {
       "slug": "white-noise",
@@ -118,7 +124,8 @@
       ],
       "channel_id": "UC7HDMexhX9XlWqa8Y1n1SJQ",
       "youtube_url": "https://www.youtube.com/channel/UC7HDMexhX9XlWqa8Y1n1SJQ",
-      "origin": "keep list"
+      "origin": "keep list",
+      "type": "podcast"
     },
     {
       "slug": "boardroom",
@@ -134,7 +141,8 @@
         "exclude": "\\bETCs\\b"
       },
       "shared_channel": true,
-      "note": "Same channel as The ETCs with Kevin Durant; ETCs episodes are left out of this show."
+      "note": "Same channel as The ETCs with Kevin Durant; ETCs episodes are left out of this show.",
+      "type": "podcast"
     },
     {
       "slug": "the-etcs",
@@ -150,7 +158,8 @@
         "include": "\\bETCs\\b"
       },
       "shared_channel": true,
-      "note": "Lives on the Boardroom channel; only videos with \"ETCs\" in the title count."
+      "note": "Lives on the Boardroom channel; only videos with \"ETCs\" in the title count.",
+      "type": "podcast"
     },
     {
       "slug": "podcast-p",
@@ -160,7 +169,8 @@
       ],
       "channel_id": "UC_MXNS3qkraCAEebdScjAPA",
       "youtube_url": "https://www.youtube.com/channel/UC_MXNS3qkraCAEebdScjAPA",
-      "origin": "keep list"
+      "origin": "keep list",
+      "type": "podcast"
     },
     {
       "slug": "kyle-kuzma",
@@ -170,7 +180,8 @@
       ],
       "channel_id": "UC_RyUOQqh3W77giXrbGKVGg",
       "youtube_url": "https://www.youtube.com/channel/UC_RyUOQqh3W77giXrbGKVGg",
-      "origin": "keep list"
+      "origin": "keep list",
+      "type": "player_channel"
     },
     {
       "slug": "andre-drummond",
@@ -181,7 +192,8 @@
       "channel_id": "UCFpuYxEexZvdaFQQf3Vloqg",
       "youtube_url": "https://www.youtube.com/channel/UCFpuYxEexZvdaFQQf3Vloqg",
       "origin": "keep list",
-      "note": "ID on the original list had a typo (EEx); this is the channel @AndreDrummond resolves to."
+      "note": "ID on the original list had a typo (EEx); this is the channel @AndreDrummond resolves to.",
+      "type": "player_channel"
     },
     {
       "slug": "dwyane-wade",
@@ -191,7 +203,8 @@
       ],
       "channel_id": "UCrlL3lECKmzkcYK8S6cW2Eg",
       "youtube_url": "https://www.youtube.com/channel/UCrlL3lECKmzkcYK8S6cW2Eg",
-      "origin": "keep list"
+      "origin": "keep list",
+      "type": "podcast"
     },
     {
       "slug": "thanalysis",
@@ -201,7 +214,8 @@
       ],
       "channel_id": "UCUqIXubCV7gcDJ-QZrdYRbw",
       "youtube_url": "https://www.youtube.com/channel/UCUqIXubCV7gcDJ-QZrdYRbw",
-      "origin": "keep list"
+      "origin": "keep list",
+      "type": "podcast"
     },
     {
       "slug": "out-the-mud",
@@ -212,7 +226,8 @@
       ],
       "channel_id": "UCqwKvfByZqmdC2jaFcUPcvQ",
       "youtube_url": "https://www.youtube.com/channel/UCqwKvfByZqmdC2jaFcUPcvQ",
-      "origin": "keep list"
+      "origin": "keep list",
+      "type": "podcast"
     },
     {
       "slug": "inside-the-green-room",
@@ -222,7 +237,8 @@
       ],
       "channel_id": "UCVKTjJgaohHuJTtNjXCKazw",
       "youtube_url": "https://www.youtube.com/channel/UCVKTjJgaohHuJTtNjXCKazw",
-      "origin": "keep list"
+      "origin": "keep list",
+      "type": "podcast"
     },
     {
       "slug": "run-it-back",
@@ -235,7 +251,8 @@
       ],
       "channel_id": "UCwZo_mDI4fOIp-g18kinGBw",
       "youtube_url": "https://www.youtube.com/channel/UCwZo_mDI4fOIp-g18kinGBw",
-      "origin": "keep list"
+      "origin": "keep list",
+      "type": "podcast"
     },
     {
       "slug": "jared-mccain",
@@ -245,7 +262,8 @@
       ],
       "channel_id": "UC5VYF0LHox2_7Ql2pKihqCQ",
       "youtube_url": "https://www.youtube.com/channel/UC5VYF0LHox2_7Ql2pKihqCQ",
-      "origin": "keep list"
+      "origin": "keep list",
+      "type": "player_channel"
     },
     {
       "slug": "roommates",
@@ -257,7 +275,8 @@
       ],
       "channel_id": "UC1N15bwJCPFHjEsun1epfmw",
       "youtube_url": "https://www.youtube.com/channel/UC1N15bwJCPFHjEsun1epfmw",
-      "origin": "keep list"
+      "origin": "keep list",
+      "type": "podcast"
     },
     {
       "slug": "jalen-williams",
@@ -267,7 +286,8 @@
       ],
       "channel_id": "UCalFuU3MOWE39CS6SbfOUgA",
       "youtube_url": "https://www.youtube.com/channel/UCalFuU3MOWE39CS6SbfOUgA",
-      "origin": "keep list"
+      "origin": "keep list",
+      "type": "player_channel"
     },
     {
       "slug": "nigel-hayes-davis",
@@ -277,7 +297,8 @@
       ],
       "channel_id": "UCZv6u7QVz-c8UoiJOMb2oyg",
       "youtube_url": "https://www.youtube.com/channel/UCZv6u7QVz-c8UoiJOMb2oyg",
-      "origin": "keep list"
+      "origin": "keep list",
+      "type": "player_channel"
     },
     {
       "slug": "tyler-herro",
@@ -287,7 +308,8 @@
       ],
       "channel_id": "UCd6K_nXCeWBk8YDwja0PPZg",
       "youtube_url": "https://www.youtube.com/channel/UCd6K_nXCeWBk8YDwja0PPZg",
-      "origin": "keep list"
+      "origin": "keep list",
+      "type": "player_channel"
     },
     {
       "slug": "kg-certified",
@@ -298,7 +320,8 @@
       ],
       "channel_id": "UCa9W_cPwwbDlwBwHOd1YWoQ",
       "youtube_url": "https://www.youtube.com/channel/UCa9W_cPwwbDlwBwHOd1YWoQ",
-      "origin": "keep list"
+      "origin": "keep list",
+      "type": "podcast"
     },
     {
       "slug": "the-ogs",
@@ -309,7 +332,8 @@
       ],
       "channel_id": "UCrUJ2hRTGLEaozZZ8cp5u0A",
       "youtube_url": "https://www.youtube.com/channel/UCrUJ2hRTGLEaozZZ8cp5u0A",
-      "origin": "keep list"
+      "origin": "keep list",
+      "type": "podcast"
     },
     {
       "slug": "club-520",
@@ -320,7 +344,8 @@
       ],
       "channel_id": "UCoA3lm9UTWDWK8Z1kcoWQcA",
       "youtube_url": "https://www.youtube.com/channel/UCoA3lm9UTWDWK8Z1kcoWQcA",
-      "origin": "keep list"
+      "origin": "keep list",
+      "type": "podcast"
     },
     {
       "slug": "victor-oladipo",
@@ -330,7 +355,8 @@
       ],
       "channel_id": "UCf5fcEALUCA53oUW3mc8tiQ",
       "youtube_url": "https://www.youtube.com/channel/UCf5fcEALUCA53oUW3mc8tiQ",
-      "origin": "keep list"
+      "origin": "keep list",
+      "type": "podcast"
     },
     {
       "slug": "to-the-baha",
@@ -342,7 +368,8 @@
       ],
       "channel_id": "UCU50K9xm-5_qbzwjMRr9A8w",
       "youtube_url": "https://www.youtube.com/channel/UCU50K9xm-5_qbzwjMRr9A8w",
-      "origin": "keep list"
+      "origin": "keep list",
+      "type": "podcast"
     },
     {
       "slug": "mind-the-game",
@@ -353,7 +380,8 @@
       ],
       "channel_id": "UC6L_LBqoKZXFa4WxHox5iCw",
       "youtube_url": "https://www.youtube.com/channel/UC6L_LBqoKZXFa4WxHox5iCw",
-      "origin": "keep list"
+      "origin": "keep list",
+      "type": "podcast"
     },
     {
       "slug": "ball-in-the-family",
@@ -365,7 +393,8 @@
       "channel_id": "UCxclESttS8hoRMd6cIYGgeA",
       "youtube_url": "https://www.youtube.com/channel/UCxclESttS8hoRMd6cIYGgeA",
       "origin": "keep list",
-      "note": "Listed as TheWAEShow on the original list; the channel is now Ball in the Family."
+      "note": "Listed as TheWAEShow on the original list; the channel is now Ball in the Family.",
+      "type": "podcast"
     },
     {
       "slug": "arenas-network",
@@ -375,7 +404,8 @@
       ],
       "channel_id": "UCuJ6CSQLBNb0nUvOn-s4aSA",
       "youtube_url": "https://www.youtube.com/channel/UCuJ6CSQLBNb0nUvOn-s4aSA",
-      "origin": "keep list"
+      "origin": "keep list",
+      "type": "player_channel"
     },
     {
       "slug": "damian-lillard",
@@ -385,7 +415,8 @@
       ],
       "channel_id": "UCIhTfcMzbR5wyNeh57ju0ug",
       "youtube_url": "https://www.youtube.com/channel/UCIhTfcMzbR5wyNeh57ju0ug",
-      "origin": "keep list"
+      "origin": "keep list",
+      "type": "player_channel"
     },
     {
       "slug": "knuckleheads",
@@ -396,7 +427,8 @@
       ],
       "channel_id": "UCLqzKYd1tST9lRPbEUoH5Hg",
       "youtube_url": "https://www.youtube.com/channel/UCLqzKYd1tST9lRPbEUoH5Hg",
-      "origin": "keep list"
+      "origin": "keep list",
+      "type": "podcast"
     },
     {
       "slug": "the-big-podcast",
@@ -406,7 +438,8 @@
       ],
       "channel_id": "UCIOXmaExi4DjLHGyGvnu3bw",
       "youtube_url": "https://www.youtube.com/channel/UCIOXmaExi4DjLHGyGvnu3bw",
-      "origin": "keep list"
+      "origin": "keep list",
+      "type": "podcast"
     },
     {
       "slug": "road-trippin",
@@ -418,7 +451,8 @@
       ],
       "channel_id": "UCSes4X8uDrpc4X46hJKjejg",
       "youtube_url": "https://www.youtube.com/channel/UCSes4X8uDrpc4X46hJKjejg",
-      "origin": "keep list"
+      "origin": "keep list",
+      "type": "podcast"
     },
     {
       "slug": "demar-derozan",
@@ -428,7 +462,8 @@
       ],
       "channel_id": "UCfHG9GrqjYaEdPkrRi9LiBA",
       "youtube_url": "https://www.youtube.com/channel/UCfHG9GrqjYaEdPkrRi9LiBA",
-      "origin": "keep list"
+      "origin": "keep list",
+      "type": "podcast"
     },
     {
       "slug": "run-your-race",
@@ -439,7 +474,8 @@
       ],
       "channel_id": "UCIuKoa1AIiLTiXo0v69gTRg",
       "youtube_url": "https://www.youtube.com/channel/UCIuKoa1AIiLTiXo0v69gTRg",
-      "origin": "keep list"
+      "origin": "keep list",
+      "type": "podcast"
     },
     {
       "slug": "the-backyard",
@@ -451,7 +487,8 @@
       "channel_id": "UCxHKsrkqNr-lQ04gTj9IGgw",
       "youtube_url": "https://www.youtube.com/channel/UCxHKsrkqNr-lQ04gTj9IGgw",
       "origin": "keep list",
-      "note": "The ID on the original list (UC_a6c3KLo9reMOqn2pbvMqg) is The Basement Yard, an unrelated show; this is D'Angelo Russell's channel from hoopshype-yt-quotes."
+      "note": "The ID on the original list (UC_a6c3KLo9reMOqn2pbvMqg) is The Basement Yard, an unrelated show; this is D'Angelo Russell's channel from hoopshype-yt-quotes.",
+      "type": "podcast"
     },
     {
       "slug": "anthony-edwards",
@@ -461,7 +498,8 @@
       ],
       "channel_id": "UCFEiKlkFpJBISr1paTLW8Vg",
       "youtube_url": "https://www.youtube.com/channel/UCFEiKlkFpJBISr1paTLW8Vg",
-      "origin": "keep list"
+      "origin": "keep list",
+      "type": "player_channel"
     },
     {
       "slug": "curious-mike",
@@ -471,7 +509,8 @@
       ],
       "channel_id": "UC3ZStupBLNVY4wVVOn7-e3w",
       "youtube_url": "https://www.youtube.com/channel/UC3ZStupBLNVY4wVVOn7-e3w",
-      "origin": "keep list"
+      "origin": "keep list",
+      "type": "podcast"
     },
     {
       "slug": "above-the-rim",
@@ -481,7 +520,8 @@
       ],
       "channel_id": "UCODlrQzQGttxpYglzmoOaEA",
       "youtube_url": "https://www.youtube.com/channel/UCODlrQzQGttxpYglzmoOaEA",
-      "origin": "keep list"
+      "origin": "keep list",
+      "type": "podcast"
     },
     {
       "slug": "trae-young",
@@ -491,7 +531,8 @@
       ],
       "channel_id": "UCwr3hqUDuO4D4szLkjeVlrA",
       "youtube_url": "https://www.youtube.com/channel/UCwr3hqUDuO4D4szLkjeVlrA",
-      "origin": "keep list"
+      "origin": "keep list",
+      "type": "podcast"
     },
     {
       "slug": "old-man-and-the-three",
@@ -502,7 +543,8 @@
       ],
       "channel_id": "UCbPY1Efha9VPRBYW2x1M16A",
       "youtube_url": "https://www.youtube.com/channel/UCbPY1Efha9VPRBYW2x1M16A",
-      "origin": "keep list"
+      "origin": "keep list",
+      "type": "podcast"
     },
     {
       "slug": "hoopin-n-hollerin",
@@ -514,7 +556,8 @@
       "channel_id": "UCIlXFWq4v1CymTFBBgQ589Q",
       "youtube_url": "https://www.youtube.com/channel/UCIlXFWq4v1CymTFBBgQ589Q",
       "origin": "keep list",
-      "note": "Formerly The Pat Bev Pod (Barstool)."
+      "note": "Formerly The Pat Bev Pod (Barstool).",
+      "type": "podcast"
     },
     {
       "slug": "dawg-talk",
@@ -525,7 +568,8 @@
       ],
       "channel_id": "UCBIPGMEJ72kaL9QHw3xUvuw",
       "youtube_url": "https://www.youtube.com/channel/UCBIPGMEJ72kaL9QHw3xUvuw",
-      "origin": "keep list"
+      "origin": "keep list",
+      "type": "podcast"
     },
     {
       "slug": "big-wos-show",
@@ -536,7 +580,8 @@
       "channel_id": "UC-Ovj3qDVxBAOWX3kwzOVRw",
       "youtube_url": "https://www.youtube.com/channel/UC-Ovj3qDVxBAOWX3kwzOVRw",
       "origin": "keep list",
-      "note": "Listed as No Fouls Given on the original list; the channel is now The Big Wos Show."
+      "note": "Listed as No Fouls Given on the original list; the channel is now The Big Wos Show.",
+      "type": "podcast"
     },
     {
       "slug": "gils-arena",
@@ -548,7 +593,8 @@
       ],
       "channel_id": "UCAvjYgmwadC682OoC4Cc6TQ",
       "youtube_url": "https://www.youtube.com/channel/UCAvjYgmwadC682OoC4Cc6TQ",
-      "origin": "keep list"
+      "origin": "keep list",
+      "type": "podcast"
     },
     {
       "slug": "draymond-green-show",
@@ -560,7 +606,8 @@
       "channel_id": "UCBNqqomXKPSWvcQDXOkRvRA",
       "youtube_url": "https://www.youtube.com/channel/UCBNqqomXKPSWvcQDXOkRvRA",
       "origin": "keep list",
-      "note": "Checked: the show posts on its own channel, not The Volume's, so no title filter is needed."
+      "note": "Checked: the show posts on its own channel, not The Volume's, so no title filter is needed.",
+      "type": "podcast"
     },
     {
       "slug": "point-game",
@@ -570,7 +617,8 @@
       ],
       "channel_id": "UCemwSsWl4rg313rUCBcDiJw",
       "youtube_url": "https://www.youtube.com/channel/UCemwSsWl4rg313rUCBcDiJw",
-      "origin": "keep list"
+      "origin": "keep list",
+      "type": "podcast"
     },
     {
       "slug": "gimme-the-hot-sauce",
@@ -580,7 +628,8 @@
       ],
       "channel_id": "UCYYTsni8rBjKzBPGu3-Q8LA",
       "youtube_url": "https://www.youtube.com/channel/UCYYTsni8rBjKzBPGu3-Q8LA",
-      "origin": "keep list"
+      "origin": "keep list",
+      "type": "podcast"
     },
     {
       "slug": "aj-dybantsa",
@@ -590,7 +639,8 @@
       ],
       "channel_id": "UCNGuP7AKOZ9yi7x5SDiCOjg",
       "youtube_url": "https://www.youtube.com/channel/UCNGuP7AKOZ9yi7x5SDiCOjg",
-      "origin": "keep list"
+      "origin": "keep list",
+      "type": "player_channel"
     },
     {
       "slug": "richard-jefferson",
@@ -600,7 +650,8 @@
       ],
       "channel_id": "UCA95kYjGqDgRziNA7sJZBag",
       "youtube_url": "https://www.youtube.com/channel/UCA95kYjGqDgRziNA7sJZBag",
-      "origin": "keep list"
+      "origin": "keep list",
+      "type": "podcast"
     },
     {
       "slug": "7pm-in-brooklyn",
@@ -611,7 +662,8 @@
       ],
       "channel_id": "UCT3wF21Qx0d0HmuiCzji8Lg",
       "youtube_url": "https://www.youtube.com/channel/UCT3wF21Qx0d0HmuiCzji8Lg",
-      "origin": "keep list"
+      "origin": "keep list",
+      "type": "podcast"
     },
     {
       "slug": "game-recognize-game",
@@ -622,7 +674,8 @@
       ],
       "channel_id": "UCe4l0wTSq_Tvva_bBTMkiXQ",
       "youtube_url": "https://www.youtube.com/channel/UCe4l0wTSq_Tvva_bBTMkiXQ",
-      "origin": "hoopshype-yt-quotes"
+      "origin": "hoopshype-yt-quotes",
+      "type": "podcast"
     },
     {
       "slug": "ayo-dosunmu",
@@ -632,7 +685,8 @@
       ],
       "channel_id": "UCnD-vTb2QeSMsXdE360Ec1A",
       "youtube_url": "https://www.youtube.com/channel/UCnD-vTb2QeSMsXdE360Ec1A",
-      "origin": "hoopshype-yt-quotes"
+      "origin": "hoopshype-yt-quotes",
+      "type": "player_channel"
     },
     {
       "slug": "cousins",
@@ -643,7 +697,8 @@
       ],
       "channel_id": "UCI5av_J_zb7S90XrucOfH0w",
       "youtube_url": "https://www.youtube.com/channel/UCI5av_J_zb7S90XrucOfH0w",
-      "origin": "hoopshype-yt-quotes"
+      "origin": "hoopshype-yt-quotes",
+      "type": "podcast"
     },
     {
       "slug": "fred-vanvleet",
@@ -653,7 +708,8 @@
       ],
       "channel_id": "UCDO3XAwii1n-i_mTeVw3evA",
       "youtube_url": "https://www.youtube.com/channel/UCDO3XAwii1n-i_mTeVw3evA",
-      "origin": "hoopshype-yt-quotes"
+      "origin": "hoopshype-yt-quotes",
+      "type": "podcast"
     },
     {
       "slug": "shump-street",
@@ -663,15 +719,20 @@
       ],
       "channel_id": "UCF2-UNMBDl0QgdXf_WgPxLA",
       "youtube_url": "https://www.youtube.com/channel/UCF2-UNMBDl0QgdXf_WgPxLA",
-      "origin": "hoopshype-yt-quotes"
+      "origin": "hoopshype-yt-quotes",
+      "type": "podcast"
     },
     {
       "slug": "gogis-garage",
       "name": "Gogis Garage",
-      "hosts": [],
+      "hosts": [
+        "Goran Dragić"
+      ],
       "channel_id": "UCejLJNSsAjPnQOR7SKuqc8g",
       "youtube_url": "https://www.youtube.com/channel/UCejLJNSsAjPnQOR7SKuqc8g",
-      "origin": "hoopshype-yt-quotes"
+      "origin": "hoopshype-yt-quotes",
+      "type": "podcast",
+      "note": "Host inferred: \"Gogi\" is Goran Dragić's nickname and the guests are Slovenian athletes and his former teammates; the channel itself names no host."
     },
     {
       "slug": "tyrese-haliburton",
@@ -681,7 +742,8 @@
       ],
       "channel_id": "UCErehpciG-VEIWfd72ZDXsg",
       "youtube_url": "https://www.youtube.com/channel/UCErehpciG-VEIWfd72ZDXsg",
-      "origin": "hoopshype-yt-quotes"
+      "origin": "hoopshype-yt-quotes",
+      "type": "player_channel"
     },
     {
       "slug": "giannis-antetokounmpo",
@@ -691,7 +753,8 @@
       ],
       "channel_id": "UCrMiMJMUSjELs0jb1vtTiAg",
       "youtube_url": "https://www.youtube.com/channel/UCrMiMJMUSjELs0jb1vtTiAg",
-      "origin": "hoopshype-yt-quotes"
+      "origin": "hoopshype-yt-quotes",
+      "type": "player_channel"
     },
     {
       "slug": "davion-mitchell",
@@ -701,7 +764,8 @@
       ],
       "channel_id": "UCi1HRyhAYBowd1OXVvNea8w",
       "youtube_url": "https://www.youtube.com/channel/UCi1HRyhAYBowd1OXVvNea8w",
-      "origin": "hoopshype-yt-quotes"
+      "origin": "hoopshype-yt-quotes",
+      "type": "player_channel"
     },
     {
       "slug": "jaylen-clark",
@@ -711,7 +775,8 @@
       ],
       "channel_id": "UC1Mh22hsS7Fs1TrQtIdlTDw",
       "youtube_url": "https://www.youtube.com/channel/UC1Mh22hsS7Fs1TrQtIdlTDw",
-      "origin": "hoopshype-yt-quotes"
+      "origin": "hoopshype-yt-quotes",
+      "type": "player_channel"
     },
     {
       "slug": "lebron-james",
@@ -721,7 +786,8 @@
       ],
       "channel_id": "UCV9dV3DcAZWGnT2yFNKxStA",
       "youtube_url": "https://www.youtube.com/channel/UCV9dV3DcAZWGnT2yFNKxStA",
-      "origin": "hoopshype-yt-quotes"
+      "origin": "hoopshype-yt-quotes",
+      "type": "player_channel"
     },
     {
       "slug": "pat-bev-show",
@@ -732,7 +798,8 @@
       "channel_id": "UCsfbCkSEMyCRDKQOtEvtiIQ",
       "youtube_url": "https://www.youtube.com/channel/UCsfbCkSEMyCRDKQOtEvtiIQ",
       "origin": "added",
-      "note": "Beverley's own channel. The old Pat Bev Pod channel is now Hoopin' N Hollerin' (already listed)."
+      "note": "Beverley's own channel. The old Pat Bev Pod channel is now Hoopin' N Hollerin' (already listed).",
+      "type": "podcast"
     },
     {
       "slug": "point-forward",
@@ -743,7 +810,8 @@
       ],
       "channel_id": "UCDEA1ZnPxXWJNJ_VFQ0aCfQ",
       "youtube_url": "https://www.youtube.com/channel/UCDEA1ZnPxXWJNJ_VFQ0aCfQ",
-      "origin": "added"
+      "origin": "added",
+      "type": "podcast"
     },
     {
       "slug": "off-guard",
@@ -759,7 +827,8 @@
         "include": "Off Guard"
       },
       "shared_channel": true,
-      "note": "Lives on the NBA on NBC channel; collected from its \"Off Guard with Austin Rivers (FULL EPISODES)\" playlist."
+      "note": "Lives on the NBA on NBC channel; collected from its \"Off Guard with Austin Rivers (FULL EPISODES)\" playlist.",
+      "type": "podcast"
     },
     {
       "slug": "the-long-shot",
@@ -771,7 +840,8 @@
       "channel_id": "UCaytb_OvJzlxDG-dKwoHbMw",
       "youtube_url": "https://www.youtube.com/channel/UCaytb_OvJzlxDG-dKwoHbMw",
       "origin": "added",
-      "note": "Posted on Duncan Robinson's own channel."
+      "note": "Posted on Duncan Robinson's own channel.",
+      "type": "podcast"
     }
   ]
 }

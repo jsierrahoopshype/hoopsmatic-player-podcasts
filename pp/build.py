@@ -60,9 +60,12 @@ def compute(now=None):
             v["slug"] = show["slug"]
         stats.append(st)
 
-    ranked = metrics.rank_shows(stats)
+    # Podcasts and player channels are ranked separately, each from No. 1.
+    ranked = metrics.rank_shows(stats, "podcast")
+    ranked_pc = metrics.rank_shows(stats, "player_channel")
     history = load_json(config.RANKS_FILE, {}) or {}
     changes = metrics.rank_changes(ranked, history, today)
+    changes.update(metrics.rank_changes(ranked_pc, history, today))
     dormant = sorted((s for s in stats if s["status"] == "dormant"),
                      key=lambda s: s["last_episode"] or "", reverse=True)
     excluded = [s for s in stats if s["status"] == "excluded"]
@@ -73,14 +76,15 @@ def compute(now=None):
     breakouts = sorted((v for v in ranked_eps if metrics.age_days(v, now) <= config.MOMENTUM_DAYS
                         and metrics.is_breakout(v.get("breakout"))),
                        key=lambda v: v["published"], reverse=True)[:6]
-    pool = [v for s in ranked + dormant for v in s["episodes"]]
+    # Most watched: podcasts only, like the main rankings.
+    pool = [v for s in ranked + dormant if s["type"] == "podcast" for v in s["episodes"]]
     mw = _period_lists(pool, now)
 
     status = load_json(config.STATUS_FILE, {}) or {}
     last_ok = (status.get("ytdlp") or {}).get("last_ok")
     return {
         "now": now, "today": today, "shows": by_slug, "shared": shared, "stats": stats,
-        "ranked": ranked, "dormant": dormant, "excluded": excluded, "changes": changes,
+        "ranked": ranked, "ranked_pc": ranked_pc, "dormant": dormant, "excluded": excluded, "changes": changes,
         "history": history, "episode_of_week": eow, "breakouts": breakouts,
         "most_watched": mw, "mw_shows": sorted({v["slug"] for v in pool}),
         "updated_label": now.strftime("%b %-d, %Y"),
@@ -96,7 +100,7 @@ def displayed_ids(ctx):
     ids.update(v["id"] for v in ctx["breakouts"])
     for rows in ctx["most_watched"].values():
         ids.update(v["id"] for v in rows)
-    for s in ctx["ranked"] + ctx["dormant"]:
+    for s in ctx["ranked"] + ctx["ranked_pc"] + ctx["dormant"]:
         eps = s["episodes"]
         ids.update(v["id"] for v in sorted(eps, key=lambda v: v["published"], reverse=True)[:12])
         ids.update(v["id"] for v in sorted(eps, key=lambda v: -v["views"])[:10])
@@ -115,8 +119,9 @@ def build(now=None, fetch_thumbs=True, out=None):
 
     pages = {config.SITE_BASE + "/": ("index.html", render.index_page(ctx)),
              config.SITE_BASE + "/most-watched/": ("most-watched/index.html", render.most_watched_page(ctx)),
+             config.SITE_BASE + "/player-channels/": ("player-channels/index.html", render.player_channels_page(ctx)),
              config.SITE_BASE + "/dormant/": ("dormant/index.html", render.dormant_page(ctx))}
-    for s in ctx["ranked"] + ctx["dormant"]:
+    for s in ctx["ranked"] + ctx["ranked_pc"] + ctx["dormant"]:
         pages[config.SITE_BASE + "/" + s["slug"] + "/"] = (s["slug"] + "/index.html", render.show_page(ctx, s))
 
     if out.exists():
@@ -140,7 +145,7 @@ def build(now=None, fetch_thumbs=True, out=None):
 
     # Today's ranking, for next week's arrows. Kept 120 days.
     hist = ctx["history"]
-    hist[ctx["today"]] = {s["slug"]: s["rank"] for s in ctx["ranked"]}
+    hist[ctx["today"]] = {s["slug"]: s["rank"] for s in ctx["ranked"] + ctx["ranked_pc"]}
     cutoff = (ctx["now"].date() - timedelta(days=120)).isoformat()
     save_json(config.RANKS_FILE, {d: r for d, r in hist.items() if d >= cutoff})
 
@@ -148,12 +153,12 @@ def build(now=None, fetch_thumbs=True, out=None):
     save_json(config.EXCLUDED_FILE, {
         "_about": "Shows not in the rankings and why. Rebuilt on every run; review and edit data/channels.json to change the roster.",
         "updated": ctx["today"],
-        "excluded_by_rules": [{"slug": s["slug"], "name": ctx["shows"][s["slug"]]["name"],
-                               "channel_id": ctx["shows"][s["slug"]]["channel_id"], "reason": s["reason"],
-                               "full_episodes_90d": s["full_90"], "uploads_90d": s["long_90"],
-                               "views_30d_full_episodes": s["momentum"]} for s in ctx["excluded"]],
+        "excluded_by_rules": [{"slug": s["slug"], "name": ctx["shows"][s["slug"]]["name"], "type": s["type"],
+                               "channel_id": ctx["shows"][s["slug"]]["channel_id"], "reason": s["reason"]}
+                              for s in ctx["excluded"]],
         "not_in_roster": roster_doc.get("not_ranked", []),
     })
-    _log("built %d pages: %d ranked, %d dormant, %d excluded, %d thumbnails"
-         % (len(pages), len(ctx["ranked"]), len(ctx["dormant"]), len(ctx["excluded"]), len(ctx["thumbs"])))
+    _log("built %d pages: %d podcasts and %d player channels ranked, %d dormant, %d excluded, %d thumbnails"
+         % (len(pages), len(ctx["ranked"]), len(ctx["ranked_pc"]), len(ctx["dormant"]), len(ctx["excluded"]),
+            len(ctx["thumbs"])))
     return ctx

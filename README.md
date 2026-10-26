@@ -33,17 +33,21 @@ A push to `main` rebuilds and redeploys from the committed data only.
   `hosts`, `channel_id`, `youtube_url`, optional `playlist_id` (a show that lives
   in one playlist of a network's channel), optional `title_filter`
   (`{"include": regex, "exclude": regex}`, case-insensitive) so one channel can
-  feed several shows, and `shared_channel` (hides subscriber numbers that belong
-  to the whole channel). `not_ranked` lists channels deliberately left out.
-- `data/excluded.json` (generated): shows that fail the rules, with the reason.
+  feed several shows, `shared_channel` (hides subscriber numbers that belong
+  to the whole channel) and `type` (`podcast` or `player_channel`, required). `not_ranked` lists channels deliberately left out.
+- `data/excluded.json` (generated): shows with no full episode at all, with the reason.
 
 ## Rules
 
 - Full episode: 20 minutes or longer. Clip: 1 to 20 minutes. Short: under 1 minute.
   Rankings use full episodes only.
-- Active: at least one full episode in the last 90 days; otherwise Dormant.
-- Real show: more than half of the uploads in the last 90 days are full episodes
-  (Shorts are not counted: the Shorts tab carries no dates).
+- Ranked: at least 4 full episodes in the last 90 days, or 1 to 3 in the last
+  90 days with at least 4 in the last 180. Otherwise Dormant. No full episode
+  ever: excluded (listed in `data/excluded.json`).
+- Two kinds of show, set by `type` in `data/channels.json`: `podcast` (main
+  rankings and Most watched) and `player_channel` (a player's personal channel
+  of vlogs, behind-the-scenes and highlights; ranked separately at
+  `/player-podcasts/player-channels/` with the same numbers and rules).
 - 30-day views (the ranking): current views of full episodes posted in the last 30 days.
 - Typical episode: median views of full episodes from the last 90 days.
 - Breakout: an episode's views divided by its show's typical episode; 5x or more is flagged.

@@ -10,6 +10,11 @@ import re
 from . import config
 from .util import load_json
 
+# "podcast": a recurring show with episodes or guests (main rankings).
+# "player_channel": a player's personal channel of vlogs, behind-the-scenes
+# and highlights (its own page, /player-podcasts/player-channels/).
+SHOW_TYPES = ("podcast", "player_channel")
+
 
 def load_roster(path=None):
     data = load_json(path or config.CHANNELS_FILE)
@@ -20,6 +25,8 @@ def load_roster(path=None):
             raise ValueError("duplicate slug: " + s["slug"])
         if s["slug"] in config.RESERVED_SLUGS:
             raise ValueError("reserved slug: " + s["slug"])
+        if s.get("type") not in SHOW_TYPES:
+            raise ValueError("%s: type must be one of %s" % (s["slug"], ", ".join(SHOW_TYPES)))
         seen.add(s["slug"])
     return shows
 
