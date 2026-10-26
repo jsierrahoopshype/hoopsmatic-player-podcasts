@@ -1,0 +1,5 @@
+# yt-dlp is left unpinned on purpose: YouTube changes often and only the
+# latest release keeps up. Flat listings only; nothing is ever downloaded.
+yt-dlp
+defusedxml
+pytest

@@ -1,0 +1,107 @@
+name: update
+
+# Daily at 06:15 UTC: read every show's public YouTube feed (no key), save the
+# day's snapshot, rebuild the site and deploy it to GitHub Pages
+# (hoopsmatic.com/player-podcasts through the HoopsMatic Worker).
+# Mondays, and whenever run by hand with "listing" ticked, it first runs the
+# full yt-dlp channel listing (every upload's length, views and date, plus
+# subscriber counts). If YouTube blocks that from GitHub's servers the step
+# warns and the run carries on with the last good data.
+# A push to main rebuilds and redeploys from the committed data only.
+
+on:
+  schedule:
+    - cron: "15 6 * * *"
+  workflow_dispatch:
+    inputs:
+      listing:
+        description: "Also run the full yt-dlp listing (the weekly job / backfill)"
+        type: boolean
+        default: false
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+# One run at a time, and never cancel one mid-commit.
+concurrency:
+  group: player-podcasts
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Weekly yt-dlp listing (Mondays, or when asked)
+        if: github.event_name != 'push'
+        continue-on-error: true
+        run: |
+          if [ "${{ inputs.listing }}" = "true" ] || { [ "${{ github.event_name }}" = "schedule" ] && [ "$(date -u +%u)" = "1" ]; }; then
+            python -m pp weekly || echo "::warning::yt-dlp listing failed; keeping the last good data"
+            python - <<'PY'
+          import json
+          s = json.load(open("data/status.json")).get("ytdlp", {})
+          if s.get("blocked"):
+              print("::warning::YouTube blocked the yt-dlp listing from this server; last good listing: %s" % s.get("last_ok"))
+          else:
+              print("yt-dlp listing: %s sources read, %s with errors" % (s.get("sources_ok"), s.get("sources_with_errors")))
+          PY
+          else
+            echo "Not Monday: no full listing today."
+          fi
+
+      - name: Daily feeds
+        if: github.event_name != 'push'
+        run: python -m pp daily
+
+      - name: Tests
+        run: python -m pytest -q
+
+      - name: Build site
+        run: python -m pp build
+
+      - name: Commit data
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data
+          if git diff --staged --quiet; then
+            echo "No data changes."
+            exit 0
+          fi
+          git commit -q -m "data: $(date -u '+%Y-%m-%d %H:%M') UTC"
+          for i in 1 2 3; do
+            git pull -q --rebase origin main && git push -q origin HEAD:main && exit 0
+            sleep $((i * 5))
+          done
+          echo "::error::could not push data"
+          exit 1
+
+      - name: Upload site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: update
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
