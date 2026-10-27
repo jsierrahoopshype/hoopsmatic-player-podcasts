@@ -79,3 +79,14 @@ def test_complete_listing_marks_missing_videos_gone(tmp_path, monkeypatch):
     cat = json.loads((tmp_path / "videos" / "UCabc.json").read_text())
     assert cat["videos"]["v0000000003"]["gone"] == "2026-10-27"
     assert not any(v.get("gone") for k, v in cat["videos"].items() if k != "v0000000003")
+
+
+def test_weekly_listing_catches_up_after_a_skipped_monday(tmp_path, monkeypatch):
+    from datetime import timedelta
+    monkeypatch.setattr(config, "STATUS_FILE", tmp_path / "status.json")
+    assert collect.weekly_due(NOW)                                          # never ran: due
+    (tmp_path / "status.json").write_text(json.dumps({"ytdlp": {"last_attempt": "2026-10-26"}}))
+    assert not collect.weekly_due(NOW)                                      # ran today (Monday)
+    assert not collect.weekly_due(NOW + timedelta(days=3))                  # Thursday: not due
+    assert collect.weekly_due(NOW + timedelta(days=7))                      # next Monday
+    assert collect.weekly_due(NOW + timedelta(days=8))                      # Monday skipped: Tuesday catches up

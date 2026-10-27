@@ -211,6 +211,16 @@ def refresh_careermap_names():
     return None
 
 
+def weekly_due(now=None):
+    from datetime import date
+    now = now or utcnow()
+    last = (_status().get("ytdlp") or {}).get("last_attempt")
+    if not last:
+        return True
+    age = (now.date() - date.fromisoformat(last)).days
+    return age >= 7 or (now.weekday() == 0 and age >= 1)
+
+
 def weekly(now=None, only=None, workers=2):
     """Full listing of every source. `only` limits it to some source ids."""
     now = now or utcnow()
