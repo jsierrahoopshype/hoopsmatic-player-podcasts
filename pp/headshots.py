@@ -39,6 +39,14 @@ def refresh_index():
             idx.setdefault(_norm(p["full_name"]), stem)
         if len(idx) > 500:
             save_json(config.HEADSHOTS_INDEX_FILE, {"source": INDEX_URL, "files": idx}, line_per_key="files")
+            # Active players and their current team, for "talked about": a
+            # lone surname counts only when a team named next to it settles who.
+            active = sorted([p["full_name"], p.get("last_name") or p["full_name"].split()[-1], p.get("team_abbrev") or ""]
+                            for p in doc.get("players") or [] if p.get("active"))
+            if len(active) > 300:
+                save_json(config.NBA_ACTIVE_FILE, {"source": INDEX_URL, "_about": "[full name, last name, team] of "
+                                                   "active NBA players. Generated weekly.", "players": active},
+                          line_per_key="players")
             return len(idx)
     except Exception as e:
         print("headshots index: kept the last copy (%s)" % e, file=sys.stderr)

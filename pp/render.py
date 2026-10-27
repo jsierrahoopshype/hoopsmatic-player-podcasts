@@ -105,6 +105,7 @@ def tabs(active):
              ("top-videos", "Top videos", B + "/top-videos/"),
              ("most-watched", "Most watched", B + "/most-watched/"),
              ("players", "Players", B + "/players/"),
+             ("teams", "Teams", B + "/teams/"),
              ("dormant", "Occasional & dormant", B + "/dormant/")]
     return '<nav class="tabs">' + "".join(
         '<a href="%s"%s>%s</a>' % (href, ' class="active"' if k == active else "", label)
@@ -410,6 +411,7 @@ def index_page(ctx):
         body.append('<section class="block"><div class="block-head"><h2>Watch now</h2></div>%s</section>\n'
                     % featured(h["watch"], ctx, "The most viewed podcast video posted in the last 48 hours."))
     body.append(shelf("Most watched this week", h["week"], ctx, "Videos posted in the last 7 days, by views."))
+    body.append(talked_home(ctx))
     if h["trending"]:
         lbl = "24 hours" if h["trend_label"] == "gain24" else "7 days"
         body.append(shelf("Trending", h["trending"], ctx, "Views gained in the last %s, from our daily view counts." % lbl,
@@ -938,6 +940,116 @@ def player_videos(p, ctx):
     return out
 
 
+# ── talked about ──
+
+def team_url(slug):
+    return B + "/teams/" + slug + "/"
+
+
+def player_link_html(slug, ctx, size=24):
+    """A player's name (with headshot) linked to their page here, else
+    NBA Career Map."""
+    from .cards import avatar
+    from .people import link_for
+    name = ctx["player_names"].get(slug, slug)
+    head = slug if slug in ctx.get("headshots", ()) else None
+    return '<a class="host" href="%s">%s%s</a>' % (e(link_for(slug)), avatar(name, head, size), e(name))
+
+
+def weeks_svg(rows, label):
+    W, H, pl, pb, pt = 720, 150, 30, 22, 10
+    mx = max(c for _, c in rows) or 1
+    bw = (W - pl - 4) / len(rows)
+    out = ['<svg class="chart" viewBox="0 0 %d %d" role="img" aria-label="%s">' % (W, H, e(label))]
+    out.append('<line class="grid" x1="%d" x2="%d" y1="%d" y2="%d"/>' % (pl, W, H - pb, H - pb))
+    out.append('<text class="ax" x="%d" y="%d">%d</text>' % (pl - 6, pt + 4, mx))
+    for i, (wk, c) in enumerate(rows):
+        h = (H - pb - pt) * c / mx
+        x = pl + 2 + i * bw
+        out.append('<rect class="bar" x="%.1f" y="%.1f" width="%.1f" height="%.1f"><title>Week of %s: %d</title></rect>'
+                   % (x, H - pb - h, max(bw - 3, 1), h, fmt_date(wk + "T00:00:00Z"), c))
+    out.append('<text class="ax" x="%d" y="%d" text-anchor="start">%s</text>' % (pl + 2, H - 6, fmt_date(rows[0][0] + "T00:00:00Z")))
+    out.append('<text class="ax" x="%d" y="%d" text-anchor="end">week of %s</text>' % (W - 2, H - 6, fmt_date(rows[-1][0] + "T00:00:00Z")))
+    out.append("</svg>")
+    return "".join(out)
+
+
+def talk_section(ctx, target, name, pronoun="them"):
+    """'Talked about' for one player or team: counts, most recent, most
+    viewed, the shows that talk about them most, and mentions per week."""
+    from . import talk
+    from .cards import talk_card
+    groups = ctx["talk"].get(target) or []
+    if len(groups) < 3:
+        return ""
+    now = ctx["now"]
+    c7, v7 = talk.window(groups, now, 7)
+    c30, v30 = talk.window(groups, now, 30)
+    vids = sum(len(g.items) for g in groups)
+    recent = groups[:8]
+    viewed = sorted(groups, key=lambda g: -g.views)[:8]
+    shows = talk.top_shows(groups)
+    out = ['<section class="block talk" id="talked-about"><div class="block-head"><h2>Talked about</h2></div>'
+           '<p class="talk-sum">%d discussions (%d videos) talk about %s: %d in the last 7 days, %d in the last 30.</p>'
+           '<p class="hint-below">Videos whose title or chapters name %s, apart from %s own appearances. Clips of the '
+           'same episode count once and are listed under the episode.</p>'
+           % (len(groups), vids, e(name), c7, c30, e(name), "their" if target[0] == "team" else "his")]
+    out.append('<h3 class="sub-h">Most recent</h3><div class="grid">%s</div>' % "".join(talk_card(g, ctx) for g in recent))
+    out.append('<h3 class="sub-h">Most viewed</h3><div class="grid">%s</div>' % "".join(talk_card(g, ctx) for g in viewed))
+    out.append('<h3 class="sub-h">Shows that talk about %s most</h3><ol class="talk-shows">%s</ol>'
+               % (pronoun, "".join('<li><a href="%s">%s</a> <span class="g-n">%d discussion%s</span></li>'
+                                   % (show_url(sl), e(ctx["shows"][sl]["name"]), n, "" if n == 1 else "s") for sl, n in shows)))
+    weeks = talk.per_week(groups, now)
+    if weeks:
+        out.append('<h3 class="sub-h">Discussions per week</h3><p class="hint-below">By the week the videos were posted, '
+                   'last 12 weeks.</p>%s' % weeks_svg(weeks, "Discussions per week"))
+    out.append("</section>\n")
+    return "".join(out)
+
+
+def talked_home(ctx):
+    """Homepage: most talked about players and teams, this week and in the
+    last 30 days (a toggle between two lists already in the page)."""
+    from . import talk
+    now = ctx["now"]
+
+    def lst(kind, days):
+        rows = talk.leaders(ctx["talk"], kind, now, days)
+        if len(rows) < 3:
+            return ""
+        items = []
+        for i, (slug, c, v) in enumerate(rows, 1):
+            if kind == "player":
+                who = player_link_html(slug, ctx, 26)
+            else:
+                t = ctx["team_by_slug"][slug]
+                who = '<a class="host" href="%s">%s</a>' % (team_url(slug), e(t["name"]))
+            items.append('<li><span class="tl-r">%d</span>%s<span class="tl-n">%d discussion%s'
+                         '<span class="bn">based on %d video%s</span></span></li>'
+                         % (i, who, c, "" if c == 1 else "s", v, "" if v == 1 else "s"))
+        return '<ol class="talk-list">%s</ol>' % "".join(items)
+
+    cols = []
+    for days in (7, 30):
+        p, t = lst("player", days), lst("team", days)
+        if not (p or t):
+            continue
+        cols.append('<div class="talk-pane" data-days="%d"%s><div class="talk-cols">'
+                    '<div><h3 class="sub-h">Players</h3>%s</div><div><h3 class="sub-h">Teams</h3>%s</div></div></div>'
+                    % (days, "" if days == 7 else " hidden", p, t))
+    if not cols:
+        return ""
+    return ('<section class="block" id="talked-about"><div class="block-head"><h2>Most talked about this week</h2></div>'
+            '<div class="toggle talk-toggle" role="tablist"><button type="button" data-days="7" class="active">7 days</button>'
+            '<button type="button" data-days="30">30 days</button></div>%s'
+            '<p class="hint-below">Distinct episodes (clips of one episode count once) whose title or chapters name the '
+            'player or team, posted in the last 7 or 30 days, apart from a player\'s own appearances. '
+            '<a href="%s/teams/">All teams</a> · <a href="%s/methodology/#talked-about">How it works</a></p></section>\n'
+            % ("".join(cols), B, B))
+
+
+# ── player pages ──
+
 def player_page(ctx, p):
     from .cards import avatar, video_card
     from .people import CAREER_MAP
@@ -954,38 +1066,54 @@ def player_page(ctx, p):
     if p["guest"]:
         roles.append("Guest %d time%s on %s" % (p["groups"], "" if p["groups"] == 1 else "s", ", ".join(
             '<a href="%s">%s</a>' % (show_url(x), e(ctx["shows"][x]["name"])) for x in gshows)))
+    team = ctx["player_team"].get(p["slug"])
+    if team:
+        roles.append('Plays for the <a href="%s">%s</a>' % (team_url(team), e(ctx["team_by_slug"][team]["name"])))
     head = p["slug"] if p["slug"] in ctx.get("headshots", ()) else None
     trail = TRAIL_HOME + [("Players", config.SITE_BASE + "/players/"), (p["name"], url)]
-    shows_in = sorted({it["show"] for it, _ in vids}, key=lambda x: ctx["shows"][x]["name"].lower())
-    role_opts = [("", "All roles")] + ([("host", "Host")] if p["hosts"] or p["former"] else []) + ([("guest", "Guest")] if p["guest"] else [])
-    opt = lambda pairs: "".join('<option value="%s">%s</option>' % (e(v), e(l)) for v, l in pairs)
+    talk_only = p.get("talk_only")
+    h1 = ("%s on NBA player podcasts" if talk_only else "%s: podcast appearances") % p["name"]
     body = [crumbs_html(trail),
-            '<div class="phead show-head">%s<div class="sh-b"><h1>%s: podcast appearances</h1>%s'
+            '<div class="phead show-head">%s<div class="sh-b"><h1>%s</h1>%s'
             '<div class="meta"><a href="%s">NBA career on NBA Career Map</a></div></div></div>\n'
-            % (avatar(p["name"], head, 88).replace('class="av', 'class="art av'), e(p["name"]),
-               "".join('<div class="meta">%s</div>' % r for r in roles), e(CAREER_MAP % p["slug"])),
-            '<div class="pfilter" data-target="#pv">'
-            '<label class="sr" for="pf-role">Role</label><select id="pf-role" class="sel" data-attr="role">%s</select>'
-            '<label class="sr" for="pf-show">Show</label><select id="pf-show" class="sel" data-attr="show"><option value="">All shows</option>%s</select>'
-            '<label class="sr" for="pf-fmt">Format</label><select id="pf-fmt" class="sel" data-attr="fmt">%s</select></div>'
-            '<p class="pf-count hint-below" aria-live="polite"></p>'
-            % (opt(role_opts), opt([(x, ctx["shows"][x]["name"]) for x in shows_in]), opt(STREAM_FMTS))]
-    cards = []
-    for it, role in vids:
-        r = "guest" if role == "guest" else "host"
-        c = video_card(it, ctx, label=role.capitalize())
-        cards.append(c.replace('<article class="vc">', '<article class="vc" data-role="%s" data-show="%s" data-fmt="%s">'
-                               % (r, e(it["show"]), e(it["fmt"])), 1))
-    body.append('<div class="grid" id="pv">%s</div>\n' % "".join(cards))
+            % (avatar(p["name"], head, 88).replace('class="av', 'class="art av'), e(h1),
+               "".join('<div class="meta">%s</div>' % r for r in roles), e(CAREER_MAP % p["slug"]))]
+    if vids and not talk_only:
+        shows_in = sorted({it["show"] for it, _ in vids}, key=lambda x: ctx["shows"][x]["name"].lower())
+        role_opts = [("", "All roles")] + ([("host", "Host")] if p["hosts"] or p["former"] else []) + ([("guest", "Guest")] if p["guest"] else [])
+        opt = lambda pairs: "".join('<option value="%s">%s</option>' % (e(v), e(l)) for v, l in pairs)
+        body.append('<div class="pfilter" data-target="#pv">'
+                    '<label class="sr" for="pf-role">Role</label><select id="pf-role" class="sel" data-attr="role">%s</select>'
+                    '<label class="sr" for="pf-show">Show</label><select id="pf-show" class="sel" data-attr="show"><option value="">All shows</option>%s</select>'
+                    '<label class="sr" for="pf-fmt">Format</label><select id="pf-fmt" class="sel" data-attr="fmt">%s</select></div>'
+                    '<p class="pf-count hint-below" aria-live="polite"></p>'
+                    % (opt(role_opts), opt([(x, ctx["shows"][x]["name"]) for x in shows_in]), opt(STREAM_FMTS)))
+        cards = []
+        for it, role in vids:
+            r = "guest" if role == "guest" else "host"
+            c = video_card(it, ctx, label=role.capitalize())
+            cards.append(c.replace('<article class="vc">', '<article class="vc" data-role="%s" data-show="%s" data-fmt="%s">'
+                                   % (r, e(it["show"]), e(it["fmt"])), 1))
+        body.append('<div class="grid" id="pv">%s</div>\n' % "".join(cards))
+        body.append('<p class="hint-below">Guest appearances: the player is stated as a guest in the title or description '
+                    '(or added by hand) and matched to one NBA Career Map player. As a host: the latest 12 and the 6 most '
+                    'viewed videos of each show.</p>')
+    elif vids:
+        body.append('<section class="block"><div class="block-head"><h2>Appearances</h2></div><div class="grid">%s</div></section>\n'
+                    % "".join(video_card(it, ctx, label=role.capitalize()) for it, role in vids))
+    body.append(talk_section(ctx, ("player", p["slug"]), p["name"], "him"))
     body.append('<p class="hint-below">%s</p>' % stamp(ctx))
-    body.append('<p class="hint-below">Guest appearances: the player is stated as a guest in the title or description '
-                '(or added by hand) and matched to one NBA Career Map player. As a host: the latest 12 and the 6 most '
-                'viewed videos of each show.</p>')
-    title = "%s Podcast Appearances: %s, Guest Episodes and Clips | HoopsMatic" % (p["name"], main_name)
-    desc = ("%s on NBA player podcasts: %s. Episodes and clips, playable here."
-            % (p["name"], "; ".join(__import__("re").sub("<[^>]+>", "", r) for r in roles)))
-    extra = ld_script(breadcrumbs_ld(trail), *[video_ld(it, ctx) for it, _ in vids[:12]])
-    return page(title, desc, url, ctx["assets_v"], "players", "".join(body), extra)
+    if talk_only:
+        title = "%s on NBA Player Podcasts: Appearances and What Players Say About Him | HoopsMatic" % p["name"]
+        n = len(ctx["talk"].get(("player", p["slug"])) or [])
+        desc = ("What NBA players say about %s on their podcasts: %d discussions on YouTube, the latest and most "
+                "viewed, playable here, and the shows that talk about him most." % (p["name"], n))
+    else:
+        title = "%s Podcast Appearances: %s, Guest Episodes and Clips | HoopsMatic" % (p["name"], main_name)
+        desc = ("%s on NBA player podcasts: %s. Episodes and clips, playable here."
+                % (p["name"], "; ".join(__import__("re").sub("<[^>]+>", "", r) for r in roles)))
+    lds = [video_ld(it, ctx) for it, _ in vids[:12]] or [video_ld(g.lead, ctx) for g in (ctx["talk"].get(("player", p["slug"])) or [])[:12]]
+    return page(title, desc, url, ctx["assets_v"], "players", "".join(body), ld_script(breadcrumbs_ld(trail), *lds))
 
 
 def players_index_page(ctx):
@@ -993,7 +1121,10 @@ def players_index_page(ctx):
     url = config.SITE_BASE + "/players/"
     ps = list(ctx["players"].values())
     hosts = sorted((p for p in ps if p["hosts"] or p["former"]), key=lambda p: p["name"])
-    guests_ = sorted((p for p in ps if not (p["hosts"] or p["former"])), key=lambda p: (-p["groups"], p["name"]))
+    guests_ = sorted((p for p in ps if not (p["hosts"] or p["former"]) and not p.get("talk_only")),
+                     key=lambda p: (-p["groups"], p["name"]))
+    talked = sorted((p for p in ps if p.get("talk_only")),
+                    key=lambda p: (-len(ctx["talk"].get(("player", p["slug"])) or []), p["name"]))
 
     def row(p):
         head = p["slug"] if p["slug"] in ctx.get("headshots", ()) else None
@@ -1004,23 +1135,79 @@ def players_index_page(ctx):
             bits.append("Former host: " + ", ".join(ctx["shows"][x]["name"] for x in p["former"]))
         if p["groups"]:
             bits.append("%d guest appearance%s" % (p["groups"], "" if p["groups"] == 1 else "s"))
+        n = len(ctx["talk"].get(("player", p["slug"])) or [])
+        if n:
+            bits.append("talked about in %d discussion%s" % (n, "" if n == 1 else "s"))
         return ('<li><a class="pl" href="%s/players/%s/">%s<span class="pl-b"><span class="pl-n">%s</span>'
                 '<span class="pl-r">%s</span></span></a></li>' % (B, e(p["slug"]), avatar(p["name"], head, 40),
                                                                  e(p["name"]), e(" · ".join(bits))))
     trail = TRAIL_HOME + [("Players", url)]
     body = [crumbs_html(trail), '<div class="hdr"><h1>NBA players on podcasts</h1></div>\n'
-            '<p class="subtitle">Every NBA player who hosts a show here, or has been a confirmed guest at least 3 '
-            'times, with their episodes and clips. %s</p>\n' % stamp(ctx)]
-    if hosts:
-        body.append('<section class="block"><div class="block-head"><h2>Hosts</h2></div><ul class="players">%s</ul></section>\n'
-                    % "".join(row(p) for p in hosts))
-    if guests_:
-        body.append('<section class="block"><div class="block-head"><h2>Guests</h2></div><ul class="players">%s</ul></section>\n'
-                    % "".join(row(p) for p in guests_))
-    desc = ("NBA players on podcasts: %d hosts and %d frequent guests, with their episodes and clips from YouTube."
-            % (len(hosts), len(guests_)))
+            '<p class="subtitle">Every NBA player who hosts a show here, has been a confirmed guest at least 3 times, '
+            'or is talked about in at least 10 discussions, with their episodes and clips. %s</p>\n' % stamp(ctx)]
+    for label, rows in (("Hosts", hosts), ("Guests", guests_), ("Talked about", talked)):
+        if rows:
+            body.append('<section class="block"><div class="block-head"><h2>%s</h2></div><ul class="players">%s</ul></section>\n'
+                        % (label, "".join(row(p) for p in rows)))
+    desc = ("NBA players on podcasts: %d hosts, %d frequent guests and %d players the shows talk about most, with "
+            "their episodes and clips from YouTube." % (len(hosts), len(guests_), len(talked)))
     return page("NBA Players on Podcasts: Hosts and Guest Appearances | HoopsMatic", desc, url, ctx["assets_v"],
                 "players", "".join(body), ld_script(breadcrumbs_ld(trail)))
+
+
+# ── team pages ──
+
+TEAM_CM = "https://hoopsmatic.com/nba-career-map/team/%s.html"
+
+
+def team_page(ctx, t):
+    from . import talk
+    url = config.SITE_BASE + "/teams/" + t["slug"] + "/"
+    trail = TRAIL_HOME + [("Teams", config.SITE_BASE + "/teams/"), (t["name"], url)]
+    groups = ctx["talk"].get(("team", t["slug"])) or []
+    names = t["names"] + t["historical"]
+    body = [crumbs_html(trail),
+            '<div class="phead"><h1>%s on NBA player podcasts</h1>'
+            '<div class="meta">Matched by: %s</div>'
+            '<div class="meta"><a href="%s">%s on NBA Career Map</a></div></div>\n'
+            % (e(t["name"]), e(", ".join(names)), e(TEAM_CM % t["slug"]), e(t["name"]))]
+    body.append(talk_section(ctx, ("team", t["slug"]), "the " + t["nickname"]))
+    rows = talk.team_players(ctx["talk"], ctx["active_by_team"], t["slug"], ctx["now"])
+    if rows:
+        body.append('<section class="block"><div class="block-head"><h2>Their players discussed most</h2></div>'
+                    '<ol class="talk-list">%s</ol><p class="hint-below">Current %s players, by discussions in the last '
+                    '90 days.</p></section>\n'
+                    % ("".join('<li><span class="tl-r">%d</span>%s<span class="tl-n">%d discussion%s'
+                               '<span class="bn">based on %d video%s</span></span></li>'
+                               % (i, player_link_html(sl, ctx, 26), c, "" if c == 1 else "s", v, "" if v == 1 else "s")
+                               for i, (sl, c, v) in enumerate(rows, 1)), e(t["name"])))
+    body.append('<p class="hint-below">%s</p>' % stamp(ctx))
+    title = "%s on NBA Player Podcasts: Episodes and Clips About the %s | HoopsMatic" % (t["name"], t["nickname"])
+    desc = ("What NBA players say about the %s on their podcasts: %d discussions on YouTube, the latest and most "
+            "viewed, playable here, and the shows that talk about them most." % (t["name"], len(groups)))
+    lds = [video_ld(g.lead, ctx) for g in groups[:12]]
+    return page(title, desc, url, ctx["assets_v"], "teams", "".join(body), ld_script(breadcrumbs_ld(trail), *lds))
+
+
+def teams_index_page(ctx):
+    from . import talk
+    url = config.SITE_BASE + "/teams/"
+    trail = TRAIL_HOME + [("Teams", url)]
+    rows = []
+    for t in sorted(ctx["teams"], key=lambda t: t["name"]):
+        groups = ctx["talk"].get(("team", t["slug"])) or []
+        c7, _ = talk.window(groups, ctx["now"], 7)
+        c30, _ = talk.window(groups, ctx["now"], 30)
+        rows.append('<li><a class="pl" href="%s"><span class="pl-b"><span class="pl-n">%s</span>'
+                    '<span class="pl-r">%d this week · %d in 30 days · %d in all</span></span></a></li>'
+                    % (team_url(t["slug"]), e(t["name"]), c7, c30, len(groups)))
+    body = [crumbs_html(trail), '<div class="hdr"><h1>NBA teams on player podcasts</h1></div>\n'
+            '<p class="subtitle">The 30 NBA teams and the podcast episodes and clips that talk about them, counted '
+            'by distinct discussions (clips of one episode count once). %s</p>\n' % stamp(ctx),
+            '<section class="block"><ul class="players">%s</ul></section>\n' % "".join(rows)]
+    desc = "All 30 NBA teams on NBA player podcasts: the episodes and clips that talk about each team, playable here."
+    return page("NBA Teams on Player Podcasts: Episodes and Clips About Every Team | HoopsMatic", desc, url,
+                ctx["assets_v"], "teams", "".join(body), ld_script(breadcrumbs_ld(trail)))
 
 
 def methodology_page(ctx):
@@ -1076,6 +1263,27 @@ def methodology_page(ctx):
         "is not shown; appearances can be added or removed by hand. Clips of the same episode count once.",
         "A player gets a page with 3 or more confirmed appearances, or as the host of a show with 3 or more "
         "videos. Player names link to that page, or to the player's NBA Career Map page."))
+    body.append('<section class="section method" id="talked-about"><h2>Talked about: mentions vs appearances</h2>'
+                '<p>An appearance is someone IN a video: a show\'s host, or a guest stated in the title or description. '
+                'A mention is someone the video is ABOUT: a player or team named in its title or in one of its chapter '
+                'lines (description lines that start with a timestamp, like "12:30 Wemby\'s debut"). The rest of a '
+                'description is never read. A mention found only in a chapter opens the video at that moment, on '
+                'YouTube and in the player here. Full descriptions come only from YouTube\'s public feeds (each '
+                'channel\'s latest 15 videos), so chapters are read from the day a video first shows up there.</p>'
+                '<p>Players are matched by full name against NBA Career Map\'s players, or by a nickname on our '
+                'list (<a href="https://github.com/jsierrahoopshype/hoopsmatic-player-podcasts/blob/main/data/nicknames.json">'
+                'data/nicknames.json</a>: Wemby, Giannis, SGA, Bron, KD, Steph, AD, Jokic and more; it can be edited). '
+                'A name that belongs to more than one Career Map player, or a surname on its own, is matched only when a '
+                'team named in the same title or chapter line settles who it is (exactly one current player with that '
+                'name on that team); otherwise it goes to a review list and is not shown. Teams are matched by nickname '
+                '(Lakers, Celtics, Sixers, Cavs, Mavs, Wolves, Blazers, Pels...) or a former name of the franchise '
+                '(SuperSonics, Bobcats, New Jersey Nets), never by a city alone.</p>'
+                '<p>A player\'s own appearance in a video does not also count as a mention of him there, and a show\'s '
+                'hosts are never "talked about" on their own show. Clips of the same episode count once (as for guests: '
+                'a link to the episode in the description, the same episode number, or a clip within 10 days after a '
+                'full episode of the show that mentions the same player or team) and are listed under the episode. '
+                'Counts are distinct discussions, with how many videos they cover. Players get a page with 10 or more '
+                'discussions; all 30 teams have one. Mentions can be added or removed by hand.</p></section>\n')
     body.append(sec("Playback and privacy",
         "Thumbnails, headshots and artwork are served from hoopsmatic.com. Nothing loads from YouTube until you "
         "press play; then the video plays in YouTube's privacy-enhanced player (youtube-nocookie.com) and "

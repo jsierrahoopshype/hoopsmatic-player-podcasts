@@ -29,7 +29,8 @@ def test_build_writes_player_channels_page_and_sitemap(tmp_path, monkeypatch):
         vids = {"%s%07d" % (sid[2:6], i): ep(d, base + i, "Episode %d" % i) for i, d in enumerate(days)}
         (tmp_path / "videos" / (sid + ".json")).write_text(json.dumps({"source_id": sid, "videos": vids}))
     for name in ("CHANNELS_FILE", "SUBSCRIBERS_FILE", "RANKS_FILE", "STATUS_FILE", "EXCLUDED_FILE", "SITEMAP_STATE_FILE",
-                 "APPEARANCES_FILE", "APPEARANCES_REVIEW_FILE", "APPEARANCES_MANUAL_FILE", "EMBED_FILE"):
+                 "APPEARANCES_FILE", "APPEARANCES_REVIEW_FILE", "APPEARANCES_MANUAL_FILE", "EMBED_FILE",
+                 "MENTIONS_FILE", "MENTIONS_MANUAL_FILE"):
         monkeypatch.setattr(config, name, tmp_path / getattr(config, name).name)
     monkeypatch.setattr(config, "VIDEOS_DIR", tmp_path / "videos")
     monkeypatch.setattr(config, "THUMBS_DIR", tmp_path / "thumbs")
@@ -87,3 +88,10 @@ def test_build_writes_player_channels_page_and_sitemap(tmp_path, monkeypatch):
         titles.add(t)
         assert "Anything wrong? Email us at" in html and "For business inquiries, contact us at" in html
         assert "github.io" not in html
+    # teams: a page for each of the 30, an index, all in the sitemap; titles as specified
+    assert len(list((out / "teams").glob("*/index.html"))) == 30
+    lakers = (out / "teams" / "los-angeles-lakers" / "index.html").read_text()
+    assert "<title>Los Angeles Lakers on NBA Player Podcasts: Episodes and Clips About the Lakers | HoopsMatic</title>" in lakers
+    assert 'href="https://hoopsmatic.com/nba-career-map/team/los-angeles-lakers.html"' in lakers
+    assert "<loc>https://hoopsmatic.com/player-podcasts/teams/</loc>" in xml
+    assert "<loc>https://hoopsmatic.com/player-podcasts/teams/miami-heat/</loc>" in xml

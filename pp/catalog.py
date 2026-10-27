@@ -6,7 +6,8 @@ Every video we have ever seen for a source, with the best data we have:
   or "feed" when only the feed has shown it), views + views_date + views_exact,
   likes + likes_views (the view count at the moment those likes were read),
   first_seen (the day we first saw it), desc (the start of its description,
-  when a feed gave one), gone (the day it disappeared from a complete listing:
+  when a feed gave one), chapters ([[seconds, text]]: the timestamped lines
+  of the whole description, from feeds only), gone (the day it disappeared from a complete listing:
   deleted, private or unavailable; cleared if it comes back) and embed (False
   when YouTube does not allow it to play on other sites).
 
@@ -74,6 +75,8 @@ def merge_feed(cat, videos, day):
         v.setdefault("duration", None)
         if f.get("desc"):
             v["desc"] = f["desc"]
+        if f.get("chapters"):
+            v["chapters"] = f["chapters"]
         if _better_views(v, f.get("views"), day, True):
             v["views"], v["views_date"], v["views_exact"] = f["views"], day, True
         if f.get("likes") is not None and f.get("views") is not None:
