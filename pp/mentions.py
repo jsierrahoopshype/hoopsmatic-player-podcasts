@@ -250,7 +250,7 @@ def build(shows, cats, items, appearances, matcher=None, manual=None):
                     if slug in own or slug in guests_in.get(v["id"], ()):
                         continue
                     found.setdefault(("player", slug), {"kind": "player", "slug": slug, "src": src, "t": sec, "how": how})
-                for slug in teams:
+                for slug in sorted(teams):
                     found.setdefault(("team", slug), {"kind": "team", "slug": slug, "src": src, "t": sec, "how": "nickname"})
                 for name, reason in unresolved:
                     if norm(name) in own_names:

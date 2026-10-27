@@ -336,7 +336,8 @@ REVIEW_MENTIONS = 1000   # plain title mentions kept in appearances_review.json
 
 def write_mentions(ctx):
     """data/mentions.json: the players and teams each video talks about."""
-    items = {vid: [[m["kind"], m["slug"], m["src"], m["t"], m["how"]] for m in ms]
+    # Sorted, so the file only changes when a mention does (set order is not stable between runs).
+    items = {vid: sorted([m["kind"], m["slug"], m["src"], m["t"], m["how"]] for m in ms)
              for vid, ms in sorted(ctx["mentions"].items())}
     save_json(config.MENTIONS_FILE, {
         "_about": ("Talked about: per video, [kind (player or team), Career Map or team slug, source (title, "
