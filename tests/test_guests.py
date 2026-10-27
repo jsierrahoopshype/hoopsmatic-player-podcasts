@@ -110,3 +110,10 @@ def test_someone_in_ten_episodes_is_a_regular_not_a_guest():
 def test_joins_takes_only_the_names_right_before_it():
     (conf, _), _ = run(["EP. 2 - Danny Meets the Raps & Kevin Durant, Michael Jordan Joins the Pod"])
     assert [it["player"] for it in conf.values()] == ["michael-jordan"]
+
+
+def test_former_hosts_are_not_review_mentions_on_their_own_show():
+    s = dict(show(), former_hosts=[{"name": "Kevin Durant", "url": None, "note": "season one"}])
+    c = cat(vid(1, 100, title="What Makes a Great Player? | Kevin Durant & Jeff Teague | Full Episode"))
+    conf, review = guests.build([s], {"UCx": c}, index=INDEX, manual={})
+    assert conf == {} and not any(it["player"] == "kevin-durant" for it in review.values())

@@ -1,5 +1,5 @@
 {
-  "_about": "Roster for hoopsmatic.com/player-podcasts. One record per show. channel_id is the YouTube channel; playlist_id (optional) collects a show from one playlist on a shared channel; title_filter (optional, case-insensitive regex) keeps only the videos whose title matches include and not exclude, so one channel can feed several shows. shared_channel hides channel subscriber numbers, which belong to the whole channel. hosts is a list of {\"name\", \"url\"}: url is the host's HoopsMatic player page (NBA Career Map), null when there is none. former_hosts (optional, same shape) are past hosts: never counted as guests of their own show. exclude_reason (optional) leaves a show out of every list, with that reason in data/excluded.json. uncertain (optional, true) keeps a show out of the rankings and off the site until cleared. type is \"podcast\" (a recurring show with episodes or guests: main rankings) or \"player_channel\" (a player's personal channel of vlogs, behind-the-scenes and highlights: ranked separately on /player-podcasts/player-channels/).",
+  "_about": "Roster for hoopsmatic.com/player-podcasts. One record per show. channel_id is the YouTube channel; playlist_id (optional) collects a show from one playlist on a shared channel; title_filter (optional, case-insensitive regex) keeps only the videos whose title matches include and not exclude, so one channel can feed several shows. shared_channel hides channel subscriber numbers, which belong to the whole channel. hosts is a list of {\"name\", \"url\"}: url is the host's HoopsMatic player page (NBA Career Map), null when there is none. former_hosts (optional, same shape, with an optional note such as the season) are past hosts: never counted as guests of their own show. exclude_reason (optional) leaves a show out of every list, with that reason in data/excluded.json. uncertain (optional, true) keeps a show out of the rankings and off the site until cleared. type is \"podcast\" (a recurring show with episodes or guests: main rankings) or \"player_channel\" (a player's personal channel of vlogs, behind-the-scenes and highlights: ranked separately on /player-podcasts/player-channels/).",
   "not_ranked": [
     {
       "name": "The Jon Krawczynski Show",
@@ -522,6 +522,13 @@
         {
           "name": "Steve Nash",
           "url": "https://hoopsmatic.com/nba-career-map/player/steve-nash.html"
+        }
+      ],
+      "former_hosts": [
+        {
+          "name": "JJ Redick",
+          "url": "https://hoopsmatic.com/nba-career-map/player/jj-redick.html",
+          "note": "season one, with LeBron James"
         }
       ],
       "channel_id": "UC6L_LBqoKZXFa4WxHox5iCw",
