@@ -103,7 +103,7 @@ def head(title, desc, url, assets_v, extra=""):
 def tabs(active):
     items = [("rankings", "Rankings", B + "/"), ("player-channels", "Player channels", B + "/player-channels/"),
              ("most-watched", "Most watched", B + "/most-watched/"),
-             ("dormant", "Dormant", B + "/dormant/")]
+             ("dormant", "Occasional & dormant", B + "/dormant/")]
     return '<nav class="tabs">' + "".join(
         '<a href="%s"%s>%s</a>' % (href, ' class="active"' if k == active else "", label)
         for k, label, href in items) + "</nav>\n"
@@ -184,9 +184,20 @@ def subs_change_html(s, shared):
             % (cls, signed(s["subs_change"]), pct(s["subs_change_pct"])))
 
 
+def _hosts(show):
+    """Hosts as (name, url or None). Roster records are {"name", "url"};
+    a bare string is a host with no player page."""
+    return [(h, None) if isinstance(h, str) else (h["name"], h.get("url")) for h in show.get("hosts") or []]
+
+
 def hosts_line(show):
-    h = show.get("hosts") or []
-    return ", ".join(h)
+    """Plain text, for meta descriptions."""
+    return ", ".join(n for n, _ in _hosts(show))
+
+
+def hosts_html(show):
+    """Each host linked to their HoopsMatic player page when there is one."""
+    return ", ".join('<a class="host" href="%s">%s</a>' % (e(u), e(n)) if u else e(n) for n, u in _hosts(show))
 
 
 # ── pages ──
@@ -203,7 +214,7 @@ def leaderboard(ctx, ranked=None):
             ('chg', change_sort(ch), '<td>%s</td>' % change_html(ch)),
             ('name', show["name"].lower(),
              '<td class="name"><a class="q" href="%s">%s</a><span class="ev">%s</span></td>'
-             % (show_url(show["slug"]), e(show["name"]), e(hosts_line(show)))),
+             % (show_url(show["slug"]), e(show["name"]), hosts_html(show))),
             ('mom', s["momentum"], '<td class="pct">%s</td>' % compact(s["momentum"])),
             ('typ', s["typical"] or 0, '<td>%s</td>' % compact(s["typical"])),
             ('subs', -1 if shared else (s["subs"] or 0), '<td>%s</td>' % subs_txt),
@@ -224,7 +235,7 @@ def leaderboard(ctx, ranked=None):
             '<span><span class="lbl">Likes/1K</span>%s</span>'
             '<span><span class="lbl">Eps/mo</span>%s</span></div></div>'
             % (attrs, compact(s["momentum"]), s["rank"], change_html(ch), show_url(show["slug"]), e(show["name"]),
-               e(hosts_line(show)), compact(s["typical"]), subs_txt, one_dec(s["likes_per_1k"]),
+               hosts_html(show), compact(s["typical"]), subs_txt, one_dec(s["likes_per_1k"]),
                one_dec(s["episodes_per_month"])))
     head_cells = [("rank", "#", "asc"), ("chg", "Change", "desc"), ("name", "Show", "asc"),
                   ("mom", "30-day views", "desc"), ("typ", "Typical episode", "desc"),
@@ -293,9 +304,10 @@ def method_html(ctx):
             '1,000 views on recent full episodes. Subscribers come from YouTube\'s public (rounded) counts; shows '
             'that share a channel with another show say "shared". %s</p>'
             '<p>A show is ranked with at least 4 full episodes in the last 90 days, or 1 to 3 in the last 90 days '
-            'and at least 4 in the last 180. The rest are listed as <a href="%s/dormant/">dormant</a> until they '
-            'post again. Podcasts and players\' personal channels are ranked separately, with the same numbers '
-            'and rules.</p></section>\n' % (rc, B))
+            'and at least 4 in the last 180. Shows with 1 to 3 in the last 90 days (and fewer than 4 in 180) are '
+            '<a href="%s/dormant/">occasional</a>, and shows with none in the last 90 days are dormant; neither is '
+            'ranked until it posts more. Podcasts and players\' personal channels are ranked separately, with the '
+            'same numbers and rules.</p></section>\n' % (rc, B))
 
 
 def most_watched_page(ctx):
@@ -334,35 +346,41 @@ def most_watched_page(ctx):
 
 def _dormant_table(rows, ctx):
     out = ['<div class="dirtable"><table class="lb static"><thead><tr><th class="left">Show</th>'
-           '<th>Last full episode</th><th class="hide-s">Full episodes</th><th>Channel</th></tr></thead><tbody>']
+           '<th>Last full episode</th><th class="hide-s">Full episodes, 90 days</th><th>Channel</th></tr></thead><tbody>']
     for s in rows:
         show = ctx["shows"][s["slug"]]
         out.append('<tr><td class="name"><a class="q" href="%s">%s</a><span class="ev">%s</span></td>'
                    '<td>%s</td><td class="hide-s">%d</td>'
                    '<td><a href="%s" target="_blank" rel="noopener">YouTube</a></td></tr>'
-                   % (show_url(show["slug"]), e(show["name"]), e(hosts_line(show)),
-                      fmt_date(s["last_episode"]), len(s["episodes"]), e(show["youtube_url"])))
+                   % (show_url(show["slug"]), e(show["name"]), hosts_html(show),
+                      fmt_date(s["last_episode"]), s["episodes_90"], e(show["youtube_url"])))
     out.append("</tbody></table></div>")
     return "".join(out)
 
 
 def dormant_page(ctx):
     url = config.SITE_BASE + "/dormant/"
-    body = ['<div class="hdr"><h1>Dormant NBA player podcasts</h1></div>\n'
-            '<p class="subtitle">Shows without enough recent full episodes to be ranked: fewer than 4 in the last '
-            '90 days and fewer than 4 in the last 180, or none in the last 90. They return to the rankings when '
-            'they post again. %s</p>\n' % stamp(ctx)]
-    pods = [s for s in ctx["dormant"] if s["type"] == "podcast"]
-    chans = [s for s in ctx["dormant"] if s["type"] == "player_channel"]
-    if not ctx["dormant"]:
-        body.append('<div class="empty">No dormant shows right now.</div>')
-    for label, rows in (("Podcasts", pods), ("Player channels", chans)):
+    body = ['<div class="hdr"><h1>Occasional &amp; dormant shows</h1></div>\n'
+            '<p class="subtitle">Shows without enough recent full episodes (20 minutes or longer) to be ranked. '
+            'Occasional: 1 to 3 in the last 90 days and fewer than 4 in the last 180. Dormant: none in the last '
+            '90 days. They return to the rankings when they post more. %s</p>\n' % stamp(ctx)]
+    groups = [("Occasional podcasts", "occasional", "podcast"), ("Occasional player channels", "occasional", "player_channel"),
+              ("Dormant podcasts", "dormant", "podcast"), ("Dormant player channels", "dormant", "player_channel")]
+    shown = 0
+    for label, status, kind in groups:
+        rows = [s for s in ctx[status] if s["type"] == kind]
         if rows:
+            shown += 1
             body.append('<section class="block"><div class="block-head"><h2>%s</h2></div>%s</section>\n'
                         % (label, _dormant_table(rows, ctx)))
-    names = ", ".join(ctx["shows"][s["slug"]]["name"] for s in pods[:4])
-    desc = "NBA player podcasts without enough recent full YouTube episodes to be ranked" + (": " + names + "." if names else ".")
-    return page("Dormant NBA Player Podcasts | HoopsMatic", desc, url, ctx["assets_v"], "dormant", "".join(body))
+    if not shown:
+        body.append('<div class="empty">No occasional or dormant shows right now.</div>')
+    names = ", ".join(ctx["shows"][s["slug"]]["name"] for s in (ctx["occasional"] + ctx["dormant"])[:4]
+                      if s["type"] == "podcast")
+    desc = ("NBA player podcasts that post only now and then, or not at all lately, with each show's last full "
+            "YouTube episode" + (": " + names + "." if names else "."))
+    return page("Occasional & Dormant NBA Player Podcasts | HoopsMatic", desc, url, ctx["assets_v"], "dormant",
+                "".join(body))
 
 
 def player_channels_page(ctx):
@@ -427,12 +445,13 @@ def show_page(ctx, s):
             '<a href="%s/player-channels/">player channels</a>' % B if pc else "podcasts",
             (" " + change_html(ch)) if ch not in (None, 0) else "")
     else:
-        status = "Dormant: last full episode %s" % fmt_date(s["last_episode"])
+        label = "Occasional" if s["status"] == "occasional" else "Dormant"
+        status = '<a href="%s/dormant/">%s</a>: last full episode %s' % (B, label, fmt_date(s["last_episode"]))
     hosts = hosts_line(show)
     body = ['<div class="phead"><h1>%s</h1><div class="meta">%s<span>%s</span>'
             '<span class="sep">·</span><a href="%s" target="_blank" rel="noopener">YouTube</a></div>'
             '<div class="meta">%s</div></div>\n'
-            % (e(show["name"]), ('<span>Hosted by %s</span><span class="sep">·</span>' % e(hosts)) if hosts else "",
+            % (e(show["name"]), ('<span>Hosted by %s</span><span class="sep">·</span>' % hosts_html(show)) if hosts else "",
                stamp(ctx), e(show["youtube_url"]), status)]
     subs_card = ('<div class="num">shared</div><div class="sub">channel carries other shows</div>' if shared else
                  '<div class="num">%s</div><div class="sub">%s this week</div>'
