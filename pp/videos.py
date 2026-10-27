@@ -10,10 +10,14 @@ videos of the same format published in the 90 days before it. At least 8
 videos are needed in that baseline; otherwise there is no score ("not enough
 data").
 
-Views gained come from the daily snapshots (data/snapshots/): today's reading
-minus the reading 1, 7 or 30 days earlier. They exist only when both readings do
-and the earlier one covered most of the videos the later one did; until then
-they are None and the pages leave them out instead of showing zeros.
+Views gained come from the snapshots (data/snapshots/): today's reading
+minus the reading 1, 7 or 30 days earlier, per video. They exist only when
+both readings do and most of the videos the earlier one read are read again;
+until then they are None and the pages leave them out instead of showing
+zeros. A video the earlier reading missed has no gain (unless it was posted
+after it: then all its views are new). Listing view counts are rounded to 3
+significant figures and feed counts are exact, so when either side is rounded
+both are, before subtracting.
 """
 from bisect import bisect_left
 from datetime import timedelta
@@ -24,8 +28,8 @@ from .util import parse_ts
 
 BREAKOUT_MIN_BASELINE = 8
 BREAKOUT_DAYS = 90
-# An earlier reading counts only if it read at least this share of the videos
-# the later one did (the first days of history were feed-only and partial).
+# The later reading must read again at least this share of the videos the
+# earlier one read (a blocked or partial run is not compared).
 MIN_COVERAGE = 0.5
 
 
@@ -60,8 +64,8 @@ def gains(today, days):
     day_then, then = history.views_on(then_day, tolerance=0 if days == 1 else 1)
     if not then:
         return None
-    shared = sum(1 for k in now if k in then)
-    if shared < MIN_COVERAGE * len(now):
+    shared = sum(1 for k in then if k in now)
+    if shared < MIN_COVERAGE * len(then):
         return None
     return {"day_then": day_then, "day_now": day_now, "then": then, "now": now}
 
@@ -109,7 +113,21 @@ def _gain(it, g):
             then = 0
         else:
             return None
+    if _rounded(now) or _rounded(then):
+        now, then = _round3(now), _round3(then)
     return max(0, now - then)
+
+
+def _rounded(n):
+    """Looks like a listing count (3 significant figures or fewer, 1,000+)."""
+    return n >= 1000 and len(str(int(n)).rstrip("0")) <= 3
+
+
+def _round3(n):
+    if n < 1000:
+        return n
+    p = 10 ** (len(str(int(n))) - 3)
+    return int(round(n / p) * p)
 
 
 def within_hours(items, now, hours):
