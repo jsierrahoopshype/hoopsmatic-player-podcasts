@@ -449,7 +449,8 @@ def method_html(ctx):
             'same numbers and rules.</p>'
             '<p>A breakout score is a video\'s views divided by the median views of the same show\'s videos of the '
             'same format published in the 90 days before it, when there are at least 8 of them (otherwise there is '
-            'no score: not enough data); 5x or more is highlighted.</p></section>\n' % (rc, B))
+            'no score: not enough data); 5x or more is highlighted. <a href="%s/methodology/">Full methodology</a>.'
+            '</p></section>\n' % (rc, B, B))
 
 
 def most_watched_page(ctx):
@@ -1019,6 +1020,77 @@ def players_index_page(ctx):
             % (len(hosts), len(guests_)))
     return page("NBA Players on Podcasts: Hosts and Guest Appearances | HoopsMatic", desc, url, ctx["assets_v"],
                 "players", "".join(body), ld_script(breadcrumbs_ld(trail)))
+
+
+def methodology_page(ctx):
+    url = config.SITE_BASE + "/methodology/"
+    trail = TRAIL_HOME + [("Methodology", url)]
+    sec = lambda h, *ps: '<section class="section method"><h2>%s</h2>%s</section>\n' % (h, "".join("<p>%s</p>" % p for p in ps))
+    body = [crumbs_html(trail), '<div class="hdr"><h1>How NBA Player Podcasts works</h1></div>\n'
+            '<p class="subtitle">Where every number on these pages comes from, what it means and what it cannot '
+            'tell you. %s</p>\n' % stamp(ctx)]
+    body.append(sec("What we collect",
+        "Only public YouTube pages and feeds, with no API key and no login: each show's public video feeds and "
+        "a listing of its channel's Videos, Live and Shorts tabs (the list a visitor sees). That gives every "
+        "video's title, length, date and view count. Feeds also give exact view counts, likes and the start of "
+        "the description for a channel's latest 15 videos.",
+        "Twice a day (06:15 and 18:15 UTC) the feeds are read and every video from the last 90 days is listed "
+        "again. Once a week (Mondays, or whenever the last full pass is a week old) every video ever posted is "
+        "listed, with subscriber counts, show artwork, the NBA Career Map player names and the headshots index.",
+        "Show list: <a href=\"%s/\">the rankings</a>, the <a href=\"%s/player-channels/\">player channels</a> and "
+        "the <a href=\"%s/dormant/\">occasional and dormant shows</a>. A show that shares a network's channel "
+        "is read from its official playlist, or by its titles." % (B, B, B)))
+    body.append(sec("Formats",
+        "Full episode: 20 minutes or longer. Clip: 1 to 20 minutes. Short: under a minute, or anything on a "
+        "channel's Shorts tab. A video can be set by hand when the automatic format is wrong."))
+    body.append(sec("Rankings",
+        "The rank uses full episodes only: the current views of every full episode posted in the last 30 days. "
+        "A show is ranked with at least 4 full episodes in the last 90 days, or 1 to 3 in the last 90 days and "
+        "at least 4 in the last 180. Shows with 1 to 3 in 90 days (and fewer than 4 in 180) are occasional; "
+        "shows with none in 90 days are dormant. Podcasts and players' personal channels are ranked separately.",
+        "The table can be sorted by any of its numbers and switched to clips, Shorts or all formats. Each number "
+        "says how many videos it is based on; one that cannot be worked out yet says \"no data\". Rank arrows "
+        "compare with a ranking at least a week old made with the same rules, and appear only once there is one."))
+    body.append(sec("Views gained and trending",
+        "We save every video's view count each day (videos from the last 90 days) and each week (every video). "
+        "Views gained is today's count minus the count 1, 7 or 30 days earlier, per video. A video posted after "
+        "the earlier count gains all its views; a video the earlier count missed gets no number. Gained numbers "
+        "appear only once both counts exist.",
+        "Listing view counts are rounded by YouTube to 3 significant figures (1.24M), while feed counts are exact. "
+        "When either count is rounded, both are rounded the same way before subtracting, so a big video's daily "
+        "gain moves in steps (10,000 views at 1.24M) rather than showing gains that never happened."))
+    body.append(sec("Breakouts",
+        BREAKOUT_NOTE + " A score of 5x or more is highlighted. Homepage breakouts are from the last 30 days and "
+        "score at least 2x."))
+    body.append(sec("Subscribers",
+        "YouTube's public, rounded subscriber count for each show's channel, read weekly. Shows that share a "
+        "channel with other shows say \"shared channel\": the count belongs to all of them. Subscriber growth "
+        "needs two readings at least a week apart."))
+    body.append(sec("Guests and player pages",
+        "A guest is confirmed only when a video's title or description states it (\"ft.\", \"feat.\", "
+        "\"featuring\", \"Guest:\", \"&lt;Name&gt; joins\", or \"with\" / \"w/\" at the start of a title part or "
+        "right after a show word such as \"Podcast\" or \"Episode 12\") and the name matches exactly one NBA "
+        "Career Map player. Hosts and former hosts are never their own show's guests, and someone in 10 or "
+        "more of one show's episodes counts as a regular, not a guest. Everything else goes to a review list that "
+        "is not shown; appearances can be added or removed by hand. Clips of the same episode count once.",
+        "A player gets a page with 3 or more confirmed appearances, or as the host of a show with 3 or more "
+        "videos. Player names link to that page, or to the player's NBA Career Map page."))
+    body.append(sec("Playback and privacy",
+        "Thumbnails, headshots and artwork are served from hoopsmatic.com. Nothing loads from YouTube until you "
+        "press play; then the video plays in YouTube's privacy-enhanced player (youtube-nocookie.com) and "
+        "YouTube's privacy policy applies. See our <a href=\"/privacy\">privacy policy</a>. Videos whose owner "
+        "turned off embedding link to YouTube instead, and videos that were deleted or made private are no "
+        "longer shown."))
+    body.append(sec("Limits",
+        "YouTube sometimes refuses listings from cloud servers; when that happens the last good data stays and "
+        "the next run catches up. Shorts carry no date in YouTube's listing: they are dated from the Shorts feed "
+        "(latest 15), from neighbouring Shorts, or from the day we first saw them. Likes and descriptions come "
+        "only from feeds, so likes per 1,000 views covers recent videos only. Only YouTube is counted: audio "
+        "platforms are not."))
+    desc = ("How NBA Player Podcasts collects YouTube numbers without an API key, ranks shows, works out views "
+            "gained and breakouts, confirms guests and plays videos.")
+    return page("Methodology: How NBA Player Podcast Rankings Work | HoopsMatic", desc, url, ctx["assets_v"], None,
+                "".join(body), ld_script(breadcrumbs_ld(trail)))
 
 
 def not_found_page(ctx):

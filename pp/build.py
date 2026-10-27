@@ -239,6 +239,7 @@ def build(now=None, fetch_thumbs=True, out=None):
              config.SITE_BASE + "/dormant/": ("dormant/index.html", render.dormant_page(ctx))}
     for s in ctx["ranked"] + ctx["ranked_pc"] + ctx["occasional"] + ctx["dormant"]:
         pages[config.SITE_BASE + "/" + s["slug"] + "/"] = (s["slug"] + "/index.html", render.show_page(ctx, s))
+    pages[config.SITE_BASE + "/methodology/"] = ("methodology/index.html", render.methodology_page(ctx))
     if ctx["players"]:
         pages[config.SITE_BASE + "/players/"] = ("players/index.html", render.players_index_page(ctx))
     for p in ctx["players"].values():
