@@ -30,20 +30,27 @@ A push to `main` rebuilds and redeploys from the committed data only.
 ## Files you may want to edit
 
 - `data/channels.json`: the roster. One record per show: `slug`, `name`,
-  `hosts`, `channel_id`, `youtube_url`, optional `playlist_id` (a show that lives
+  `hosts` (a list of `{"name", "url"}`; `url` is the host's HoopsMatic player
+  page on NBA Career Map, the section with the most player pages, or `null`
+  when there is none), `channel_id`, `youtube_url`, optional `playlist_id` (a show that lives
   in one playlist of a network's channel), optional `title_filter`
   (`{"include": regex, "exclude": regex}`, case-insensitive) so one channel can
   feed several shows, `shared_channel` (hides subscriber numbers that belong
-  to the whole channel) and `type` (`podcast` or `player_channel`, required). `not_ranked` lists channels deliberately left out.
-- `data/excluded.json` (generated): shows with no full episode at all, with the reason.
+  to the whole channel), `type` (`podcast` or `player_channel`, required) and
+  optional `exclude_reason` (leaves the show out of every list, with that
+  reason in `data/excluded.json`). `not_ranked` lists channels deliberately left out.
+- `data/excluded.json` (generated): shows with no full episode at all, or left out by `exclude_reason`, with the reason.
 
 ## Rules
 
 - Full episode: 20 minutes or longer. Clip: 1 to 20 minutes. Short: under 1 minute.
   Rankings use full episodes only.
 - Ranked: at least 4 full episodes in the last 90 days, or 1 to 3 in the last
-  90 days with at least 4 in the last 180. Otherwise Dormant. No full episode
-  ever: excluded (listed in `data/excluded.json`).
+  90 days with at least 4 in the last 180.
+- Occasional: 1 to 3 in the last 90 days and fewer than 4 in the last 180.
+  Dormant: none in the last 90 days. Neither is ranked; both are listed with
+  their last full-episode date on `/player-podcasts/dormant/`.
+- No full episode ever: excluded (listed in `data/excluded.json`).
 - Two kinds of show, set by `type` in `data/channels.json`: `podcast` (main
   rankings and Most watched) and `player_channel` (a player's personal channel
   of vlogs, behind-the-scenes and highlights; ranked separately at

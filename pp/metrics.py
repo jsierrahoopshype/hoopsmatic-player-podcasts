@@ -95,11 +95,12 @@ def is_active(videos, now):
 
 
 def ranking_status(videos, now):
-    """"ranked", "dormant" or "excluded" for one show's videos.
+    """"ranked", "occasional", "dormant" or "excluded" for one show's videos.
 
     Ranked: 4+ full episodes in the last 90 days, or 1 to 3 in the last 90
-    days with 4+ in the last 180. Any other show with a full episode on record
-    is dormant; a show with no full episode at all is excluded."""
+    days with 4+ in the last 180. Occasional: 1 to 3 in the last 90 days and
+    fewer than 4 in the last 180 (not ranked). Dormant: none in the last 90
+    days. Excluded: no full episode at all."""
     eps = episodes(videos)
     if not eps:
         return "excluded"
@@ -107,6 +108,8 @@ def ranking_status(videos, now):
     n180 = len(within(eps, now, config.LONG_DAYS))
     if n90 >= config.RANKED_MIN_EPISODES or (n90 >= 1 and n180 >= config.RANKED_MIN_EPISODES):
         return "ranked"
+    if n90 >= 1:
+        return "occasional"
     return "dormant"
 
 
@@ -137,6 +140,9 @@ def show_stats(show, cat, now, subs_history=None, shared=False):
 
     status = ranking_status(vids, now)
     reason = "No full-length episodes (20+ minutes) found." if status == "excluded" else None
+    # A show the roster leaves out on purpose (e.g. a network's own channel).
+    if show.get("exclude_reason"):
+        status, reason = "excluded", show["exclude_reason"]
 
     scored = []
     for v in eps:

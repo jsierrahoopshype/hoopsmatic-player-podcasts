@@ -1,5 +1,5 @@
 {
-  "_about": "Roster for hoopsmatic.com/player-podcasts. One record per show. channel_id is the YouTube channel; playlist_id (optional) collects a show from one playlist on a shared channel; title_filter (optional, case-insensitive regex) keeps only the videos whose title matches include and not exclude, so one channel can feed several shows. shared_channel hides channel subscriber numbers, which belong to the whole channel. type is \"podcast\" (a recurring show with episodes or guests: main rankings) or \"player_channel\" (a player's personal channel of vlogs, behind-the-scenes and highlights: ranked separately on /player-podcasts/player-channels/).",
+  "_about": "Roster for hoopsmatic.com/player-podcasts. One record per show. channel_id is the YouTube channel; playlist_id (optional) collects a show from one playlist on a shared channel; title_filter (optional, case-insensitive regex) keeps only the videos whose title matches include and not exclude, so one channel can feed several shows. shared_channel hides channel subscriber numbers, which belong to the whole channel. hosts is a list of {\"name\", \"url\"}: url is the host's HoopsMatic player page (NBA Career Map), null when there is none. exclude_reason (optional) leaves a show out of every list, with that reason in data/excluded.json. type is \"podcast\" (a recurring show with episodes or guests: main rankings) or \"player_channel\" (a player's personal channel of vlogs, behind-the-scenes and highlights: ranked separately on /player-podcasts/player-channels/).",
   "not_ranked": [
     {
       "name": "The Jon Krawczynski Show",
@@ -47,8 +47,14 @@
       "slug": "straight-to-cam",
       "name": "Straight to Cam",
       "hosts": [
-        "Cameron Brink",
-        "Sydel Curry-Lee"
+        {
+          "name": "Cameron Brink",
+          "url": null
+        },
+        {
+          "name": "Sydel Curry-Lee",
+          "url": null
+        }
       ],
       "channel_id": "UC4uXDQzZG_WNeIyJQEsZcNA",
       "youtube_url": "https://www.youtube.com/channel/UC4uXDQzZG_WNeIyJQEsZcNA",
@@ -59,7 +65,10 @@
       "slug": "catch12",
       "name": "Catch12",
       "hosts": [
-        "Ja Morant"
+        {
+          "name": "Ja Morant",
+          "url": "https://hoopsmatic.com/nba-career-map/player/ja-morant.html"
+        }
       ],
       "channel_id": "UC4p0nlqdUlocfv--48-15Lg",
       "youtube_url": "https://www.youtube.com/channel/UC4p0nlqdUlocfv--48-15Lg",
@@ -70,7 +79,10 @@
       "slug": "rogue-bogues",
       "name": "Rogue Bogues",
       "hosts": [
-        "Andrew Bogut"
+        {
+          "name": "Andrew Bogut",
+          "url": "https://hoopsmatic.com/nba-career-map/player/andrew-bogut.html"
+        }
       ],
       "channel_id": "UCvy0Lw9TcvSAQnTzj62aOUA",
       "youtube_url": "https://www.youtube.com/channel/UCvy0Lw9TcvSAQnTzj62aOUA",
@@ -81,9 +93,18 @@
       "slug": "on-the-haus",
       "name": "On The Haus Podcast",
       "hosts": [
-        "Sam Hauser",
-        "Joey Hauser",
-        "Dave Hauser"
+        {
+          "name": "Sam Hauser",
+          "url": "https://hoopsmatic.com/nba-career-map/player/sam-hauser.html"
+        },
+        {
+          "name": "Joey Hauser",
+          "url": null
+        },
+        {
+          "name": "Dave Hauser",
+          "url": null
+        }
       ],
       "channel_id": "UCqbroTPGO_SaLJB_TI4zztg",
       "youtube_url": "https://www.youtube.com/channel/UCqbroTPGO_SaLJB_TI4zztg",
@@ -94,9 +115,18 @@
       "slug": "straight-game",
       "name": "Straight Game Podcast",
       "hosts": [
-        "Mike Bibby",
-        "Eddie House",
-        "Ty Ellis"
+        {
+          "name": "Mike Bibby",
+          "url": "https://hoopsmatic.com/nba-career-map/player/mike-bibby.html"
+        },
+        {
+          "name": "Eddie House",
+          "url": "https://hoopsmatic.com/nba-career-map/player/eddie-house.html"
+        },
+        {
+          "name": "Ty Ellis",
+          "url": null
+        }
       ],
       "channel_id": "UCuhRRUv5bBdVRU6uExsd24w",
       "youtube_url": "https://www.youtube.com/channel/UCuhRRUv5bBdVRU6uExsd24w",
@@ -107,8 +137,14 @@
       "slug": "all-the-smoke",
       "name": "All the Smoke",
       "hosts": [
-        "Matt Barnes",
-        "Stephen Jackson"
+        {
+          "name": "Matt Barnes",
+          "url": "https://hoopsmatic.com/nba-career-map/player/matt-barnes.html"
+        },
+        {
+          "name": "Stephen Jackson",
+          "url": "https://hoopsmatic.com/nba-career-map/player/stephen-jackson.html"
+        }
       ],
       "channel_id": "UC2ozVs4pg2K3uFLw6-0ayCQ",
       "youtube_url": "https://www.youtube.com/channel/UC2ozVs4pg2K3uFLw6-0ayCQ",
@@ -119,8 +155,14 @@
       "slug": "white-noise",
       "name": "White Noise Podcast",
       "hosts": [
-        "Derrick White",
-        "Alex Welsh"
+        {
+          "name": "Derrick White",
+          "url": "https://hoopsmatic.com/nba-career-map/player/derrick-white.html"
+        },
+        {
+          "name": "Alex Welsh",
+          "url": null
+        }
       ],
       "channel_id": "UC7HDMexhX9XlWqa8Y1n1SJQ",
       "youtube_url": "https://www.youtube.com/channel/UC7HDMexhX9XlWqa8Y1n1SJQ",
@@ -131,8 +173,14 @@
       "slug": "boardroom",
       "name": "Boardroom",
       "hosts": [
-        "Kevin Durant",
-        "Rich Kleiman"
+        {
+          "name": "Kevin Durant",
+          "url": "https://hoopsmatic.com/nba-career-map/player/kevin-durant.html"
+        },
+        {
+          "name": "Rich Kleiman",
+          "url": null
+        }
       ],
       "channel_id": "UCB_4C2Gl7Zfg4uBXk_AcWwA",
       "youtube_url": "https://www.youtube.com/channel/UCB_4C2Gl7Zfg4uBXk_AcWwA",
@@ -142,14 +190,21 @@
       },
       "shared_channel": true,
       "note": "Same channel as The ETCs with Kevin Durant; ETCs episodes are left out of this show.",
-      "type": "podcast"
+      "type": "podcast",
+      "exclude_reason": "network channel, not a player podcast"
     },
     {
       "slug": "the-etcs",
       "name": "The ETCs with Kevin Durant",
       "hosts": [
-        "Kevin Durant",
-        "Eddie Gonzalez"
+        {
+          "name": "Kevin Durant",
+          "url": "https://hoopsmatic.com/nba-career-map/player/kevin-durant.html"
+        },
+        {
+          "name": "Eddie Gonzalez",
+          "url": null
+        }
       ],
       "channel_id": "UCB_4C2Gl7Zfg4uBXk_AcWwA",
       "youtube_url": "https://www.youtube.com/channel/UCB_4C2Gl7Zfg4uBXk_AcWwA",
@@ -165,7 +220,10 @@
       "slug": "podcast-p",
       "name": "Podcast P with Paul George",
       "hosts": [
-        "Paul George"
+        {
+          "name": "Paul George",
+          "url": "https://hoopsmatic.com/nba-career-map/player/paul-george.html"
+        }
       ],
       "channel_id": "UC_MXNS3qkraCAEebdScjAPA",
       "youtube_url": "https://www.youtube.com/channel/UC_MXNS3qkraCAEebdScjAPA",
@@ -176,7 +234,10 @@
       "slug": "kyle-kuzma",
       "name": "Kyle Kuzma",
       "hosts": [
-        "Kyle Kuzma"
+        {
+          "name": "Kyle Kuzma",
+          "url": "https://hoopsmatic.com/nba-career-map/player/kyle-kuzma.html"
+        }
       ],
       "channel_id": "UC_RyUOQqh3W77giXrbGKVGg",
       "youtube_url": "https://www.youtube.com/channel/UC_RyUOQqh3W77giXrbGKVGg",
@@ -187,7 +248,10 @@
       "slug": "andre-drummond",
       "name": "Andre Drummond",
       "hosts": [
-        "Andre Drummond"
+        {
+          "name": "Andre Drummond",
+          "url": "https://hoopsmatic.com/nba-career-map/player/andre-drummond.html"
+        }
       ],
       "channel_id": "UCFpuYxEexZvdaFQQf3Vloqg",
       "youtube_url": "https://www.youtube.com/channel/UCFpuYxEexZvdaFQQf3Vloqg",
@@ -199,7 +263,10 @@
       "slug": "dwyane-wade",
       "name": "Dwyane Wade",
       "hosts": [
-        "Dwyane Wade"
+        {
+          "name": "Dwyane Wade",
+          "url": "https://hoopsmatic.com/nba-career-map/player/dwyane-wade.html"
+        }
       ],
       "channel_id": "UCrlL3lECKmzkcYK8S6cW2Eg",
       "youtube_url": "https://www.youtube.com/channel/UCrlL3lECKmzkcYK8S6cW2Eg",
@@ -210,7 +277,10 @@
       "slug": "thanalysis",
       "name": "Thanalysis Show",
       "hosts": [
-        "Thanasis Antetokounmpo"
+        {
+          "name": "Thanasis Antetokounmpo",
+          "url": "https://hoopsmatic.com/nba-career-map/player/thanasis-antetokounmpo.html"
+        }
       ],
       "channel_id": "UCUqIXubCV7gcDJ-QZrdYRbw",
       "youtube_url": "https://www.youtube.com/channel/UCUqIXubCV7gcDJ-QZrdYRbw",
@@ -221,8 +291,14 @@
       "slug": "out-the-mud",
       "name": "Out The Mud Podcast",
       "hosts": [
-        "Zach Randolph",
-        "Tony Allen"
+        {
+          "name": "Zach Randolph",
+          "url": "https://hoopsmatic.com/nba-career-map/player/zach-randolph.html"
+        },
+        {
+          "name": "Tony Allen",
+          "url": "https://hoopsmatic.com/nba-career-map/player/tony-allen.html"
+        }
       ],
       "channel_id": "UCqwKvfByZqmdC2jaFcUPcvQ",
       "youtube_url": "https://www.youtube.com/channel/UCqwKvfByZqmdC2jaFcUPcvQ",
@@ -233,7 +309,10 @@
       "slug": "inside-the-green-room",
       "name": "Inside the Green Room",
       "hosts": [
-        "Danny Green"
+        {
+          "name": "Danny Green",
+          "url": "https://hoopsmatic.com/nba-career-map/player/danny-green.html"
+        }
       ],
       "channel_id": "UCVKTjJgaohHuJTtNjXCKazw",
       "youtube_url": "https://www.youtube.com/channel/UCVKTjJgaohHuJTtNjXCKazw",
@@ -244,10 +323,22 @@
       "slug": "run-it-back",
       "name": "Run It Back",
       "hosts": [
-        "Michelle Beadle",
-        "Lou Williams",
-        "Chandler Parsons",
-        "DeMarcus Cousins"
+        {
+          "name": "Michelle Beadle",
+          "url": null
+        },
+        {
+          "name": "Lou Williams",
+          "url": "https://hoopsmatic.com/nba-career-map/player/louis-williams.html"
+        },
+        {
+          "name": "Chandler Parsons",
+          "url": "https://hoopsmatic.com/nba-career-map/player/chandler-parsons.html"
+        },
+        {
+          "name": "DeMarcus Cousins",
+          "url": "https://hoopsmatic.com/nba-career-map/player/demarcus-cousins.html"
+        }
       ],
       "channel_id": "UCwZo_mDI4fOIp-g18kinGBw",
       "youtube_url": "https://www.youtube.com/channel/UCwZo_mDI4fOIp-g18kinGBw",
@@ -258,7 +349,10 @@
       "slug": "jared-mccain",
       "name": "Jared McCain",
       "hosts": [
-        "Jared McCain"
+        {
+          "name": "Jared McCain",
+          "url": "https://hoopsmatic.com/nba-career-map/player/jared-mccain.html"
+        }
       ],
       "channel_id": "UC5VYF0LHox2_7Ql2pKihqCQ",
       "youtube_url": "https://www.youtube.com/channel/UC5VYF0LHox2_7Ql2pKihqCQ",
@@ -269,9 +363,18 @@
       "slug": "roommates",
       "name": "Roommates Show",
       "hosts": [
-        "Jalen Brunson",
-        "Josh Hart",
-        "Matt Hillman"
+        {
+          "name": "Jalen Brunson",
+          "url": "https://hoopsmatic.com/nba-career-map/player/jalen-brunson.html"
+        },
+        {
+          "name": "Josh Hart",
+          "url": "https://hoopsmatic.com/nba-career-map/player/josh-hart.html"
+        },
+        {
+          "name": "Matt Hillman",
+          "url": null
+        }
       ],
       "channel_id": "UC1N15bwJCPFHjEsun1epfmw",
       "youtube_url": "https://www.youtube.com/channel/UC1N15bwJCPFHjEsun1epfmw",
@@ -282,7 +385,10 @@
       "slug": "jalen-williams",
       "name": "Jalen Williams",
       "hosts": [
-        "Jalen Williams"
+        {
+          "name": "Jalen Williams",
+          "url": "https://hoopsmatic.com/nba-career-map/player/jalen-williams.html"
+        }
       ],
       "channel_id": "UCalFuU3MOWE39CS6SbfOUgA",
       "youtube_url": "https://www.youtube.com/channel/UCalFuU3MOWE39CS6SbfOUgA",
@@ -293,7 +399,10 @@
       "slug": "nigel-hayes-davis",
       "name": "Nigel Hayes-Davis",
       "hosts": [
-        "Nigel Hayes-Davis"
+        {
+          "name": "Nigel Hayes-Davis",
+          "url": "https://hoopsmatic.com/nba-career-map/player/nigel-hayes.html"
+        }
       ],
       "channel_id": "UCZv6u7QVz-c8UoiJOMb2oyg",
       "youtube_url": "https://www.youtube.com/channel/UCZv6u7QVz-c8UoiJOMb2oyg",
@@ -304,7 +413,10 @@
       "slug": "tyler-herro",
       "name": "Tyler Herro",
       "hosts": [
-        "Tyler Herro"
+        {
+          "name": "Tyler Herro",
+          "url": "https://hoopsmatic.com/nba-career-map/player/tyler-herro.html"
+        }
       ],
       "channel_id": "UCd6K_nXCeWBk8YDwja0PPZg",
       "youtube_url": "https://www.youtube.com/channel/UCd6K_nXCeWBk8YDwja0PPZg",
@@ -315,8 +427,14 @@
       "slug": "kg-certified",
       "name": "KG Certified",
       "hosts": [
-        "Kevin Garnett",
-        "Paul Pierce"
+        {
+          "name": "Kevin Garnett",
+          "url": "https://hoopsmatic.com/nba-career-map/player/kevin-garnett.html"
+        },
+        {
+          "name": "Paul Pierce",
+          "url": "https://hoopsmatic.com/nba-career-map/player/paul-pierce.html"
+        }
       ],
       "channel_id": "UCa9W_cPwwbDlwBwHOd1YWoQ",
       "youtube_url": "https://www.youtube.com/channel/UCa9W_cPwwbDlwBwHOd1YWoQ",
@@ -327,8 +445,14 @@
       "slug": "the-ogs",
       "name": "The OGs",
       "hosts": [
-        "Udonis Haslem",
-        "Mike Miller"
+        {
+          "name": "Udonis Haslem",
+          "url": "https://hoopsmatic.com/nba-career-map/player/udonis-haslem.html"
+        },
+        {
+          "name": "Mike Miller",
+          "url": "https://hoopsmatic.com/nba-career-map/player/mike-miller.html"
+        }
       ],
       "channel_id": "UCrUJ2hRTGLEaozZZ8cp5u0A",
       "youtube_url": "https://www.youtube.com/channel/UCrUJ2hRTGLEaozZZ8cp5u0A",
@@ -339,8 +463,14 @@
       "slug": "club-520",
       "name": "Club 520 Podcast",
       "hosts": [
-        "Jeff Teague",
-        "B Hen"
+        {
+          "name": "Jeff Teague",
+          "url": "https://hoopsmatic.com/nba-career-map/player/jeff-teague.html"
+        },
+        {
+          "name": "B Hen",
+          "url": null
+        }
       ],
       "channel_id": "UCoA3lm9UTWDWK8Z1kcoWQcA",
       "youtube_url": "https://www.youtube.com/channel/UCoA3lm9UTWDWK8Z1kcoWQcA",
@@ -351,7 +481,10 @@
       "slug": "victor-oladipo",
       "name": "Victor Oladipo",
       "hosts": [
-        "Victor Oladipo"
+        {
+          "name": "Victor Oladipo",
+          "url": "https://hoopsmatic.com/nba-career-map/player/victor-oladipo.html"
+        }
       ],
       "channel_id": "UCf5fcEALUCA53oUW3mc8tiQ",
       "youtube_url": "https://www.youtube.com/channel/UCf5fcEALUCA53oUW3mc8tiQ",
@@ -362,9 +495,18 @@
       "slug": "to-the-baha",
       "name": "To The Baha",
       "hosts": [
-        "Theo Pinson",
-        "Raymond Felton",
-        "Charlie Villanueva"
+        {
+          "name": "Theo Pinson",
+          "url": "https://hoopsmatic.com/nba-career-map/player/theo-pinson.html"
+        },
+        {
+          "name": "Raymond Felton",
+          "url": "https://hoopsmatic.com/nba-career-map/player/raymond-felton.html"
+        },
+        {
+          "name": "Charlie Villanueva",
+          "url": "https://hoopsmatic.com/nba-career-map/player/charlie-villanueva.html"
+        }
       ],
       "channel_id": "UCU50K9xm-5_qbzwjMRr9A8w",
       "youtube_url": "https://www.youtube.com/channel/UCU50K9xm-5_qbzwjMRr9A8w",
@@ -375,8 +517,14 @@
       "slug": "mind-the-game",
       "name": "Mind the Game",
       "hosts": [
-        "LeBron James",
-        "Steve Nash"
+        {
+          "name": "LeBron James",
+          "url": "https://hoopsmatic.com/nba-career-map/player/lebron-james.html"
+        },
+        {
+          "name": "Steve Nash",
+          "url": "https://hoopsmatic.com/nba-career-map/player/steve-nash.html"
+        }
       ],
       "channel_id": "UC6L_LBqoKZXFa4WxHox5iCw",
       "youtube_url": "https://www.youtube.com/channel/UC6L_LBqoKZXFa4WxHox5iCw",
@@ -387,8 +535,14 @@
       "slug": "ball-in-the-family",
       "name": "Ball in the Family Podcast",
       "hosts": [
-        "Lonzo Ball",
-        "LiAngelo Ball"
+        {
+          "name": "Lonzo Ball",
+          "url": "https://hoopsmatic.com/nba-career-map/player/lonzo-ball.html"
+        },
+        {
+          "name": "LiAngelo Ball",
+          "url": null
+        }
       ],
       "channel_id": "UCxclESttS8hoRMd6cIYGgeA",
       "youtube_url": "https://www.youtube.com/channel/UCxclESttS8hoRMd6cIYGgeA",
@@ -400,7 +554,10 @@
       "slug": "arenas-network",
       "name": "The Arenas Network",
       "hosts": [
-        "Gilbert Arenas"
+        {
+          "name": "Gilbert Arenas",
+          "url": "https://hoopsmatic.com/nba-career-map/player/gilbert-arenas.html"
+        }
       ],
       "channel_id": "UCuJ6CSQLBNb0nUvOn-s4aSA",
       "youtube_url": "https://www.youtube.com/channel/UCuJ6CSQLBNb0nUvOn-s4aSA",
@@ -411,7 +568,10 @@
       "slug": "damian-lillard",
       "name": "Damian Lillard",
       "hosts": [
-        "Damian Lillard"
+        {
+          "name": "Damian Lillard",
+          "url": "https://hoopsmatic.com/nba-career-map/player/damian-lillard.html"
+        }
       ],
       "channel_id": "UCIhTfcMzbR5wyNeh57ju0ug",
       "youtube_url": "https://www.youtube.com/channel/UCIhTfcMzbR5wyNeh57ju0ug",
@@ -422,8 +582,14 @@
       "slug": "knuckleheads",
       "name": "Knuckleheads",
       "hosts": [
-        "Quentin Richardson",
-        "Darius Miles"
+        {
+          "name": "Quentin Richardson",
+          "url": "https://hoopsmatic.com/nba-career-map/player/quentin-richardson.html"
+        },
+        {
+          "name": "Darius Miles",
+          "url": "https://hoopsmatic.com/nba-career-map/player/darius-miles.html"
+        }
       ],
       "channel_id": "UCLqzKYd1tST9lRPbEUoH5Hg",
       "youtube_url": "https://www.youtube.com/channel/UCLqzKYd1tST9lRPbEUoH5Hg",
@@ -434,7 +600,10 @@
       "slug": "the-big-podcast",
       "name": "The Big Podcast with Shaq",
       "hosts": [
-        "Shaquille O'Neal"
+        {
+          "name": "Shaquille O'Neal",
+          "url": "https://hoopsmatic.com/nba-career-map/player/shaquille-o-neal.html"
+        }
       ],
       "channel_id": "UCIOXmaExi4DjLHGyGvnu3bw",
       "youtube_url": "https://www.youtube.com/channel/UCIOXmaExi4DjLHGyGvnu3bw",
@@ -445,9 +614,18 @@
       "slug": "road-trippin",
       "name": "Road Trippin'",
       "hosts": [
-        "Richard Jefferson",
-        "Channing Frye",
-        "Allie Clifton"
+        {
+          "name": "Richard Jefferson",
+          "url": "https://hoopsmatic.com/nba-career-map/player/richard-jefferson.html"
+        },
+        {
+          "name": "Channing Frye",
+          "url": "https://hoopsmatic.com/nba-career-map/player/channing-frye.html"
+        },
+        {
+          "name": "Allie Clifton",
+          "url": null
+        }
       ],
       "channel_id": "UCSes4X8uDrpc4X46hJKjejg",
       "youtube_url": "https://www.youtube.com/channel/UCSes4X8uDrpc4X46hJKjejg",
@@ -458,7 +636,10 @@
       "slug": "demar-derozan",
       "name": "DeMar DeRozan",
       "hosts": [
-        "DeMar DeRozan"
+        {
+          "name": "DeMar DeRozan",
+          "url": "https://hoopsmatic.com/nba-career-map/player/demar-derozan.html"
+        }
       ],
       "channel_id": "UCfHG9GrqjYaEdPkrRi9LiBA",
       "youtube_url": "https://www.youtube.com/channel/UCfHG9GrqjYaEdPkrRi9LiBA",
@@ -469,8 +650,14 @@
       "slug": "run-your-race",
       "name": "Run Your Race",
       "hosts": [
-        "Theo Pinson",
-        "AJ Richardson"
+        {
+          "name": "Theo Pinson",
+          "url": "https://hoopsmatic.com/nba-career-map/player/theo-pinson.html"
+        },
+        {
+          "name": "AJ Richardson",
+          "url": null
+        }
       ],
       "channel_id": "UCIuKoa1AIiLTiXo0v69gTRg",
       "youtube_url": "https://www.youtube.com/channel/UCIuKoa1AIiLTiXo0v69gTRg",
@@ -481,8 +668,14 @@
       "slug": "the-backyard",
       "name": "The Backyard Podcast",
       "hosts": [
-        "D'Angelo Russell",
-        "Logan Linkmeyer"
+        {
+          "name": "D'Angelo Russell",
+          "url": "https://hoopsmatic.com/nba-career-map/player/d-angelo-russell.html"
+        },
+        {
+          "name": "Logan Linkmeyer",
+          "url": null
+        }
       ],
       "channel_id": "UCxHKsrkqNr-lQ04gTj9IGgw",
       "youtube_url": "https://www.youtube.com/channel/UCxHKsrkqNr-lQ04gTj9IGgw",
@@ -494,7 +687,10 @@
       "slug": "anthony-edwards",
       "name": "Anthony Edwards",
       "hosts": [
-        "Anthony Edwards"
+        {
+          "name": "Anthony Edwards",
+          "url": "https://hoopsmatic.com/nba-career-map/player/anthony-edwards.html"
+        }
       ],
       "channel_id": "UCFEiKlkFpJBISr1paTLW8Vg",
       "youtube_url": "https://www.youtube.com/channel/UCFEiKlkFpJBISr1paTLW8Vg",
@@ -505,7 +701,10 @@
       "slug": "curious-mike",
       "name": "Curious Mike",
       "hosts": [
-        "Michael Porter Jr."
+        {
+          "name": "Michael Porter Jr.",
+          "url": "https://hoopsmatic.com/nba-career-map/player/michael-porter.html"
+        }
       ],
       "channel_id": "UC3ZStupBLNVY4wVVOn7-e3w",
       "youtube_url": "https://www.youtube.com/channel/UC3ZStupBLNVY4wVVOn7-e3w",
@@ -516,7 +715,10 @@
       "slug": "above-the-rim",
       "name": "Above The Rim with DH12",
       "hosts": [
-        "Dwight Howard"
+        {
+          "name": "Dwight Howard",
+          "url": "https://hoopsmatic.com/nba-career-map/player/dwight-howard.html"
+        }
       ],
       "channel_id": "UCODlrQzQGttxpYglzmoOaEA",
       "youtube_url": "https://www.youtube.com/channel/UCODlrQzQGttxpYglzmoOaEA",
@@ -527,7 +729,10 @@
       "slug": "trae-young",
       "name": "Trae Young",
       "hosts": [
-        "Trae Young"
+        {
+          "name": "Trae Young",
+          "url": "https://hoopsmatic.com/nba-career-map/player/trae-young.html"
+        }
       ],
       "channel_id": "UCwr3hqUDuO4D4szLkjeVlrA",
       "youtube_url": "https://www.youtube.com/channel/UCwr3hqUDuO4D4szLkjeVlrA",
@@ -538,8 +743,14 @@
       "slug": "old-man-and-the-three",
       "name": "The Old Man and The Three",
       "hosts": [
-        "Cam Johnson",
-        "Tommy Alter"
+        {
+          "name": "Cam Johnson",
+          "url": "https://hoopsmatic.com/nba-career-map/player/cameron-johnson.html"
+        },
+        {
+          "name": "Tommy Alter",
+          "url": null
+        }
       ],
       "channel_id": "UCbPY1Efha9VPRBYW2x1M16A",
       "youtube_url": "https://www.youtube.com/channel/UCbPY1Efha9VPRBYW2x1M16A",
@@ -550,8 +761,14 @@
       "slug": "hoopin-n-hollerin",
       "name": "Hoopin' N Hollerin'",
       "hosts": [
-        "Jason Williams",
-        "Rone"
+        {
+          "name": "Jason Williams",
+          "url": "https://hoopsmatic.com/nba-career-map/player/jason-williams.html"
+        },
+        {
+          "name": "Rone",
+          "url": null
+        }
       ],
       "channel_id": "UCIlXFWq4v1CymTFBBgQ589Q",
       "youtube_url": "https://www.youtube.com/channel/UCIlXFWq4v1CymTFBBgQ589Q",
@@ -563,8 +780,14 @@
       "slug": "dawg-talk",
       "name": "The Dawg Talk Podcast",
       "hosts": [
-        "Kentavious Caldwell-Pope",
-        "Jordan McGruder"
+        {
+          "name": "Kentavious Caldwell-Pope",
+          "url": "https://hoopsmatic.com/nba-career-map/player/kentavious-caldwell-pope.html"
+        },
+        {
+          "name": "Jordan McGruder",
+          "url": null
+        }
       ],
       "channel_id": "UCBIPGMEJ72kaL9QHw3xUvuw",
       "youtube_url": "https://www.youtube.com/channel/UCBIPGMEJ72kaL9QHw3xUvuw",
@@ -575,7 +798,10 @@
       "slug": "big-wos-show",
       "name": "The Big Wos Show",
       "hosts": [
-        "Wosny Lambre"
+        {
+          "name": "Wosny Lambre",
+          "url": null
+        }
       ],
       "channel_id": "UC-Ovj3qDVxBAOWX3kwzOVRw",
       "youtube_url": "https://www.youtube.com/channel/UC-Ovj3qDVxBAOWX3kwzOVRw",
@@ -587,9 +813,18 @@
       "slug": "gils-arena",
       "name": "Gil's Arena",
       "hosts": [
-        "Gilbert Arenas",
-        "Kenyon Martin",
-        "Josiah Johnson"
+        {
+          "name": "Gilbert Arenas",
+          "url": "https://hoopsmatic.com/nba-career-map/player/gilbert-arenas.html"
+        },
+        {
+          "name": "Kenyon Martin",
+          "url": "https://hoopsmatic.com/nba-career-map/player/kenyon-martin.html"
+        },
+        {
+          "name": "Josiah Johnson",
+          "url": null
+        }
       ],
       "channel_id": "UCAvjYgmwadC682OoC4Cc6TQ",
       "youtube_url": "https://www.youtube.com/channel/UCAvjYgmwadC682OoC4Cc6TQ",
@@ -600,8 +835,14 @@
       "slug": "draymond-green-show",
       "name": "The Draymond Green Show",
       "hosts": [
-        "Draymond Green",
-        "Baron Davis"
+        {
+          "name": "Draymond Green",
+          "url": "https://hoopsmatic.com/nba-career-map/player/draymond-green.html"
+        },
+        {
+          "name": "Baron Davis",
+          "url": "https://hoopsmatic.com/nba-career-map/player/baron-davis.html"
+        }
       ],
       "channel_id": "UCBNqqomXKPSWvcQDXOkRvRA",
       "youtube_url": "https://www.youtube.com/channel/UCBNqqomXKPSWvcQDXOkRvRA",
@@ -613,7 +854,10 @@
       "slug": "point-game",
       "name": "Point Game",
       "hosts": [
-        "Isaiah Thomas"
+        {
+          "name": "Isaiah Thomas",
+          "url": "https://hoopsmatic.com/nba-career-map/player/isaiah-thomas.html"
+        }
       ],
       "channel_id": "UCemwSsWl4rg313rUCBcDiJw",
       "youtube_url": "https://www.youtube.com/channel/UCemwSsWl4rg313rUCBcDiJw",
@@ -624,7 +868,10 @@
       "slug": "gimme-the-hot-sauce",
       "name": "Gimme The Hot Sauce",
       "hosts": [
-        "Stacey King"
+        {
+          "name": "Stacey King",
+          "url": "https://hoopsmatic.com/nba-career-map/player/stacey-king.html"
+        }
       ],
       "channel_id": "UCYYTsni8rBjKzBPGu3-Q8LA",
       "youtube_url": "https://www.youtube.com/channel/UCYYTsni8rBjKzBPGu3-Q8LA",
@@ -635,7 +882,10 @@
       "slug": "aj-dybantsa",
       "name": "AJ Dybantsa",
       "hosts": [
-        "AJ Dybantsa"
+        {
+          "name": "AJ Dybantsa",
+          "url": "https://hoopsmatic.com/nba-career-map/player/aj-dybantsa.html"
+        }
       ],
       "channel_id": "UCNGuP7AKOZ9yi7x5SDiCOjg",
       "youtube_url": "https://www.youtube.com/channel/UCNGuP7AKOZ9yi7x5SDiCOjg",
@@ -646,7 +896,10 @@
       "slug": "richard-jefferson",
       "name": "The Richard Show",
       "hosts": [
-        "Richard Jefferson"
+        {
+          "name": "Richard Jefferson",
+          "url": "https://hoopsmatic.com/nba-career-map/player/richard-jefferson.html"
+        }
       ],
       "channel_id": "UCA95kYjGqDgRziNA7sJZBag",
       "youtube_url": "https://www.youtube.com/channel/UCA95kYjGqDgRziNA7sJZBag",
@@ -657,8 +910,14 @@
       "slug": "7pm-in-brooklyn",
       "name": "7PM in Brooklyn",
       "hosts": [
-        "Carmelo Anthony",
-        "The Kid Mero"
+        {
+          "name": "Carmelo Anthony",
+          "url": "https://hoopsmatic.com/nba-career-map/player/carmelo-anthony.html"
+        },
+        {
+          "name": "The Kid Mero",
+          "url": null
+        }
       ],
       "channel_id": "UCT3wF21Qx0d0HmuiCzji8Lg",
       "youtube_url": "https://www.youtube.com/channel/UCT3wF21Qx0d0HmuiCzji8Lg",
@@ -669,8 +928,14 @@
       "slug": "game-recognize-game",
       "name": "Game Recognize Game",
       "hosts": [
-        "Breanna Stewart",
-        "Myles Turner"
+        {
+          "name": "Breanna Stewart",
+          "url": null
+        },
+        {
+          "name": "Myles Turner",
+          "url": "https://hoopsmatic.com/nba-career-map/player/myles-turner.html"
+        }
       ],
       "channel_id": "UCe4l0wTSq_Tvva_bBTMkiXQ",
       "youtube_url": "https://www.youtube.com/channel/UCe4l0wTSq_Tvva_bBTMkiXQ",
@@ -681,7 +946,10 @@
       "slug": "ayo-dosunmu",
       "name": "Ayo Dosunmu",
       "hosts": [
-        "Ayo Dosunmu"
+        {
+          "name": "Ayo Dosunmu",
+          "url": "https://hoopsmatic.com/nba-career-map/player/ayo-dosunmu.html"
+        }
       ],
       "channel_id": "UCnD-vTb2QeSMsXdE360Ec1A",
       "youtube_url": "https://www.youtube.com/channel/UCnD-vTb2QeSMsXdE360Ec1A",
@@ -692,8 +960,14 @@
       "slug": "cousins",
       "name": "Cousins",
       "hosts": [
-        "Vince Carter",
-        "Tracy McGrady"
+        {
+          "name": "Vince Carter",
+          "url": "https://hoopsmatic.com/nba-career-map/player/vince-carter.html"
+        },
+        {
+          "name": "Tracy McGrady",
+          "url": "https://hoopsmatic.com/nba-career-map/player/tracy-mcgrady.html"
+        }
       ],
       "channel_id": "UCI5av_J_zb7S90XrucOfH0w",
       "youtube_url": "https://www.youtube.com/channel/UCI5av_J_zb7S90XrucOfH0w",
@@ -704,7 +978,10 @@
       "slug": "fred-vanvleet",
       "name": "Fred VanVleet",
       "hosts": [
-        "Fred VanVleet"
+        {
+          "name": "Fred VanVleet",
+          "url": "https://hoopsmatic.com/nba-career-map/player/fred-vanvleet.html"
+        }
       ],
       "channel_id": "UCDO3XAwii1n-i_mTeVw3evA",
       "youtube_url": "https://www.youtube.com/channel/UCDO3XAwii1n-i_mTeVw3evA",
@@ -715,7 +992,10 @@
       "slug": "shump-street",
       "name": "Shump Street",
       "hosts": [
-        "Iman Shumpert"
+        {
+          "name": "Iman Shumpert",
+          "url": "https://hoopsmatic.com/nba-career-map/player/iman-shumpert.html"
+        }
       ],
       "channel_id": "UCF2-UNMBDl0QgdXf_WgPxLA",
       "youtube_url": "https://www.youtube.com/channel/UCF2-UNMBDl0QgdXf_WgPxLA",
@@ -726,7 +1006,10 @@
       "slug": "gogis-garage",
       "name": "Gogis Garage",
       "hosts": [
-        "Goran Dragić"
+        {
+          "name": "Goran Dragić",
+          "url": "https://hoopsmatic.com/nba-career-map/player/goran-dragic.html"
+        }
       ],
       "channel_id": "UCejLJNSsAjPnQOR7SKuqc8g",
       "youtube_url": "https://www.youtube.com/channel/UCejLJNSsAjPnQOR7SKuqc8g",
@@ -738,7 +1021,10 @@
       "slug": "tyrese-haliburton",
       "name": "Tyrese Haliburton",
       "hosts": [
-        "Tyrese Haliburton"
+        {
+          "name": "Tyrese Haliburton",
+          "url": "https://hoopsmatic.com/nba-career-map/player/tyrese-haliburton.html"
+        }
       ],
       "channel_id": "UCErehpciG-VEIWfd72ZDXsg",
       "youtube_url": "https://www.youtube.com/channel/UCErehpciG-VEIWfd72ZDXsg",
@@ -749,7 +1035,10 @@
       "slug": "giannis-antetokounmpo",
       "name": "Giannis Antetokounmpo",
       "hosts": [
-        "Giannis Antetokounmpo"
+        {
+          "name": "Giannis Antetokounmpo",
+          "url": "https://hoopsmatic.com/nba-career-map/player/giannis-antetokounmpo.html"
+        }
       ],
       "channel_id": "UCrMiMJMUSjELs0jb1vtTiAg",
       "youtube_url": "https://www.youtube.com/channel/UCrMiMJMUSjELs0jb1vtTiAg",
@@ -760,7 +1049,10 @@
       "slug": "davion-mitchell",
       "name": "Davion Mitchell",
       "hosts": [
-        "Davion Mitchell"
+        {
+          "name": "Davion Mitchell",
+          "url": "https://hoopsmatic.com/nba-career-map/player/davion-mitchell.html"
+        }
       ],
       "channel_id": "UCi1HRyhAYBowd1OXVvNea8w",
       "youtube_url": "https://www.youtube.com/channel/UCi1HRyhAYBowd1OXVvNea8w",
@@ -771,7 +1063,10 @@
       "slug": "jaylen-clark",
       "name": "Jaylen Clark",
       "hosts": [
-        "Jaylen Clark"
+        {
+          "name": "Jaylen Clark",
+          "url": "https://hoopsmatic.com/nba-career-map/player/jaylen-clark.html"
+        }
       ],
       "channel_id": "UC1Mh22hsS7Fs1TrQtIdlTDw",
       "youtube_url": "https://www.youtube.com/channel/UC1Mh22hsS7Fs1TrQtIdlTDw",
@@ -782,7 +1077,10 @@
       "slug": "lebron-james",
       "name": "LeBron James",
       "hosts": [
-        "LeBron James"
+        {
+          "name": "LeBron James",
+          "url": "https://hoopsmatic.com/nba-career-map/player/lebron-james.html"
+        }
       ],
       "channel_id": "UCV9dV3DcAZWGnT2yFNKxStA",
       "youtube_url": "https://www.youtube.com/channel/UCV9dV3DcAZWGnT2yFNKxStA",
@@ -793,7 +1091,10 @@
       "slug": "pat-bev-show",
       "name": "The Pat Bev Show",
       "hosts": [
-        "Patrick Beverley"
+        {
+          "name": "Patrick Beverley",
+          "url": "https://hoopsmatic.com/nba-career-map/player/patrick-beverley.html"
+        }
       ],
       "channel_id": "UCsfbCkSEMyCRDKQOtEvtiIQ",
       "youtube_url": "https://www.youtube.com/channel/UCsfbCkSEMyCRDKQOtEvtiIQ",
@@ -805,8 +1106,14 @@
       "slug": "point-forward",
       "name": "Point Forward",
       "hosts": [
-        "Andre Iguodala",
-        "Evan Turner"
+        {
+          "name": "Andre Iguodala",
+          "url": "https://hoopsmatic.com/nba-career-map/player/andre-iguodala.html"
+        },
+        {
+          "name": "Evan Turner",
+          "url": "https://hoopsmatic.com/nba-career-map/player/evan-turner.html"
+        }
       ],
       "channel_id": "UCDEA1ZnPxXWJNJ_VFQ0aCfQ",
       "youtube_url": "https://www.youtube.com/channel/UCDEA1ZnPxXWJNJ_VFQ0aCfQ",
@@ -817,7 +1124,10 @@
       "slug": "off-guard",
       "name": "Off Guard with Austin Rivers",
       "hosts": [
-        "Austin Rivers"
+        {
+          "name": "Austin Rivers",
+          "url": "https://hoopsmatic.com/nba-career-map/player/austin-rivers.html"
+        }
       ],
       "channel_id": "UCFw3-5NBx1XJTaF0TPcK8iQ",
       "youtube_url": "https://www.youtube.com/playlist?list=PLUTe2YwR56Zuf3N8SUI89jbJdDWkI76i0",
@@ -834,8 +1144,14 @@
       "slug": "the-long-shot",
       "name": "The Long Shot",
       "hosts": [
-        "Duncan Robinson",
-        "Davis Reid"
+        {
+          "name": "Duncan Robinson",
+          "url": "https://hoopsmatic.com/nba-career-map/player/duncan-robinson.html"
+        },
+        {
+          "name": "Davis Reid",
+          "url": null
+        }
       ],
       "channel_id": "UCaytb_OvJzlxDG-dKwoHbMw",
       "youtube_url": "https://www.youtube.com/channel/UCaytb_OvJzlxDG-dKwoHbMw",

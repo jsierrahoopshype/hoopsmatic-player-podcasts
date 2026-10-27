@@ -29,8 +29,9 @@ TYPICAL_DAYS = 90       # median window, episodes-per-month window, ranked windo
 WEEK_DAYS = 7
 BREAKOUT_X = 5.0        # an episode at 5x its show's median or more is a breakout
 # Ranked: at least 4 full episodes in the last 90 days, or 1 to 3 in the last
-# 90 days with at least 4 in the last 180. Otherwise Dormant (no full episode
-# ever: excluded).
+# 90 days with at least 4 in the last 180. Occasional: 1 to 3 in the last 90
+# days but fewer than 4 in the last 180 (not ranked). Dormant: none in the last
+# 90 days. No full episode ever: excluded.
 RANKED_MIN_EPISODES = 4
 LONG_DAYS = 180
 SEASON_START = date(2026, 10, 1)
