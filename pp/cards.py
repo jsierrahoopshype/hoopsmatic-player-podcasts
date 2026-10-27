@@ -32,12 +32,15 @@ def fmt_len(sec):
 
 
 def host_people(show, ctx):
-    """[(name, url or None, headshot slug or None)] for a show's hosts."""
+    """[(name, url or None, headshot slug or None)] for a show's hosts. The
+    url is the host's page under /players/ when there is one, else their
+    Career Map page."""
+    from .people import host_link, slug_from_url
     out = []
     for h in show.get("hosts") or []:
         name, url = (h, None) if isinstance(h, str) else (h["name"], h.get("url"))
-        slug = url.rstrip("/").rsplit("/", 1)[-1].replace(".html", "") if url else None
-        out.append((name, url, slug if slug and slug in ctx.get("headshots", ()) else None))
+        slug = slug_from_url(url)
+        out.append((name, host_link(url), slug if slug and slug in ctx.get("headshots", ()) else None))
     return out
 
 
@@ -82,7 +85,7 @@ def badge(it):
     return '<span class="bo%s">%.1fx</span>' % (" hot" if b >= config.BREAKOUT_X else "", b)
 
 
-def video_card(it, ctx, show_breakout=False, extra=""):
+def video_card(it, ctx, show_breakout=False, extra="", label=""):
     from .render import fmt_date, full
     show = ctx["shows"][it["show"]]
     gain = ""
@@ -91,7 +94,7 @@ def video_card(it, ctx, show_breakout=False, extra=""):
     elif extra == "gain7" and it.get("gain7") is not None:
         gain = ' · <span class="gain">+%s in 7 days</span>' % full(it["gain7"])
     return ('<article class="vc">%s<div class="vc-body">'
-            '<div class="vc-top"><span class="fmt fmt-%s">%s</span>%s</div>'
+            '<div class="vc-top"><span class="fmt fmt-%s">%s</span>%s%s</div>'
             '<h3 class="vc-t"><a href="%s" target="_blank" rel="noopener">%s</a></h3>'
             '<div class="vc-show"><a href="%s/%s/">%s</a></div>'
             '<div class="vc-hosts">%s</div>'
@@ -99,7 +102,7 @@ def video_card(it, ctx, show_breakout=False, extra=""):
             '<a class="vc-yt" href="%s" target="_blank" rel="noopener">Watch on YouTube</a>'
             '</div></article>'
             % (_media(it, ctx), e(it["fmt"]), FMT_LABEL.get(it["fmt"], "Video"),
-               badge(it) if show_breakout else "",
+               badge(it) if show_breakout else "", ('<span class="role">%s</span>' % e(label)) if label else "",
                e(yt(it["id"])), e(it["title"]), B, e(show["slug"]), e(show["name"]),
                hosts_html(show, ctx), fmt_date(it["published"]), full(it["views"]), gain, e(yt(it["id"]))))
 

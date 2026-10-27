@@ -81,7 +81,25 @@ lists, not in date windows.
   `/player-podcasts/player-channels/` with the same numbers and rules).
 - 30-day views (the ranking): current views of full episodes posted in the last 30 days.
 - Typical episode: median views of full episodes from the last 90 days.
-- Breakout: an episode's views divided by its show's typical episode; 5x or more is flagged.
+- Breakout: a video's views divided by the median views of the same show's
+  videos of the same format published in the 90 days before it, with at
+  least 8 of them (otherwise no score); 5x or more is highlighted.
+- Views gained (24 hours, 7 and 30 days): the difference between two
+  snapshots, per video, at the same precision (listing counts are rounded to
+  3 significant figures). Shown only once both snapshots exist.
+- Rank arrows compare with a ranking at least a week old made with the same
+  rules (`RANK_RULE` in `pp/config.py`); until there is one, no arrows.
+
+## Pages
+
+- `/player-podcasts/`: Watch now, shelves, the Latest videos stream and the rankings.
+- `/player-podcasts/top-videos/`: most viewed, biggest gainers and breakouts.
+- `/player-podcasts/<show>/`: one page per show on the site.
+- `/player-podcasts/players/` and `/player-podcasts/players/<Career Map slug>/`:
+  a page for every player with 3+ confirmed guest appearances or hosting a
+  show with 3+ videos. Player names link there, or to NBA Career Map.
+- `/player-podcasts/player-channels/`, `/most-watched/`, `/dormant/`.
+- Videos play in the page through youtube-nocookie.com, only after a press.
 
 All numbers live in `pp/config.py`.
 
@@ -90,5 +108,5 @@ All numbers live in `pp/config.py`.
 ```
 pip install -r requirements.txt
 python -m pytest -q
-python -m pp build      # from committed data, no fetching
+python -m pp build      # from committed data; fetches only missing thumbnails, headshots and embed checks
 ```

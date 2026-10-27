@@ -14,6 +14,7 @@ APPEARANCES_MANUAL_FILE = DATA / "appearances_manual.json"  # manual adds/remove
 THUMBS_DIR = DATA / "thumbs"          # small thumbnails, committed, served from our own domain
 HEADSHOTS_DIR = DATA / "headshots"    # player headshots from nba-headshots, committed
 HEADSHOTS_INDEX_FILE = DATA / "headshots_index.json"
+ART_DIR = DATA / "art"                # show artwork (channel avatars), committed
 EMBED_FILE = DATA / "embed.json"      # oEmbed result per video (ok / no / gone)
 CHANNELS_FILE = DATA / "channels.json"
 SUBSCRIBERS_FILE = DATA / "subscribers.json"

@@ -28,7 +28,8 @@ def test_build_writes_player_channels_page_and_sitemap(tmp_path, monkeypatch):
                             ("UCocc", 70, (30,)), ("UCnet", 9, (1, 2, 3, 4))):
         vids = {"%s%07d" % (sid[2:6], i): ep(d, base + i, "Episode %d" % i) for i, d in enumerate(days)}
         (tmp_path / "videos" / (sid + ".json")).write_text(json.dumps({"source_id": sid, "videos": vids}))
-    for name in ("CHANNELS_FILE", "SUBSCRIBERS_FILE", "RANKS_FILE", "STATUS_FILE", "EXCLUDED_FILE", "SITEMAP_STATE_FILE"):
+    for name in ("CHANNELS_FILE", "SUBSCRIBERS_FILE", "RANKS_FILE", "STATUS_FILE", "EXCLUDED_FILE", "SITEMAP_STATE_FILE",
+                 "APPEARANCES_FILE", "APPEARANCES_REVIEW_FILE", "APPEARANCES_MANUAL_FILE", "EMBED_FILE"):
         monkeypatch.setattr(config, name, tmp_path / getattr(config, name).name)
     monkeypatch.setattr(config, "VIDEOS_DIR", tmp_path / "videos")
     monkeypatch.setattr(config, "THUMBS_DIR", tmp_path / "thumbs")
@@ -58,5 +59,14 @@ def test_build_writes_player_channels_page_and_sitemap(tmp_path, monkeypatch):
     assert not (out / "net").exists() and "/player-podcasts/net/" not in xml
     exc = json.loads(config.EXCLUDED_FILE.read_text())["excluded_by_rules"]
     assert [(x["slug"], x["reason"]) for x in exc] == [("net", "network channel, not a player podcast")]
-    # host links
-    assert '<a class="host" href="https://hoopsmatic.com/nba-career-map/player/al.html">Al</a>' in index
+    # host links: Al hosts a show with 3+ videos, so Al has a player page and
+    # every host link points there; the page is in the sitemap
+    assert '<a class="host" href="/player-podcasts/players/al/">Al</a>' in index
+    al = (out / "players" / "al" / "index.html").read_text()
+    assert "<title>Al Podcast Appearances: The Pod, Guest Episodes and Clips | HoopsMatic</title>" in al
+    assert 'href="https://hoopsmatic.com/nba-career-map/player/al.html"' in al
+    assert "<loc>https://hoopsmatic.com/player-podcasts/players/al/</loc>" in xml
+    assert "<loc>https://hoopsmatic.com/player-podcasts/players/</loc>" in xml
+    show = (out / "pod" / "index.html").read_text()
+    assert "<title>The Pod: Episodes, Clips and YouTube Rankings | HoopsMatic</title>" in show
+    assert '"@type": "BreadcrumbList"' in show and '"@type": "VideoObject"' in show

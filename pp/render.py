@@ -104,6 +104,7 @@ def tabs(active):
     items = [("rankings", "Rankings", B + "/"), ("player-channels", "Player channels", B + "/player-channels/"),
              ("top-videos", "Top videos", B + "/top-videos/"),
              ("most-watched", "Most watched", B + "/most-watched/"),
+             ("players", "Players", B + "/players/"),
              ("dormant", "Occasional & dormant", B + "/dormant/")]
     return '<nav class="tabs">' + "".join(
         '<a href="%s"%s>%s</a>' % (href, ' class="active"' if k == active else "", label)
@@ -188,8 +189,10 @@ def subs_change_html(s, shared):
 
 def _hosts(show):
     """Hosts as (name, url or None). Roster records are {"name", "url"};
-    a bare string is a host with no player page."""
-    return [(h, None) if isinstance(h, str) else (h["name"], h.get("url")) for h in show.get("hosts") or []]
+    a bare string is a host with no player page. The url is the host's page
+    under /players/ when there is one, else their Career Map page."""
+    from .people import host_link
+    return [(h, None) if isinstance(h, str) else (h["name"], host_link(h.get("url"))) for h in show.get("hosts") or []]
 
 
 def hosts_line(show):
@@ -198,7 +201,7 @@ def hosts_line(show):
 
 
 def hosts_html(show):
-    """Each host linked to their HoopsMatic player page when there is one."""
+    """Each host linked to their player page here, or on NBA Career Map."""
     return ", ".join('<a class="host" href="%s">%s</a>' % (e(u), e(n)) if u else e(n) for n, u in _hosts(show))
 
 
@@ -609,57 +612,413 @@ def chart_svg(eps, med):
     return "".join(out)
 
 
+# ── structured data ──
+
+def iso_duration(sec):
+    if not sec:
+        return None
+    sec = int(sec)
+    h, rem = divmod(sec, 3600)
+    m, x = divmod(rem, 60)
+    return "PT" + ("%dH" % h if h else "") + ("%dM" % m if m else "") + "%dS" % x
+
+
+def video_ld(it, ctx):
+    """schema.org VideoObject for one video card on the page."""
+    d = {"@type": "VideoObject", "name": it["title"], "uploadDate": it["published"],
+         "url": yt_url(it["id"]), "embedUrl": "https://www.youtube-nocookie.com/embed/" + it["id"],
+         "description": "%s, %s on YouTube." % (it["title"], ctx["shows"][it["show"]]["name"]),
+         "thumbnailUrl": config.SITE_BASE + "/thumbs/" + it["id"] + ".webp" if it["id"] in ctx["thumbs"]
+         else "https://i.ytimg.com/vi/%s/hqdefault.jpg" % it["id"],
+         "interactionStatistic": {"@type": "InteractionCounter", "interactionType": {"@type": "WatchAction"},
+                                  "userInteractionCount": it["views"]}}
+    if it.get("duration"):
+        d["duration"] = iso_duration(it["duration"])
+    return d
+
+
+def breadcrumbs_ld(trail):
+    """trail: [(name, absolute url)], home first."""
+    return {"@type": "BreadcrumbList", "itemListElement": [
+        {"@type": "ListItem", "position": i, "name": n, "item": u} for i, (n, u) in enumerate(trail, 1)]}
+
+
+def ld_script(*nodes):
+    doc = {"@context": "https://schema.org", "@graph": list(nodes)}
+    return '<script type="application/ld+json">%s</script>\n' % json.dumps(doc).replace("</", "<\\/")
+
+
+def crumbs_html(trail):
+    return ('<nav class="crumbs" aria-label="Breadcrumb">%s</nav>\n'
+            % " / ".join('<a href="%s">%s</a>' % (e(u.replace(config.SITE_ORIGIN, "")), e(n)) for n, u in trail[:-1]))
+
+
+TRAIL_HOME = [("HoopsMatic", config.SITE_ORIGIN + "/"), ("NBA Player Podcasts", config.SITE_BASE + "/")]
+
+
+# ── show pages ──
+
+def _clean_desc(text, limit=320):
+    """A channel's About text, without links and email addresses, cut at a
+    word near `limit`."""
+    import re
+    t = re.sub(r"\S+@\S+|https?://\S+|www\.\S+", "", text or "")
+    t = re.sub(r"\s+", " ", t).strip(" -|•")
+    if len(t) > limit:
+        t = t[:limit].rsplit(" ", 1)[0].rstrip(",.;:") + "…"
+    return t
+
+
+def art_html(show, ctx, size=88):
+    cid = show["channel_id"]
+    if cid in ctx.get("art", ()):
+        return '<img class="art" src="%s/art/%s.webp" width="%d" height="%d" alt="">' % (B, e(cid), size, size)
+    from .headshots import initials
+    return '<span class="art art-i" aria-hidden="true">%s</span>' % e(initials(show["name"]))
+
+
+def people_html(entries, ctx, size=28):
+    """[(name, link, headshot slug)] -> linked names with headshots."""
+    from .cards import avatar
+    return "".join(('<a class="host" href="%s">%s%s</a>' % (e(u), avatar(n, h, size), e(n))) if u
+                   else '<span class="host">%s%s</span>' % (avatar(n, h, size), e(n)) for n, u, h in entries)
+
+
+def _former_hosts(show, ctx):
+    from .people import host_link, slug_from_url
+    out = []
+    for h in show.get("former_hosts") or []:
+        slug = slug_from_url(h.get("url"))
+        out.append((h["name"], host_link(h.get("url")), slug if slug in ctx.get("headshots", ()) else None))
+    return out
+
+
+def _metric_cards(ctx, s):
+    """The show's key numbers, each with what it is, its period and the
+    videos it is based on."""
+    m = ctx["show_metrics"][s["slug"]]
+    shared = ctx["shared"][s["slug"]]
+    f = ctx["flags"]
+    based = lambda n: "based on %d video%s" % (n, "" if n == 1 else "s")
+    rows = [
+        ("Views, 30 days", m["full"]["v30"], "current views on full episodes posted in the last 30 days"),
+        ("Views, 7 days", m["all"]["v7"], "current views on every video posted in the last 7 days"),
+        ("Typical full episode", m["x"]["typf"], "median views, full episodes from the last 90 days"),
+        ("Typical clip", m["x"]["typc"], "median views, clips from the last 90 days"),
+        ("Total views", m["all"]["total"], "every video on YouTube, all time"),
+        ("Videos, 30 days", m["all"]["vids"], "videos of every format posted in the last 30 days"),
+        ("Likes per 1K views", m["all"]["likes"], "videos from the last 90 days with likes from YouTube's feed"),
+    ]
+    if f.get("g7"):
+        rows.insert(2, ("Gained, 7 days", m["all"]["g7"], "views gained by videos from the last 90 days, %s to %s"
+                        % (fmt_date(f["g7_since"] + "T00:00:00Z"), fmt_date(f["gain_day"] + "T00:00:00Z"))))
+    out = []
+    for lbl, (val, n), sub in rows:
+        if lbl == "Videos, 30 days":
+            num = "%d" % val
+            sub_txt = sub
+        elif lbl == "Likes per 1K views":
+            num = ("%.1f" % val) if val is not None else '<span class="nd">no data</span>'
+            sub_txt = sub + (" (" + based(n) + ")" if val is not None else "")
+        else:
+            num = compact(val) if val is not None else '<span class="nd">no data</span>'
+            sub_txt = sub + (" (" + based(n) + ")" if val is not None else "")
+        out.append('<div class="stat-card"><div class="lbl">%s</div><div class="num">%s</div><div class="sub">%s</div></div>'
+                   % (lbl, num, e(sub_txt)))
+    if shared:
+        out.append('<div class="stat-card"><div class="lbl">Channel subscribers</div><div class="num">shared</div>'
+                   '<div class="sub">shared channel: the count belongs to every show on it</div></div>')
+    else:
+        subs = m["x"]["subs"][0]
+        g, gp = m["x"]["subg"]
+        sub = "YouTube's public, rounded count" + ((", read " + ctx["listing_label"]) if ctx.get("listing_label") else "")
+        if g is not None:
+            sub += "; %s (%s) since a week earlier" % (signed(g), pct(gp)) if gp is not None else "; %s since a week earlier" % signed(g)
+        out.append('<div class="stat-card"><div class="lbl">Channel subscribers</div><div class="num">%s</div><div class="sub">%s</div></div>'
+                   % (compact(subs) if subs is not None else '<span class="nd">no data</span>', e(sub)))
+    return '<div class="stat-cards">%s</div>\n' % "".join(out)
+
+
+def weekly_history(ids):
+    """[(date, total views)] of these videos from each weekly snapshot,
+    counting only videos every reading has (so the line compares like with
+    like). Empty until there are 3 readings."""
+    from . import history
+    days = history.days_on_file("weekly")
+    if len(days) < 3:
+        return []
+    reads = []
+    for d in days:
+        doc = history.load_weekly(d) or {}
+        flat = {}
+        for vv in (doc.get("v") or {}).values():
+            flat.update(vv)
+        reads.append((d, flat))
+    common = set(ids)
+    for _, flat in reads:
+        common &= set(flat)
+    if not common:
+        return []
+    return [(d, sum(flat[i] for i in common)) for d, flat in reads]
+
+
+def history_svg(points):
+    W, H, pl, pb, pt = 720, 200, 54, 22, 10
+    vals = [v for _, v in points]
+    lo, hi = min(vals), max(vals)
+    span = (hi - lo) or 1
+    xs = [pl + (W - pl - 8) * i / (len(points) - 1) for i in range(len(points))]
+    ys = [H - pb - (H - pb - pt) * (v - lo) / span for v in vals]
+    out = ['<svg class="chart" viewBox="0 0 %d %d" role="img" aria-label="Total views by week">' % (W, H)]
+    for frac in (0, 1):
+        y = H - pb - frac * (H - pb - pt)
+        out.append('<line class="grid" x1="%d" x2="%d" y1="%.1f" y2="%.1f"/>' % (pl, W, y, y))
+        out.append('<text class="ax" x="%d" y="%.1f">%s</text>' % (pl - 6, y + 3, compact(lo + frac * span)))
+    out.append('<polyline class="line" fill="none" points="%s"/>' % " ".join("%.1f,%.1f" % p for p in zip(xs, ys)))
+    for (d, v), x, y in zip(points, xs, ys):
+        out.append('<circle class="pt" cx="%.1f" cy="%.1f" r="3"><title>%s: %s views</title></circle>' % (x, y, fmt_date(d + "T00:00:00Z"), full(v)))
+    out.append('<text class="ax" x="%d" y="%d" text-anchor="start">%s</text>' % (pl, H - 6, fmt_date(points[0][0] + "T00:00:00Z")))
+    out.append('<text class="ax" x="%d" y="%d" text-anchor="end">%s</text>' % (W - 2, H - 6, fmt_date(points[-1][0] + "T00:00:00Z")))
+    out.append("</svg>")
+    return "".join(out)
+
+
+def guests_html(ctx, slug):
+    """Confirmed guests of one show, linked, with how many appearances."""
+    from .people import link_for
+    by = {}
+    for it in ctx["appearances"].values():
+        if it["show"] == slug and it["video"] in ctx["item_by_id"]:
+            by.setdefault(it["player"], []).append(it)
+    if not by:
+        return ""
+    names = ctx["player_names"]
+    rows = []
+    for player, apps in by.items():
+        vids = sorted((ctx["item_by_id"][a["video"]] for a in apps), key=lambda v: v["published"], reverse=True)
+        n = len({a.get("group") or a["video"] for a in apps})
+        rows.append((vids[0]["published"], player, n, vids[0]))
+    rows.sort(reverse=True)
+    from .cards import avatar
+    items = []
+    for _, player, n, v in rows[:60]:
+        name = names.get(player, player)
+        head = player if player in ctx.get("headshots", ()) else None
+        items.append('<li><a class="host" href="%s">%s%s</a> <span class="g-n">%d appearance%s · latest %s: '
+                     '<a href="%s" target="_blank" rel="noopener">%s</a></span></li>'
+                     % (e(link_for(player)), avatar(name, head, 24), e(name), n, "" if n == 1 else "s",
+                        fmt_date(v["published"]), e(yt_url(v["id"])), e(v["title"][:90])))
+    more = (' <span class="g-n">and %d more</span>' % (len(rows) - 60)) if len(rows) > 60 else ""
+    return ('<section class="block" id="guests"><div class="block-head"><h2>Guests</h2></div>'
+            '<ul class="guests">%s</ul>%s<p class="hint-below">Players stated as guests in a video\'s title or '
+            'description and matched to one NBA Career Map player; clips of the same episode count once.</p></section>\n'
+            % ("".join(items), more))
+
+
+def related_html(ctx, slug):
+    rel = ctx["related"].get(slug) or []
+    if not rel:
+        return ""
+    cards = []
+    for o in rel:
+        show = ctx["shows"][o]
+        st = ctx["stats_by_slug"][o]
+        status = ("No. %d" % st["rank"]) if st["status"] == "ranked" else st["status"].capitalize()
+        cards.append('<a class="rel" href="%s">%s<span class="rel-b"><span class="rel-n">%s</span>'
+                     '<span class="rel-h">%s</span><span class="rel-s">%s</span></span></a>'
+                     % (show_url(o), art_html(show, ctx, 56), e(show["name"]), e(hosts_line(show)), e(status)))
+    return ('<section class="block"><div class="block-head"><h2>Related shows</h2></div><div class="rels">%s</div></section>\n'
+            % "".join(cards))
+
+
 def show_page(ctx, s):
+    from .cards import host_people, shelf, video_card
+    from .metrics import FULL, CLIP
     show = ctx["shows"][s["slug"]]
     url = config.SITE_BASE + "/" + show["slug"] + "/"
-    shared = ctx["shared"][s["slug"]]
     eps = s["episodes"]
+    vids = sorted(ctx["per_show"].get(s["slug"], []), key=lambda it: it["published"], reverse=True)
+    pc = s["type"] == "player_channel"
     if s["status"] == "ranked":
         ch = ctx["changes"].get(s["slug"]) if ctx["changes"] else None
-        pc = s["type"] == "player_channel"
-        status = 'Ranked <strong>No. %d</strong> of %d %s by 30-day views%s' % (
+        status = 'Ranked <strong>No. %d</strong> of %d %s by views on full episodes from the last 30 days%s' % (
             s["rank"], len(ctx["ranked_pc"] if pc else ctx["ranked"]),
-            '<a href="%s/player-channels/">player channels</a>' % B if pc else "podcasts",
+            '<a href="%s/player-channels/">player channels</a>' % B if pc else '<a href="%s/#rankings">podcasts</a>' % B,
             (" " + change_html(ch)) if ch not in (None, 0) else "")
     else:
         label = "Occasional" if s["status"] == "occasional" else "Dormant"
         status = '<a href="%s/dormant/">%s</a>: last full episode %s' % (B, label, fmt_date(s["last_episode"]))
     hosts = hosts_line(show)
-    body = ['<div class="phead"><h1>%s</h1><div class="meta">%s<span>%s</span>'
-            '<span class="sep">·</span><a href="%s" target="_blank" rel="noopener">YouTube</a></div>'
-            '<div class="meta">%s</div></div>\n'
-            % (e(show["name"]), ('<span>Hosted by %s</span><span class="sep">·</span>' % hosts_html(show)) if hosts else "",
-               stamp(ctx), e(show["youtube_url"]), status)]
-    subs_card = ('<div class="num">shared</div><div class="sub">channel carries other shows</div>' if shared else
-                 '<div class="num">%s</div><div class="sub">%s this week</div>'
-                 % (compact(s["subs"]), (signed(s["subs_change"]) + " (" + pct(s["subs_change_pct"]) + ")")
-                    if s["subs_change"] is not None else "change: –"))
-    body.append('<div class="stat-cards">'
-                '<div class="stat-card"><div class="lbl">30-day views</div><div class="num">%s</div><div class="sub">full episodes, last 30 days</div></div>'
-                '<div class="stat-card"><div class="lbl">Typical episode</div><div class="num">%s</div><div class="sub">median, last 90 days</div></div>'
-                '<div class="stat-card"><div class="lbl">Subscribers</div>%s</div>'
-                '<div class="stat-card"><div class="lbl">Likes per 1K views</div><div class="num">%s</div><div class="sub">full episodes, last 90 days</div></div>'
-                '<div class="stat-card"><div class="lbl">Episodes per month</div><div class="num">%s</div><div class="sub">%d full episodes in 90 days</div></div>'
-                '<div class="stat-card"><div class="lbl">Full episodes</div><div class="num">%s</div><div class="sub">on YouTube, all time</div></div>'
-                '</div>\n'
-                % (compact(s["momentum"]), compact(s["typical"]), subs_card, one_dec(s["likes_per_1k"]),
-                   one_dec(s["episodes_per_month"]), s["episodes_90"], full(len(eps))))
+    former = _former_hosts(show, ctx)
+    links = ['<a href="%s" target="_blank" rel="noopener">YouTube channel</a>'
+             % e("https://www.youtube.com/channel/" + show["channel_id"])]
+    if show.get("playlist_id"):
+        links.append('<a href="%s" target="_blank" rel="noopener">Official playlist</a>'
+                     % e("https://www.youtube.com/playlist?list=" + show["playlist_id"]))
+    desc_txt = _clean_desc(ctx["descriptions"].get(s["slug"]))
+    trail = TRAIL_HOME + [(show["name"], url)]
+    body = [crumbs_html(trail),
+            '<div class="phead show-head">%s<div class="sh-b"><h1>%s</h1>'
+            '<div class="meta">%s</div>%s<div class="meta">%s</div><div class="meta">%s</div></div></div>\n'
+            % (art_html(show, ctx), e(show["name"]),
+               ('Hosted by ' + people_html(host_people(show, ctx), ctx)) if hosts else "",
+               ('<div class="meta">Former host%s: %s</div>' % ("s" if len(former) > 1 else "", people_html(former, ctx)))
+               if former else "", status, " · ".join(links))]
+    if desc_txt:
+        body.append('<p class="show-desc">%s</p>\n' % e(desc_txt))
+    body.append('<p class="hint-below">%s</p>' % stamp(ctx))
+    body.append(_metric_cards(ctx, s))
+    if len(vids) >= 3:
+        body.append('<section class="block" id="latest"><div class="block-head"><h2>Latest videos</h2></div>'
+                    '<div class="grid">%s</div></section>\n' % "".join(video_card(it, ctx) for it in vids[:12]))
+    trend_key = "gain24" if ctx["flags"].get("g24") else "gain7" if ctx["flags"].get("g7") else None
+    if trend_key:
+        tr = sorted((it for it in vids if it.get(trend_key)), key=lambda it: -it[trend_key])[:8]
+        if len(tr) >= 3:
+            body.append(shelf("Trending", tr, ctx, "Views gained in the last %s, from our daily view counts."
+                              % ("24 hours" if trend_key == "gain24" else "7 days"), extra=trend_key))
+    top_eps = sorted((it for it in vids if it["fmt"] == FULL), key=lambda it: -it["views"])[:8]
+    top_clips = sorted((it for it in vids if it["fmt"] == CLIP), key=lambda it: -it["views"])[:8]
+    if len(top_eps) >= 3:
+        body.append(shelf("Most viewed episodes", top_eps, ctx, "Full episodes (20 minutes or longer), all time.", show_breakout=True))
+    if len(top_clips) >= 3:
+        body.append(shelf("Most viewed clips", top_clips, ctx, "Clips (1 to 20 minutes), all time.", show_breakout=True))
+    hist = weekly_history([it["id"] for it in vids if it["fmt"] == FULL])
+    if hist:
+        body.append('<section class="section"><h2>Views over time</h2><p class="hint">Total views of the full '
+                    'episodes in every weekly reading, week by week.</p>%s</section>\n' % history_svg(hist))
     body.append('<section class="section"><h2>Views per episode</h2><p class="hint">Last %d full episodes, oldest '
-                'to newest. Dashed line: typical episode. Highlighted: breakouts.</p>%s</section>\n'
+                'to newest. Dashed line: typical episode. Highlighted: breakouts (5x or more).</p>%s</section>\n'
                 % (min(len(eps), 40), chart_svg(eps, s["typical"])))
-    recent = sorted(eps, key=lambda v: v["published"], reverse=True)[:12]
-    body.append('<section class="block"><div class="block-head"><h2>Recent episodes</h2></div><div class="eps">%s</div></section>\n'
-                % "".join(ep_row(v, ctx) for v in recent))
-    best = sorted(eps, key=lambda v: -v["views"])[:10]
-    body.append('<section class="block"><div class="block-head"><h2>Top episodes, all time</h2></div><div class="eps">%s</div></section>\n'
-                % "".join(ep_row(v, ctx, rank=i) for i, v in enumerate(best, 1)))
+    body.append(guests_html(ctx, s["slug"]))
+    body.append(related_html(ctx, s["slug"]))
     if show.get("note"):
         body.append('<p class="note">%s</p>\n' % e(show["note"]))
-    desc = ("%s%s on YouTube: %s views on full episodes in the last 30 days, %s on a typical episode. "
-            "Top episodes and views per episode." % (show["name"], (" (" + hosts + ")") if hosts else "",
-                                                     full(s["momentum"]), full(s["typical"])))
-    title = "%s: YouTube Views and Top Episodes | HoopsMatic" % show["name"]
-    return page(title, desc, url, ctx["assets_v"], None, "".join(body))
+    m = ctx["show_metrics"][s["slug"]]
+    desc = ("%s%s: latest episodes and clips, playable here, with YouTube rankings: %s views on full episodes "
+            "in the last 30 days, %s on a typical episode." % (show["name"], (" (" + hosts + ")") if hosts else "",
+                                                              full(m["full"]["v30"][0] or 0), full(s["typical"])))
+    title = "%s: Episodes, Clips and YouTube Rankings | HoopsMatic" % show["name"]
+    extra = ld_script(breadcrumbs_ld(trail), *[video_ld(it, ctx) for it in vids[:12]])
+    return page(title, desc, url, ctx["assets_v"], None, "".join(body), extra)
+
+
+# ── player pages ──
+
+def _player_main_show(p, ctx):
+    hosted = p["hosts"] or p["former"]
+    if hosted:
+        return max(hosted, key=lambda x: ctx["show_metrics"][x]["all"]["total"][0] or 0)
+    counts = {}
+    for a in p["guest"]:
+        counts[a["show"]] = counts.get(a["show"], 0) + 1
+    return max(counts, key=lambda x: (counts[x], x)) if counts else None
+
+
+def player_videos(p, ctx):
+    """[(item, role)]: every confirmed guest appearance, and for each show
+    they host the latest 12 and the 6 most viewed videos."""
+    out, seen = [], set()
+    for a in sorted(p["guest"], key=lambda a: ctx["item_by_id"].get(a["video"], {}).get("published", ""), reverse=True):
+        it = ctx["item_by_id"].get(a["video"])
+        if it and it["id"] not in seen:
+            seen.add(it["id"])
+            out.append((it, "guest"))
+    for role, shows in (("host", p["hosts"]), ("former host", p["former"])):
+        for sl in shows:
+            vids = ctx["per_show"].get(sl, [])
+            pick = sorted(vids, key=lambda it: it["published"], reverse=True)[:12] + \
+                sorted(vids, key=lambda it: -it["views"])[:6]
+            for it in pick:
+                if it["id"] not in seen:
+                    seen.add(it["id"])
+                    out.append((it, role))
+    return out
+
+
+def player_page(ctx, p):
+    from .cards import avatar, video_card
+    from .people import CAREER_MAP
+    url = config.SITE_ORIGIN + config.BASE_PATH + "/players/" + p["slug"] + "/"
+    main = _player_main_show(p, ctx)
+    main_name = ctx["shows"][main]["name"] if main else "NBA podcasts"
+    vids = player_videos(p, ctx)
+    roles = []
+    if p["hosts"]:
+        roles.append("Host of " + ", ".join('<a href="%s">%s</a>' % (show_url(x), e(ctx["shows"][x]["name"])) for x in p["hosts"]))
+    if p["former"]:
+        roles.append("Former host of " + ", ".join('<a href="%s">%s</a>' % (show_url(x), e(ctx["shows"][x]["name"])) for x in p["former"]))
+    gshows = sorted({a["show"] for a in p["guest"]}, key=lambda x: ctx["shows"][x]["name"].lower())
+    if p["guest"]:
+        roles.append("Guest %d time%s on %s" % (p["groups"], "" if p["groups"] == 1 else "s", ", ".join(
+            '<a href="%s">%s</a>' % (show_url(x), e(ctx["shows"][x]["name"])) for x in gshows)))
+    head = p["slug"] if p["slug"] in ctx.get("headshots", ()) else None
+    trail = TRAIL_HOME + [("Players", config.SITE_BASE + "/players/"), (p["name"], url)]
+    shows_in = sorted({it["show"] for it, _ in vids}, key=lambda x: ctx["shows"][x]["name"].lower())
+    role_opts = [("", "All roles")] + ([("host", "Host")] if p["hosts"] or p["former"] else []) + ([("guest", "Guest")] if p["guest"] else [])
+    opt = lambda pairs: "".join('<option value="%s">%s</option>' % (e(v), e(l)) for v, l in pairs)
+    body = [crumbs_html(trail),
+            '<div class="phead show-head">%s<div class="sh-b"><h1>%s: podcast appearances</h1>%s'
+            '<div class="meta"><a href="%s">NBA career on NBA Career Map</a></div></div></div>\n'
+            % (avatar(p["name"], head, 88).replace('class="av', 'class="art av'), e(p["name"]),
+               "".join('<div class="meta">%s</div>' % r for r in roles), e(CAREER_MAP % p["slug"])),
+            '<div class="pfilter" data-target="#pv">'
+            '<label class="sr" for="pf-role">Role</label><select id="pf-role" class="sel" data-attr="role">%s</select>'
+            '<label class="sr" for="pf-show">Show</label><select id="pf-show" class="sel" data-attr="show"><option value="">All shows</option>%s</select>'
+            '<label class="sr" for="pf-fmt">Format</label><select id="pf-fmt" class="sel" data-attr="fmt">%s</select></div>'
+            '<p class="pf-count hint-below" aria-live="polite"></p>'
+            % (opt(role_opts), opt([(x, ctx["shows"][x]["name"]) for x in shows_in]), opt(STREAM_FMTS))]
+    cards = []
+    for it, role in vids:
+        r = "guest" if role == "guest" else "host"
+        c = video_card(it, ctx, label=role.capitalize())
+        cards.append(c.replace('<article class="vc">', '<article class="vc" data-role="%s" data-show="%s" data-fmt="%s">'
+                               % (r, e(it["show"]), e(it["fmt"])), 1))
+    body.append('<div class="grid" id="pv">%s</div>\n' % "".join(cards))
+    body.append('<p class="hint-below">%s</p>' % stamp(ctx))
+    body.append('<p class="hint-below">Guest appearances: the player is stated as a guest in the title or description '
+                '(or added by hand) and matched to one NBA Career Map player. As a host: the latest 12 and the 6 most '
+                'viewed videos of each show.</p>')
+    title = "%s Podcast Appearances: %s, Guest Episodes and Clips | HoopsMatic" % (p["name"], main_name)
+    desc = ("%s on NBA player podcasts: %s. Episodes and clips, playable here."
+            % (p["name"], "; ".join(__import__("re").sub("<[^>]+>", "", r) for r in roles)))
+    extra = ld_script(breadcrumbs_ld(trail), *[video_ld(it, ctx) for it, _ in vids[:12]])
+    return page(title, desc, url, ctx["assets_v"], "players", "".join(body), extra)
+
+
+def players_index_page(ctx):
+    from .cards import avatar
+    url = config.SITE_BASE + "/players/"
+    ps = list(ctx["players"].values())
+    hosts = sorted((p for p in ps if p["hosts"] or p["former"]), key=lambda p: p["name"])
+    guests_ = sorted((p for p in ps if not (p["hosts"] or p["former"])), key=lambda p: (-p["groups"], p["name"]))
+
+    def row(p):
+        head = p["slug"] if p["slug"] in ctx.get("headshots", ()) else None
+        bits = []
+        if p["hosts"]:
+            bits.append("Host: " + ", ".join(ctx["shows"][x]["name"] for x in p["hosts"]))
+        if p["former"]:
+            bits.append("Former host: " + ", ".join(ctx["shows"][x]["name"] for x in p["former"]))
+        if p["groups"]:
+            bits.append("%d guest appearance%s" % (p["groups"], "" if p["groups"] == 1 else "s"))
+        return ('<li><a class="pl" href="%s/players/%s/">%s<span class="pl-b"><span class="pl-n">%s</span>'
+                '<span class="pl-r">%s</span></span></a></li>' % (B, e(p["slug"]), avatar(p["name"], head, 40),
+                                                                 e(p["name"]), e(" · ".join(bits))))
+    trail = TRAIL_HOME + [("Players", url)]
+    body = [crumbs_html(trail), '<div class="hdr"><h1>NBA players on podcasts</h1></div>\n'
+            '<p class="subtitle">Every NBA player who hosts a show here, or has been a confirmed guest at least 3 '
+            'times, with their episodes and clips. %s</p>\n' % stamp(ctx)]
+    if hosts:
+        body.append('<section class="block"><div class="block-head"><h2>Hosts</h2></div><ul class="players">%s</ul></section>\n'
+                    % "".join(row(p) for p in hosts))
+    if guests_:
+        body.append('<section class="block"><div class="block-head"><h2>Guests</h2></div><ul class="players">%s</ul></section>\n'
+                    % "".join(row(p) for p in guests_))
+    desc = ("NBA players on podcasts: %d hosts and %d frequent guests, with their episodes and clips from YouTube."
+            % (len(hosts), len(guests_)))
+    return page("NBA Players on Podcasts: Hosts and Guest Appearances | HoopsMatic", desc, url, ctx["assets_v"],
+                "players", "".join(body), ld_script(breadcrumbs_ld(trail)))
 
 
 def not_found_page(ctx):

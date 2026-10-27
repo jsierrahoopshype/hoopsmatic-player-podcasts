@@ -294,3 +294,26 @@
   root.querySelector('#sf-q').addEventListener('input', function () { clearTimeout(t); t = setTimeout(applyFilters, 250); });
   ['#sf-show', '#sf-host', '#sf-fmt', '#sf-range'].forEach(function (s) { root.querySelector(s).addEventListener('change', applyFilters); });
 })();
+
+/* Player pages: filter the cards by role, show and format. Every card is in
+   the page already; this only hides the ones that do not match. */
+(function () {
+  'use strict';
+  var bar = document.querySelector('.pfilter');
+  if (!bar) return;
+  var grid = document.querySelector(bar.getAttribute('data-target'));
+  var count = document.querySelector('.pf-count');
+  var sels = bar.querySelectorAll('select[data-attr]');
+  function apply() {
+    var want = {};
+    sels.forEach(function (s) { if (s.value) want[s.getAttribute('data-attr')] = s.value; });
+    var shown = 0, cards = grid.querySelectorAll('.vc');
+    cards.forEach(function (c) {
+      var on = Object.keys(want).every(function (k) { return c.getAttribute('data-' + k) === want[k]; });
+      c.hidden = !on;
+      if (on) shown++;
+    });
+    count.textContent = shown === cards.length ? '' : (shown === 1 ? '1 video' : shown + ' videos');
+  }
+  sels.forEach(function (s) { s.addEventListener('change', apply); });
+})();
