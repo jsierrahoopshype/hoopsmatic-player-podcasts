@@ -121,3 +121,17 @@ def test_player_pages_from_mentions_need_ten_discussions():
 def test_a_numeral_suffix_picks_its_own_player():
     assert M.find("Warriors title reaction w/ Gary Payton II")[0] == {"gary-payton-ii": "name"}
     assert M.find("Gary Payton fight story")[2][0][0] == "Gary Payton"
+
+
+def test_mentions_file_is_written_in_a_stable_order(tmp_path, monkeypatch):
+    import json
+    from pp import build, config
+    monkeypatch.setattr(config, "MENTIONS_FILE", tmp_path / "m.json")
+    ms = {"v1": [{"kind": "team", "slug": "san-antonio-spurs", "src": "title", "t": None, "how": "nickname"},
+                 {"kind": "team", "slug": "new-york-knicks", "src": "title", "t": None, "how": "nickname"}]}
+    build.write_mentions({"mentions": ms})
+    first = (tmp_path / "m.json").read_text()
+    ms["v1"].reverse()
+    build.write_mentions({"mentions": ms})
+    assert (tmp_path / "m.json").read_text() == first
+    assert json.loads(first)["items"]["v1"][0][1] == "new-york-knicks"
