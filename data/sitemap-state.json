@@ -1,6 +1,6 @@
 {
   "https://hoopsmatic.com/player-podcasts/": {
-    "hash": "9f65d16e1903f0437a1cd29a7cc778190077c5d82517f4606fe16d4ce966ac5a",
+    "hash": "e9a1da7a2bc6a36ac8d0c6f57d8b4015b71bd89e7bcd0ce80cdbec9ddb10924a",
     "lastmod": "2026-10-27"
   },
   "https://hoopsmatic.com/player-podcasts/7pm-in-brooklyn/": {
@@ -143,6 +143,10 @@
     "hash": "ae013e20699c3ebfa1d02f6edabceda838a25b6ca652be9ebcd968898acc5d76",
     "lastmod": "2026-10-27"
   },
+  "https://hoopsmatic.com/player-podcasts/methodology/": {
+    "hash": "c9a127a31682b235db2d0b358b785c9436532627129a7640afeeb45af0ff84ff",
+    "lastmod": "2026-10-27"
+  },
   "https://hoopsmatic.com/player-podcasts/mind-the-game/": {
     "hash": "dfd79689336e0f63e228140cfb829bbb85edb49e18ef730b836f54c7cad2c542",
     "lastmod": "2026-10-27"
@@ -176,7 +180,7 @@
     "lastmod": "2026-10-27"
   },
   "https://hoopsmatic.com/player-podcasts/player-channels/": {
-    "hash": "8e00badbf88af9828f956347f9838b87490644813422a9d3f7bc58bd2f42f493",
+    "hash": "46b6c5189260a85c01f97252ded76fb322c7b93b1d0e530de4d04aaac6e5a9af",
     "lastmod": "2026-10-27"
   },
   "https://hoopsmatic.com/player-podcasts/players/": {
