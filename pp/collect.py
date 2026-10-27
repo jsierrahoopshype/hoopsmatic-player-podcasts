@@ -235,6 +235,8 @@ def weekly(now=None, only=None, workers=2):
     views, _ = _snapshot_from_catalogs(srcs, day, now, recent_only=False)
     history.write_weekly(day, views)
     refresh_careermap_names()
+    from . import headshots
+    headshots.refresh_index()
     history.rollup(day)
 
     blocked = bool(failed) and not ok_sources

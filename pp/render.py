@@ -126,7 +126,7 @@ def stamp(ctx):
 
 def thumb(vid, ctx, cls="th"):
     if vid in ctx["thumbs"]:
-        return ('<img class="%s" src="%s/thumbs/%s.jpg" width="160" height="90" loading="lazy" alt="">'
+        return ('<img class="%s" src="%s/thumbs/%s.webp" width="160" height="90" loading="lazy" alt="">'
                 % (cls, B, e(vid)))
     return '<span class="%s th-empty"></span>' % cls
 
@@ -252,33 +252,70 @@ def leaderboard(ctx, ranked=None):
             % (sort_opts, th, "\n".join(rows), "\n".join(cards)))
 
 
+STREAM_FMTS = [("", "All formats"), ("full", "Full episodes"), ("clip", "Clips"), ("short", "Shorts")]
+STREAM_RANGES = [("90", "Last 90 days"), ("30", "Last 30 days"), ("7", "Last 7 days"), ("1", "Last 24 hours")]
+
+
+def stream_html(ctx):
+    """Latest Videos: the first cards in the page, the rest loaded in chunks."""
+    from .cards import video_card
+    st = ctx["stream"]
+    if len(st) < 3:
+        return ""
+    shows = sorted({it["show"] for it in st}, key=lambda x: ctx["shows"][x]["name"].lower())
+    hosts = sorted({n for x in shows for n in ctx["stream_hosts"].get(x, [])})
+    tabs = [("latest", "Latest"), ("views", "Most viewed")] + ([("trending", "Trending")] if ctx["flags"].get("g24") else [])
+    opt = lambda pairs: "".join('<option value="%s">%s</option>' % (e(v), e(l)) for v, l in pairs)
+    return ('<section class="block" id="latest-videos"><div class="block-head"><h2>Latest videos</h2></div>'
+            '<div class="stream" data-meta="%s/data/stream-meta.json?v=%s" data-base="%s">'
+            '<div class="toggle stream-tabs" role="tablist">%s</div>'
+            '<div class="stream-filters">'
+            '<label class="sr" for="sf-q">Search</label><input id="sf-q" class="sel sf-q" type="search" '
+            'placeholder="Search title, show or host" autocomplete="off">'
+            '<label class="sr" for="sf-show">Show</label><select id="sf-show" class="sel"><option value="">All shows</option>%s</select>'
+            '<label class="sr" for="sf-host">Host</label><select id="sf-host" class="sel"><option value="">All hosts</option>%s</select>'
+            '<label class="sr" for="sf-fmt">Format</label><select id="sf-fmt" class="sel">%s</select>'
+            '<label class="sr" for="sf-range">Date range</label><select id="sf-range" class="sel">%s</select>'
+            '</div><p class="stream-count hint-below" aria-live="polite"></p>'
+            '<div class="grid stream-grid">%s</div>'
+            '<button class="loadmore" type="button">Load more</button></div></section>\n'
+            % (B, ctx["stream_v"], B,
+               "".join('<button type="button" data-tab="%s"%s>%s</button>' % (k, ' class="active"' if k == "latest" else "", l)
+                       for k, l in tabs),
+               opt([(x, ctx["shows"][x]["name"]) for x in shows]), opt([(h, h) for h in hosts]),
+               opt(STREAM_FMTS), opt(STREAM_RANGES),
+               "".join(video_card(it, ctx) for it in st[:12])))
+
+
 def index_page(ctx):
+    from .cards import featured, shelf
     url = config.SITE_BASE + "/"
     top = ctx["ranked"][:3]
     top_names = ", ".join(ctx["shows"][s["slug"]]["name"] for s in top)
-    desc = ("NBA player podcasts ranked by YouTube views on full episodes from the last 30 days. "
-            "Top right now: %s." % top_names) if top else "NBA player podcasts ranked by YouTube views."
-    body = ['<div class="hdr"><h1>NBA Player Podcasts</h1></div>\n'
-            '<p class="subtitle">%d podcasts hosted by NBA players, ranked by YouTube views on full episodes '
-            '(20 minutes or longer) posted in the last 30 days. %s</p>\n' % (len(ctx["ranked"]), stamp(ctx))]
-    eow = ctx["episode_of_week"]
-    if eow:
-        show = ctx["shows"][eow["slug"]]
-        body.append('<section class="block"><div class="block-head"><h2>Episode of the week</h2></div>'
-                    '<div class="eow">%s<div class="eow-body">%s'
-                    '<div class="ep-meta"><a class="ep-show" href="%s">%s</a> · %s · %s</div>'
-                    '<div class="eow-num"><span class="v">%s</span> views%s</div></div></div></section>\n'
-                    % (thumb(eow["id"], ctx, "th big"), ep_link(eow), show_url(show["slug"]), e(show["name"]),
-                       fmt_date(eow["published"]), fmt_len(eow.get("duration")), full(eow["views"]),
-                       (" · " + breakout_tag(eow.get("breakout")) + " its show's typical episode")
-                       if eow.get("breakout") else ""))
-    if ctx["breakouts"]:
-        body.append('<section class="block"><div class="block-head"><h2>Latest breakouts</h2></div><div class="eps">')
-        for v in ctx["breakouts"]:
-            body.append(ep_row(v, ctx, ctx["shows"][v["slug"]]))
-        body.append('</div><p class="hint-below">Full episodes from the last 30 days with at least 5 times '
-                    'their show\'s typical views.</p></section>\n')
-    body.append('<section class="block"><div class="block-head"><h2>Rankings</h2></div>')
+    desc = ("Watch the latest NBA player podcast episodes and clips, the most watched videos this week and the "
+            "rankings by YouTube views. Top right now: %s." % top_names) if top else \
+        "Watch the latest NBA player podcast episodes and clips, and the rankings by YouTube views."
+    h = ctx["home"]
+    body = ['<div class="hdr"><h1>NBA Player Podcasts: Rankings, Episodes and Clips</h1></div>\n'
+            '<p class="subtitle">Episodes, clips and Shorts from %d podcasts hosted by NBA players, playable right '
+            'here, with the rankings by YouTube views on full episodes (20 minutes or longer) from the last 30 days. '
+            '%s</p>\n' % (len(ctx["ranked"]), stamp(ctx)),
+            '<nav class="jump"><a href="#latest-videos">Latest videos</a><a href="#rankings">Rankings</a>'
+            '<a href="%s/most-watched/">Most watched</a></nav>\n' % B]
+    if h["watch"]:
+        body.append('<section class="block"><div class="block-head"><h2>Watch now</h2></div>%s</section>\n'
+                    % featured(h["watch"], ctx, "The most viewed podcast video posted in the last 48 hours."))
+    body.append(shelf("Most watched this week", h["week"], ctx, "Videos posted in the last 7 days, by views."))
+    if h["trending"]:
+        lbl = "24 hours" if h["trend_label"] == "gain24" else "7 days"
+        body.append(shelf("Trending", h["trending"], ctx, "Views gained in the last %s, from our daily view counts." % lbl,
+                          extra=h["trend_label"]))
+    body.append(shelf("Latest episodes", h["latest_eps"], ctx, "Full episodes (20 minutes or longer), newest first."))
+    body.append(shelf("Biggest breakouts", h["breakouts"], ctx,
+                      "Breakout = a video's views divided by the median views of the same show's videos of the same "
+                      "format from the 90 days before it (at least 8 of them). Last 30 days.", show_breakout=True))
+    body.append(stream_html(ctx))
+    body.append('<section class="block" id="rankings"><div class="block-head"><h2>Rankings</h2></div>')
     body.append(leaderboard(ctx))
     body.append('<p class="hint-below">Players\' personal channels (vlogs, behind the scenes, highlights) are '
                 'ranked separately: <a href="%s/player-channels/">%d player channels</a>.</p>'
@@ -289,7 +326,7 @@ def index_page(ctx):
           "itemListElement": [{"@type": "ListItem", "position": s["rank"], "name": ctx["shows"][s["slug"]]["name"],
                                "url": config.SITE_BASE + "/" + s["slug"] + "/"} for s in ctx["ranked"][:25]]}
     extra = '<script type="application/ld+json">%s</script>\n' % json.dumps(ld).replace("</", "<\\/")
-    return page("NBA Player Podcasts Rankings by YouTube Views | HoopsMatic", desc, url, ctx["assets_v"],
+    return page("NBA Player Podcasts: Rankings, Episodes and Clips | HoopsMatic", desc, url, ctx["assets_v"],
                 "rankings", "".join(body), extra)
 
 
