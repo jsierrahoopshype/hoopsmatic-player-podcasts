@@ -174,6 +174,9 @@ def build(now=None, fetch_thumbs=True, out=None):
     return ctx
 
 
+REVIEW_MENTIONS = 1000   # plain title mentions kept in appearances_review.json
+
+
 def write_appearances(ctx):
     """data/appearances.json (confirmed guests, shown on the site) and
     data/appearances_review.json (possible guests, not shown)."""
@@ -185,10 +188,18 @@ def write_appearances(ctx):
                    "same episode share one group and count as one appearance. Generated on every build."),
         "items": items}, line_per_key="items")
     rev = sorted(ctx["appearances_review"].items(), key=lambda kv: -(kv[1].get("views") or 0))
+    # Plain title mentions run to tens of thousands: keep the most viewed
+    # ones, and every stated guest held back (same name, or a regular).
+    plain = [kv for kv in rev if kv[1]["reason"].startswith("named in the title")]
+    keep = {k for k, _ in plain[:REVIEW_MENTIONS]}
+    rev = [kv for kv in rev if kv[0] in keep or not kv[1]["reason"].startswith("named in the title")]
     save_json(config.APPEARANCES_REVIEW_FILE, {
         "_about": ("Possible guests, NOT shown on the site: players named in a title without being stated as "
-                   "guests, or a stated guest whose name belongs to more than one player. To confirm one, add "
-                   "{\"video\": ..., \"player\": <Career Map slug>} to \"add\" in data/appearances_manual.json. "
-                   "Sorted by views. Generated on every build."),
+                   "guests (the %d most viewed of %d), a stated guest whose name belongs to more than one "
+                   "player, or someone stated in so many of one show's episodes that they are likely a co-host "
+                   "or regular. To confirm one, add {\"video\": ..., \"player\": <Career Map slug>} to \"add\" "
+                   "in data/appearances_manual.json. Sorted by views. Generated on every build."
+                   % (min(REVIEW_MENTIONS, len(plain)), len(plain))),
+        "total_title_mentions": len(plain),
         "items": [dict(v, key=k) for k, v in rev]}, line_per_key="items")
 

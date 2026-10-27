@@ -78,3 +78,35 @@ def test_description_link_groups_a_clip_with_its_episode():
     c = {"videos": {"v00xxxxxxxx": vids[0], "v01": vids[1]}}
     conf, _ = guests.build([show()], {"UCx": c}, index=INDEX, manual={})
     assert len({it["group"] for it in conf.values()}) == 1
+
+
+def test_with_counts_only_as_a_guest_line():
+    (conf, review), _ = run(["Jeff Teague REACTS to Lakers being CAUTIOUS with Kevin Durant this season | Club 520",
+                             "Why working out with Kevin Garnett is a BAD thing",
+                             "Jeff Teague on Lakers since pairing Isiah Thomas with Jamal Crawford | Club 520",
+                             "Club 520 Podcast w/ Tyrese Haliburton",
+                             "With Michael Jordan | Episode 3"])
+    assert sorted(it["player"] for it in conf.values()) == ["michael-jordan", "tyrese-haliburton"]
+    assert {"kevin-durant", "kevin-garnett", "jamal-crawford"} <= {it["player"] for it in review.values()}
+
+
+def test_former_hosts_are_not_guests_of_their_own_show():
+    s = dict(show(), former_hosts=[{"name": "Kevin Durant", "url": None}])
+    c = cat(vid(1, 100, title="The Club 520 Podcast w/ Kevin Durant"))
+    conf, _ = guests.build([s], {"UCx": c}, index=INDEX, manual={})
+    assert conf == {}
+
+
+def test_someone_in_ten_episodes_is_a_regular_not_a_guest():
+    titles = ["Episode %d ft. Jamal Crawford" % i for i in range(guests.REGULAR_MIN)] + ["Ep 99 ft. Kevin Garnett"]
+    # One full episode per 20 days so none share a group.
+    vids = [vid(1 + 20 * i, 100, title=t) for i, t in enumerate(titles)]
+    conf, review = guests.build([show()], {"UCx": cat(*vids)}, index=INDEX, manual={})
+    assert [it["player"] for it in conf.values()] == ["kevin-garnett"]
+    regular = [it for it in review.values() if it["player"] == "jamal-crawford"]
+    assert len(regular) == guests.REGULAR_MIN and "regular" in regular[0]["reason"]
+
+
+def test_joins_takes_only_the_names_right_before_it():
+    (conf, _), _ = run(["EP. 2 - Danny Meets the Raps & Kevin Durant, Michael Jordan Joins the Pod"])
+    assert [it["player"] for it in conf.values()] == ["michael-jordan"]

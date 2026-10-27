@@ -46,7 +46,8 @@ lists, not in date windows.
 - `data/channels.json`: the roster. One record per show: `slug`, `name`,
   `hosts` (a list of `{"name", "url"}`; `url` is the host's HoopsMatic player
   page on NBA Career Map, the section with the most player pages, or `null`
-  when there is none), `channel_id`, `youtube_url`, optional `playlist_id` (a show that lives
+  when there is none), optional `former_hosts` (same shape; past hosts are
+  never counted as guests of their own show), `channel_id`, `youtube_url`, optional `playlist_id` (a show that lives
   in one playlist of a network's channel), optional `title_filter`
   (`{"include": regex, "exclude": regex}`, case-insensitive) so one channel can
   feed several shows, `shared_channel` (hides subscriber numbers that belong

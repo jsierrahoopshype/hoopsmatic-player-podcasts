@@ -3,11 +3,16 @@
 A guest is confirmed automatically only when a video's title (or the start of
 its description, when a feed gave one; "with" is not read there) says so
 explicitly:
-    "ft. <Name>", "feat. <Name>", "featuring <Name>", "with <Name>" / "w/ <Name>",
+    "ft. <Name>", "feat. <Name>", "featuring <Name>", "with <Name>" / "w/ <Name>"
+    (only at the start of a title segment or after a show word such as
+    "Podcast" or "Episode 12", and followed by names alone),
     "<Name> joins" (or "stops by", "drops by", "swings by", "sits down with"),
     "Guest: <Name>"
 AND the name is exactly one NBA Career Map player (the same names, slugs and
-same-name checks used for hosts). A show's own hosts are never its guests.
+same-name checks used for hosts). A show's own hosts (and former hosts,
+"former_hosts" in data/channels.json) are never its guests, and someone
+stated in 10 or more of one show's episodes is treated as a regular (sent to
+review) rather than a guest.
 
 Every other mention of a Career Map player in a title goes to
 data/appearances_review.json (not shown on the site), as does an explicit
@@ -47,10 +52,21 @@ WITH_STOP = re.compile(
     r"reunion|relationship|friendship|fight(?:ing)?|mess(?:ing)?|deal(?:ing)?|problem|issues?|"
     r"along|together|connection|chemistry|signing|meeting|talks?|conversations?)\s*$", re.I)
 
+# "with <Name>" / "w/ <Name>" counts only as a guest line: at the start of
+# a title segment or right after a show word ("Podcast w/", "Episode 12
+# with", "LIVE with"), and with nothing but names after it up to the end of
+# the segment. "Jeff Teague REACTS to Lakers being CAUTIOUS with LeBron
+# James this season" is not a guest line.
+WITH_AFTER = re.compile(
+    r"(?:^|\b(?:podcast|pod|episode|ep\.?\s*\d*|show|special|live|livestream|stream|interview|chat|"
+    r"sit-?down|q&a|edition|finale|premiere|party|part\s*\d+|\d+))\s*$", re.I)
+NAMES_ONLY = re.compile(r"^\s*(?:[A-Z@][\w'’\.\-]*|de|del|da|van|von|der|la|le|and|&|,|\+)"
+                        r"(?:\s*(?:[A-Z@][\w'’\.\-]*|de|del|da|van|von|der|la|le|and|&|,|\+))*\s*$")
+
 PATTERNS = [
     ("ft.", re.compile(r"\b(?:ft\.?|feat\.?|featuring)\s+(?P<seg>[^|\-–—:!?()\[\]•]+)", re.I)),
     ("with", re.compile(r"(?P<pre>[^|\-–—:!?()\[\]•]*?)\b(?:with|w/)\s+(?P<seg>[^|\-–—:!?()\[\]•]+)", re.I)),
-    ("joins", re.compile(r"(?P<seg>%s(?:\s*(?:,|&|and)\s*%s)*)\s+(?i:joins|join|stops by|drops by|swings by|"
+    ("joins", re.compile(r"(?P<seg>%s(?:\s*(?:&|and)\s*%s)*)\s+(?i:joins|join|stops by|drops by|swings by|"
                          r"sits down with|pulls up)\b" % (NAME, NAME))),
     ("guest:", re.compile(r"\bguests?\s*:\s*(?P<seg>[^|\-–—!?()\[\]•]+)", re.I)),
 ]
@@ -122,11 +138,13 @@ def explicit_names(text, allow_with=True):
         if label == "with" and not allow_with:
             continue
         for m in rx.finditer(text or ""):
-            if label == "with" and WITH_STOP.search(m.group("pre") or ""):
-                continue
             seg = m.group("seg")
-            if label == "with" and seg.isupper():
-                continue   # ALL CAPS after "with" is emphasis, not a guest line
+            if label == "with":
+                pre = m.group("pre") or ""
+                if WITH_STOP.search(pre) or not WITH_AFTER.search(pre) or not NAMES_ONLY.match(seg):
+                    continue
+                if seg.isupper():
+                    continue   # ALL CAPS after "with" is emphasis, not a guest line
             for n in split_names(seg):
                 out.append((n, label))
     return out
@@ -202,6 +220,9 @@ def group_keys(videos, full_ids):
     return keys
 
 
+REGULAR_MIN = 10       # appearances on one show that make someone a regular
+
+
 def build(shows, cats, index=None, manual=None):
     """-> (appearances {key: item}, review {key: item}).
 
@@ -216,7 +237,7 @@ def build(shows, cats, index=None, manual=None):
         if show.get("exclude_reason"):
             continue
         host_slugs = set()
-        for h in show.get("hosts") or []:
+        for h in (show.get("hosts") or []) + (show.get("former_hosts") or []):
             name = h["name"] if isinstance(h, dict) else h
             slug, _ = index.lookup(name)
             if slug:
@@ -270,6 +291,7 @@ def build(shows, cats, index=None, manual=None):
             del review[key]
 
     # Group clips of the same episode: one appearance per group.
+    groups = {}
     for show_slug, vids in vids_by_show.items():
         by_id = {v["id"]: v for v in vids}
         full_ids = {v["id"] for v in vids if metrics.video_format(v) == metrics.FULL}
@@ -281,6 +303,20 @@ def build(shows, cats, index=None, manual=None):
             keys = group_keys(pv, full_ids)
             for v in pv:
                 confirmed["%s:%s" % (v["id"], player)]["group"] = "%s/%s" % (show_slug, keys[v["id"]])
+            groups[(show_slug, player)] = len(set(keys.values()))
+
+    # Someone "with" a show in this many of its episodes is a co-host or a
+    # regular, not a guest: back to review unless added by hand.
+    for key in list(confirmed):
+        it = confirmed[key]
+        n = groups.get((it["show"], it["player"]), 0)
+        if n >= REGULAR_MIN and it["how"] != "manual":
+            v = next((x for x in vids_by_show[it["show"]] if x["id"] == it["video"]), {})
+            review[key] = {"video": it["video"], "show": it["show"], "name": it.get("name") or it["player"],
+                           "player": it["player"],
+                           "reason": "named in %d of this show's episodes: likely a co-host or regular" % n,
+                           "title": v.get("title") or "", "views": v.get("views")}
+            del confirmed[key]
     return confirmed, review
 
 
