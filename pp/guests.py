@@ -74,7 +74,7 @@ PATTERNS = [
 
 def norm(name):
     a = unicodedata.normalize("NFKD", name).encode("ascii", "ignore").decode().lower()
-    a = a.replace("’", "'")
+    a = a.replace("’", "'").replace(",", " ")
     a = re.sub(r"\s+(jr|sr|ii|iii|iv)\.?$", "", a.strip())
     a = re.sub(r"[.'`]", "", a)
     return re.sub(r"[\s\-]+", " ", a).strip()
@@ -82,13 +82,22 @@ def norm(name):
 
 def cm_slug(name):
     """Career Map's slug for one of its own names ("Bob Duffy (1922)" ->
-    bob-duffy-1922, "D'Angelo Russell" -> d-angelo-russell)."""
+    bob-duffy-1922, "D'Angelo Russell" -> d-angelo-russell, "Jaren Jackson Jr"
+    -> jaren-jackson-jr: a suffix stays, as on Career Map's own pages)."""
     m = re.match(r"^(.*?)\s*\((\d{4})\)$", name)
     base, year = (m.group(1), m.group(2)) if m else (name, None)
     a = unicodedata.normalize("NFKD", base).encode("ascii", "ignore").decode().lower()
-    a = re.sub(r"\s+(jr|sr)\.?$", "", a)
     s = re.sub(r"[^a-z0-9]+", "-", a).strip("-")
     return s + ("-" + year if year else "")
+
+
+SUFFIX_RE = re.compile(r"[,\s]+(jr|sr|ii|iii|iv)\.?$", re.I)
+
+
+def split_suffix(name):
+    """'Jaren Jackson Jr.' -> ('Jaren Jackson', 'jr'); no suffix -> (name, None)."""
+    m = SUFFIX_RE.search((name or "").strip())
+    return (name.strip()[:m.start()], m.group(1).lower()) if m else (name, None)
 
 
 class PlayerIndex:
@@ -97,11 +106,15 @@ class PlayerIndex:
     def __init__(self, names):
         self.by_key = {}
         self.display = {}
+        self.suffix = {}        # slug -> "jr" / "sr" / "ii" / ... or None
         for n in names:
             base = re.sub(r"\s*\(\d{4}\)$", "", n)
             slug = cm_slug(n)
             self.display[slug] = base
-            self.by_key.setdefault(norm(base), []).append(slug)
+            self.suffix[slug] = split_suffix(base)[1]
+            hits = self.by_key.setdefault(norm(base), [])
+            if slug not in hits:
+                hits.append(slug)
         for k, slug in ALIASES.items():
             if slug in self.display:
                 self.by_key.setdefault(k, [slug])
@@ -112,8 +125,24 @@ class PlayerIndex:
         return cls(doc.get("names") or [])
 
     def lookup(self, name):
-        """-> (slug or None, ambiguous: bool)."""
-        hits = self.by_key.get(norm(name)) or []
+        """-> (slug or None, ambiguous: bool). A name written with a suffix
+        ("Jr.", "II") means only the player with that suffix; when no player
+        of that name has one (Career Map files Michael Porter Jr. as Michael
+        Porter), the one player of that name."""
+        base, sfx = split_suffix(name)
+        hits = self.by_key.get(norm(base)) or []
+        if sfx:
+            same = [h for h in hits if self.suffix.get(h) == sfx]
+            if len(same) == 1:
+                return same[0], False
+            plain = [h for h in hits if not self.suffix.get(h)]
+            if len(hits) == 1 and plain:
+                return hits[0], False
+            # "Tim Hardaway Sr.": Career Map files the father without a
+            # suffix and the son as "Jr", so the one without it is the Sr.
+            if sfx == "sr" and len(plain) == 1:
+                return plain[0], False
+            return None, len(hits) > 1
         if len(hits) == 1:
             return hits[0], False
         return None, len(hits) > 1

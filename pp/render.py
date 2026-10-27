@@ -1222,7 +1222,8 @@ def methodology_page(ctx):
         "a listing of its channel's Videos, Live and Shorts tabs (the list a visitor sees). That gives every "
         "video's title, length, date and view count. Feeds also give exact view counts, likes and the start of "
         "the description for a channel's latest 15 videos.",
-        "Twice a day (06:15 and 18:15 UTC) the feeds are read and every video from the last 90 days is listed "
+        "Twice a day (06:37 and 18:37 UTC, with backup runs at 09:41 and 21:41 UTC when one was missed) the feeds "
+        "are read and every video from the last 90 days is listed "
         "again. Once a week (Mondays, or whenever the last full pass is a week old) every video ever posted is "
         "listed, with subscriber counts, show artwork, the NBA Career Map player names and the headshots index.",
         "Show list: <a href=\"%s/\">the rankings</a>, the <a href=\"%s/player-channels/\">player channels</a> and "
@@ -1273,9 +1274,17 @@ def methodology_page(ctx):
                 '<p>Players are matched by full name against NBA Career Map\'s players, or by a nickname on our '
                 'list (<a href="https://github.com/jsierrahoopshype/hoopsmatic-player-podcasts/blob/main/data/nicknames.json">'
                 'data/nicknames.json</a>: Wemby, Giannis, SGA, Bron, KD, Steph, AD, Jokic and more; it can be edited). '
-                'A name that belongs to more than one Career Map player, or a surname on its own, is matched only when a '
-                'team named in the same title or chapter line settles who it is (exactly one current player with that '
-                'name on that team); otherwise it goes to a review list and is not shown. Teams are matched by nickname '
+                'A name written with a suffix ("Jr.", "Sr.", "II", "III") means only the player with that suffix '
+                '(Jaren Jackson Jr. is never his father). A plain name shared by a father and son, where only one has a '
+                'suffix on Career Map, means the one without it (Gary Payton), except for names on our always-review '
+                'list (data/always_review.json: Tim Hardaway, Larry Nance, Glenn Robinson, Kelly Oubre, Jaren Jackson, '
+                'Gary Trent), whose sons are often written without the suffix. A surname on its own matches when exactly '
+                'one Career Map player has it (Kuminga, Haliburton); a surname shared by several players, or any other '
+                'name shared by different players, is matched only when a team named in the same title or chapter line '
+                'settles who it is (exactly one current player with that name on that team); otherwise it goes to a '
+                'review list and is not shown. A first name on its own is ignored unless it is on the nickname list, and '
+                'so is a surname that is also an everyday word (data/surname_stopwords.json: Battle, Block, Day...). '
+                'Teams are matched by nickname '
                 '(Lakers, Celtics, Sixers, Cavs, Mavs, Wolves, Blazers, Pels...) or a former name of the franchise '
                 '(SuperSonics, Bobcats, New Jersey Nets), never by a city alone.</p>'
                 '<p>A player\'s own appearance in a video does not also count as a mention of him there, and a show\'s '
@@ -1300,6 +1309,14 @@ def methodology_page(ctx):
             "gained and breakouts, confirms guests and plays videos.")
     return page("Methodology: How NBA Player Podcast Rankings Work | HoopsMatic", desc, url, ctx["assets_v"], None,
                 "".join(body), ld_script(breadcrumbs_ld(trail)))
+
+
+def moved_page(url):
+    """A stub at a page's old address: sends the visitor to the new one."""
+    return ('<!doctype html>\n<html lang="en"><head><meta charset="utf-8">'
+            '<meta name="robots" content="noindex"><link rel="canonical" href="%s">'
+            '<meta http-equiv="refresh" content="0; url=%s"><title>Moved | HoopsMatic</title></head>'
+            '<body><p>This page moved to <a href="%s">%s</a>.</p></body></html>\n' % (e(url), e(url), e(url), e(url)))
 
 
 def not_found_page(ctx):

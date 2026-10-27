@@ -3,9 +3,11 @@ from datetime import timedelta
 from pp import chapters, guests, mentions, people, talk
 from tests.helpers import NOW, cat, vid
 
-INDEX = guests.PlayerIndex(["Gary Payton", "Gary Payton II", "Victor Wembanyama", "LeBron James", "Kevin Durant", "Jayson Tatum", "Nikola Jokić",
-                            "Charles Jones (1957)", "Charles Jones (1975)", "Jeff Teague", "Magic Johnson",
-                            "Larry Bird", "Jaylen Brown"])
+INDEX = guests.PlayerIndex(["Gary Payton", "Gary Payton II", "Victor Wembanyama", "LeBron James", "Kevin Durant",
+                            "Jayson Tatum", "Earl Tatum", "Nikola Jokić", "Charles Jones (1957)", "Charles Jones (1975)",
+                            "Jeff Teague", "Magic Johnson", "Larry Bird", "Jaylen Brown", "Jonathan Kuminga",
+                            "Jaren Jackson", "Jaren Jackson Jr", "Tim Hardaway", "Tim Hardaway Jr", "Richard Jefferson",
+                            "Tyus Battle", "Kelly Oubre", "Shai Gilgeous-Alexander", "Matt Guokas, Sr.", "Matt Guokas", "Michael Porter"])
 TEAMS = [{"slug": "boston-celtics", "name": "Boston Celtics", "nickname": "Celtics", "abbrev": "BOS",
           "names": ["Celtics"], "historical": []},
          {"slug": "oklahoma-city-thunder", "name": "Oklahoma City Thunder", "nickname": "Thunder", "abbrev": "OKC",
@@ -17,7 +19,7 @@ TEAMS = [{"slug": "boston-celtics", "name": "Boston Celtics", "nickname": "Celti
          {"slug": "miami-heat", "name": "Miami Heat", "nickname": "Heat", "abbrev": "MIA", "names": ["Heat"], "historical": []}]
 NICK = {"Wemby": "victor-wembanyama", "KD": "kevin-durant", "Jokic": "nikola-jokic", "Bron": "lebron-james"}
 ACTIVE = [["Jayson Tatum", "Tatum", "BOS"], ["Jaylen Brown", "Brown", "BOS"], ["Charles Jones", "Jones", "PHI"]]
-M = mentions.Matcher(INDEX, NICK, TEAMS, ACTIVE)
+M = mentions.Matcher(INDEX, NICK, TEAMS, ACTIVE, always_review=["Tim Hardaway", "Kelly Oubre"], stopwords=["battle"])
 
 
 def test_nicknames_match_as_written_or_all_caps_and_accents_do_not_matter():
@@ -33,15 +35,58 @@ def test_full_names_and_possessives():
     assert M.find("NIKOLA JOKIC DOMINATES")[0] == {"nikola-jokic": "name"}
 
 
-def test_shared_names_and_lone_surnames_need_a_team_to_settle_them():
+def test_shared_names_and_shared_surnames_need_a_team_to_settle_them():
     players, _, unresolved = M.find("Charles Jones was a problem")
     assert players == {} and unresolved == [("Charles Jones", "name belongs to more than one Career Map player")]
     assert M.find("Charles Jones and the Sixers")[0] == {}             # active Charles Jones has no Career Map slug of his own
+    # Tatum: Jayson and Earl, so a lone "Tatum" needs his team alongside
     players, teams, unresolved = M.find("Tatum is back")
-    assert players == {} and unresolved[0][0] == "Tatum"
+    assert players == {} and unresolved == [("Tatum", "surname shared by more than one Career Map player, no team settles who")]
     players, teams, _ = M.find("Tatum and the Celtics are back")
     assert players == {"jayson-tatum": "surname+team"} and teams == {"boston-celtics"}
-    assert M.find("Shannon Sharpe on Tatum's future")[2] == [("Tatum", "surname alone, no team in the same line settles who")]
+
+
+def test_a_written_suffix_matches_only_the_player_with_it():
+    assert M.find("Jaren Jackson Jr. Gets Real On the Grizzlies")[0] == {"jaren-jackson-jr": "name+suffix"}
+    assert M.find("JAREN JACKSON JR TALKS")[0] == {"jaren-jackson-jr": "name+suffix"}
+    assert M.find("Tim Hardaway Jr. on the Mavs")[0] == {"tim-hardaway-jr": "name+suffix"}
+    # the father is filed without a suffix: "Sr." means him
+    assert M.find("Tim Hardaway Sr. CALLS OUT Gil's Arena")[0] == {"tim-hardaway": "name+suffix"}
+    assert M.find("Matt Guokas Sr. remembers")[0] == {"matt-guokas-sr": "name+suffix"}
+    assert M.find("Warriors title reaction w/ Gary Payton II")[0] == {"gary-payton-ii": "name+suffix"}
+    # Career Map files Michael Porter Jr. without the suffix: the one Michael Porter
+    assert M.find("Michael Porter Jr. drops 40")[0] == {"michael-porter": "name+suffix"}
+    assert all(not u for u in (M.find("Jaren Jackson Jr. & Ja")[2],))   # never to review
+
+
+def test_a_plain_father_and_son_name_means_the_one_without_a_suffix():
+    assert M.find("Vernon Maxwell's Gary Payton Fight Story")[0] == {"gary-payton": "name (no suffix)"}
+    assert M.find("Jaren Jackson on the 90s Rockets")[0] == {"jaren-jackson": "name (no suffix)"}
+    assert M.find("Matt Guokas on the 76ers")[0] == {"matt-guokas": "name (no suffix)"}
+
+
+def test_names_on_the_always_review_list_go_to_review_without_a_suffix():
+    players, _, unresolved = M.find("Tim Hardaway SNAPS On Gil's Arena")
+    assert players == {} and unresolved == [("Tim Hardaway", "name on the always-review list (written without a suffix)")]
+    players, _, unresolved = M.find("Kelly Oubre drops 30")
+    assert players == {} and unresolved[0][0] == "Kelly Oubre"
+    assert M.find("Tim Hardaway Jr. drops 30")[0] == {"tim-hardaway-jr": "name+suffix"}
+
+
+def test_a_surname_of_exactly_one_player_matches_on_its_own():
+    assert M.find("KUMINGA TURNED DOWN THE LAKERS")[0] == {"jonathan-kuminga": "surname (one player)"}
+    assert M.find("Draymond on Recruiting Durant")[0] == {"kevin-durant": "surname (one player)"}
+    assert M.find("Finals X-Factors: Gilgeous-Alexander vs the field")[0] == {"shai-gilgeous-alexander": "surname (one player)"}
+    assert M.find("Battle for the West")[0] == {}                       # an everyday word: never on its own
+    assert M.find("Battle for the West")[2] == []
+
+
+def test_lone_first_names_are_ignored_unless_a_nickname():
+    assert M.find("The Story of Richard & Kenyon's Locker Room Fight") == ({}, set(), [])
+    assert M.find("Jaren and Tim talk") == ({}, set(), [])
+    assert M.find("Bron and Jokic")[0] == {"lebron-james": "nickname", "nikola-jokic": "nickname"}
+    # a first name before a surname is someone else ("Shannon Sharpe")
+    assert M.find("Shannon Sharpe on the Celtics")[0] == {}
 
 
 def test_teams_by_nickname_never_by_city():
@@ -116,11 +161,6 @@ def test_player_pages_from_mentions_need_ten_discussions():
     ps = {"host": {"slug": "host"}}
     people.add_talked_about(ps, talk_map, {"a": "A"})
     assert set(ps) == {"host", "a"} and ps["a"]["talk_only"] and "talk_only" not in ps["host"]
-
-
-def test_a_numeral_suffix_picks_its_own_player():
-    assert M.find("Warriors title reaction w/ Gary Payton II")[0] == {"gary-payton-ii": "name"}
-    assert M.find("Gary Payton fight story")[2][0][0] == "Gary Payton"
 
 
 def test_mentions_file_is_written_in_a_stable_order(tmp_path, monkeypatch):

@@ -299,6 +299,11 @@ def build(now=None, fetch_thumbs=True, out=None):
         p.parent.mkdir(parents=True, exist_ok=True)
         p.write_text(html, encoding="utf-8")
     (out / "404.html").write_text(render.not_found_page(ctx), encoding="utf-8")
+    # Pages that moved: a stub at the old address pointing at the new one.
+    for old_rel, new_rel in ((load_json(config.MOVED_PAGES_FILE, {}) or {}).get("moved") or {}).items():
+        if (out / new_rel / "index.html").exists() and not (out / old_rel / "index.html").exists():
+            (out / old_rel).mkdir(parents=True, exist_ok=True)
+            (out / old_rel / "index.html").write_text(render.moved_page(config.SITE_BASE + "/" + new_rel), encoding="utf-8")
 
     state = sitemap.update_state(load_json(config.SITEMAP_STATE_FILE, {}),
                                  {u: html for u, (_, html) in pages.items()}, ctx["today"])

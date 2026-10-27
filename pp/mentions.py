@@ -32,7 +32,7 @@ import re
 import unicodedata
 
 from . import config, metrics
-from .guests import PlayerIndex, group_keys, norm
+from .guests import PlayerIndex, group_keys, norm, split_suffix
 from .util import load_json
 
 WORD = re.compile(r"[A-Za-z0-9][A-Za-z0-9'’\.\-]*")
@@ -53,6 +53,7 @@ jalen marcus duncan
 """.split())
 
 
+SUFFIXES = ("Jr", "Sr", "II", "III", "IV")
 # A team word followed by these is not the team ("Heat Check").
 NOT_TEAM = {"miami-heat": r"\s+(?:Check|CHECK)\b"}
 
@@ -67,14 +68,19 @@ def _cased_forms(name):
 
 
 class Matcher:
-    def __init__(self, index, nicknames, teams, active):
+    def __init__(self, index, nicknames, teams, active, always_review=(), stopwords=()):
         self.index = index
-        # nickname -> slug; patterns longest first so "Ant Edwards" beats "Ant"
-        self.suffixed = {}
+        self.always_review = {norm(n) for n in always_review}
+        self.stopwords = {norm(w) for w in stopwords}
+        # Every Career Map player's surname and first name (suffix left out).
+        self.surnames, self.first_names = {}, set()
         for slug, disp in index.display.items():
-            m = re.match(r"^(.*)\s+(II|III|IV)$", disp)
-            if m:
-                self.suffixed[(norm(m.group(1)), m.group(2))] = slug
+            toks = split_suffix(disp)[0].split()            # "Gilgeous-Alexander" stays one surname
+            if len(toks) >= 2:
+                self.surnames.setdefault(norm(toks[-1]), set()).add(slug)
+                self.first_names.add(norm(toks[0]))
+        self.nick_words = {norm(n) for n in nicknames}
+        # nickname -> slug; patterns longest first so "Ant Edwards" beats "Ant"
         self.nick = []
         for name, slug in sorted(nicknames.items(), key=lambda kv: -len(kv[0])):
             if slug in index.display:
@@ -104,7 +110,26 @@ class Matcher:
         return cls(index or PlayerIndex.load(),
                    (load_json(config.NICKNAMES_FILE, {}) or {}).get("names", {}),
                    (load_json(config.TEAMS_FILE, {}) or {}).get("teams", []),
-                   (load_json(config.NBA_ACTIVE_FILE, {}) or {}).get("players", []))
+                   (load_json(config.NBA_ACTIVE_FILE, {}) or {}).get("players", []),
+                   (load_json(config.ALWAYS_REVIEW_FILE, {}) or {}).get("names", []),
+                   (load_json(config.SURNAME_STOPWORDS_FILE, {}) or {}).get("words", []))
+
+    def _plain_name(self, name):
+        """A full name written without a suffix -> (slug or None, ambiguous,
+        how). A father and son where only one has a suffix on Career Map:
+        the one without, unless the name is on the always-review list."""
+        slug, amb = self.index.lookup(name)
+        base, sfx = split_suffix(name)
+        if sfx:
+            return slug, amb, "name+suffix" if slug else None
+        if norm(base) in self.always_review and (slug or amb):
+            return None, True, "always review"
+        if amb:
+            hits = self.index.by_key.get(norm(base)) or []
+            plain = [h for h in hits if not self.index.suffix.get(h)]
+            if len(hits) == 2 and len(plain) == 1:
+                return plain[0], False, "name (no suffix)"
+        return slug, amb, "name"
 
     def find(self, text):
         """-> (players {slug: how}, teams {slug}, unresolved [(name, reason)])
@@ -128,28 +153,19 @@ class Matcher:
                 # the words must be adjacent (only spaces between them)
                 if any(text[win[k][1]:win[k + 1][0]].strip() for k in range(size - 1)):
                     continue
+                # A suffix right after the name belongs to it ("Gary Payton II").
+                if len(words) > i + size and words[i + size][2] in SUFFIXES \
+                        and not text[win[-1][1]:words[i + size][0]].strip(" ,"):
+                    win = words[i:i + size + 1]
                 name = " ".join(w[2] for w in win)
-                slug, amb = self.index.lookup(name)
-                # "Gary Payton II" is its own Career Map player, though the
-                # suffix is dropped when names are compared.
-                if amb:
-                    if win[-1][2] in ("II", "III", "IV"):
-                        exact = self.suffixed.get((norm(name), win[-1][2]))
-                    elif len(words) > i + size and words[i + size][2] in ("II", "III", "IV"):
-                        exact = self.suffixed.get((norm(name), words[i + size][2]))
-                        if exact:
-                            size += 1
-                            win = words[i:i + size]
-                    else:
-                        exact = None
-                    if exact:
-                        slug, amb = exact, False
+                slug, amb, how = self._plain_name(name)
                 if slug or amb:
                     taken.append((win[0][0], win[-1][1]))
                     if slug:
-                        players.setdefault(slug, "name")
+                        players.setdefault(slug, how)
                     else:
-                        ambiguous.append(name)
+                        ambiguous.append((name, how))
+                    size = len(win)
                     i += size
                     done = True
                     break
@@ -171,15 +187,19 @@ class Matcher:
                     taken.append((m.start(), m.end()))
                     teams.add(slug)
         # 4. Shared names, settled by a team named alongside.
-        for name in ambiguous:
+        for name, how in ambiguous:
             cands = [c for c in self.active_full.get(norm(name), []) if c[1] in teams and c[0]]
             if len({c[0] for c in cands}) == 1:
                 players.setdefault(cands[0][0], "name+team")
+            elif how == "always review":
+                unresolved.append((name, "name on the always-review list (written without a suffix)"))
             else:
                 unresolved.append((name, "name belongs to more than one Career Map player"))
-        # 5. Lone surnames of active players, settled the same way.
+        # 5. Words on their own: first names are ignored (unless a nickname);
+        #    a surname of exactly one Career Map player matches; one shared
+        #    by several, or an everyday word, needs a team in the same line.
         for k, (s, e, w) in enumerate(words):
-            if not w[:1].isupper() or not free(s, e) or len(w) < 4:
+            if not w[:1].isupper() or not free(s, e) or len(w) < 3:
                 continue
             # the second half of a name already matched ("Steph Curry")
             if k and not free(words[k - 1][0], words[k - 1][1]) and not text[words[k - 1][1]:s].strip():
@@ -190,19 +210,26 @@ class Matcher:
                     and free(nxt[0], nxt[1]):
                 continue
             key = norm(w)
-            cands = self.active_last.get(key)
-            if not cands:
-                continue
-            hit = {c[0] for c in cands if c[1] in teams and c[0]}
+            if key in self.first_names and key not in self.nick_words:
+                continue                                   # "Richard", "Tyson", "Kenyon"
+            hit = {c[0] for c in self.active_last.get(key, ()) if c[1] in teams and c[0]}
             if len(hit) == 1:
                 players.setdefault(hit.pop(), "surname+team")
-            elif key not in COMMON:
-                # after another capitalised word it is someone's surname
-                # ("Caitlin Clark", "Eddie Murphy"), not a player on his own
-                prv = words[k - 1] if k else None
-                if prv and prv[2][:1].isupper() and prv[2][1:2].islower() and not text[prv[1]:s].strip():
+                continue
+            cands = self.surnames.get(key)
+            if not cands:
+                continue
+            prv = words[k - 1] if k else None
+            after_cap = prv and prv[2][:1].isupper() and prv[2][1:2].islower() and not text[prv[1]:s].strip()
+            if key in self.stopwords or key in COMMON:
+                continue                                   # an everyday word ("Battle", "Hill")
+            if len(cands) == 1:
+                # after a first name it is someone else's surname ("Mike Tyson")
+                if after_cap and norm(prv[2]) in self.first_names:
                     continue
-                unresolved.append((w, "surname alone, no team in the same line settles who"))
+                players.setdefault(next(iter(cands)), "surname (one player)")
+            elif not after_cap:
+                unresolved.append((w, "surname shared by more than one Career Map player, no team settles who"))
         return players, teams, unresolved
 
 

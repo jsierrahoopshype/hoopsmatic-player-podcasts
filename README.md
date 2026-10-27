@@ -6,9 +6,12 @@ HoopsMatic Worker). No API keys anywhere.
 
 ## How it updates
 
-`.github/workflows/update.yml`, every day at 06:15 UTC and again at 18:15 UTC
-(a safety net: GitHub sometimes skips a scheduled run; a second run the same
-day only refreshes that day's numbers):
+`.github/workflows/update.yml`, every day at 06:37 and 18:37 UTC, on odd
+minutes because GitHub starts scheduled runs late (or skips them) at busy
+times like :00 and :15. Backup slots at 09:41 and 21:41 UTC run only when no
+run has succeeded in the last 6 hours. "Run workflow" on the Actions tab
+starts one by hand. A second run the same day only refreshes that day's
+numbers:
 
 1. **Full listing** (`python -m pp weekly-if-due`): on Mondays, or whenever
    the last one is a week old, yt-dlp reads every tab of every channel
@@ -63,6 +66,9 @@ lists, not in date windows.
 - `data/mentions_manual.json`: `add` / `remove` talked-about mentions
   (`{"video", "player" or "team", optional "t" in seconds}`); wins over automatic ones.
 - `data/teams.json`: the 30 franchises with the nicknames and former names that mean each.
+- `data/always_review.json`: names never matched automatically without their suffix.
+- `data/surname_stopwords.json`: surnames that are everyday words, never matched on their own.
+- `data/moved_pages.json`: old page addresses and where they moved (a stub redirects).
 - `data/appearances_manual.json`: `add` / `remove` guest appearances
   (`{"video": "<id>", "player": "<Career Map slug>"}`); wins over automatic
   matches. `data/appearances.json` (confirmed, shown) and
@@ -113,9 +119,15 @@ Separate from appearances (hosts and guests). A video talks about a player or
 team when its title or a chapter line of its description (a line starting
 with a timestamp) names them; the rest of a description is never read.
 Chapters come from feeds only, so they cover videos seen in a feed. Players:
-full Career Map name or a nickname in `data/nicknames.json`; a shared name or
-a lone surname only when a team named in the same line settles it, otherwise
-it goes to the "mentions" list in `data/appearances_review.json`. Teams: by
+full Career Map name or a nickname in `data/nicknames.json`. A written suffix
+(Jr., Sr., II, III) means only the player with it; a plain father-and-son
+name means the one without a suffix, except names in
+`data/always_review.json`. A lone surname matches when exactly one Career Map
+player has it (unless it is an everyday word in
+`data/surname_stopwords.json`); a shared name or shared surname only when a
+team named in the same line settles it, otherwise it goes to the "mentions"
+list in `data/appearances_review.json`. Lone first names are ignored unless
+they are nicknames. Teams: by
 nickname or former franchise name (`data/teams.json`), never a city alone.
 A player's own appearance in a video, and a show's hosts on their own show,
 never count. Clips of one episode count once. Players with 10+ discussions
