@@ -1,0 +1,6 @@
+{
+  "_about": "Old page addresses under /player-podcasts/ that moved, and where to. Each old address gets a small page that sends visitors (and search engines, via canonical) to the new one; it is not in the sitemap. darius-acuff: Career Map's address keeps the Jr. (fixed Oct 28, 2026).",
+  "moved": {
+    "players/darius-acuff/": "players/darius-acuff-jr/"
+  }
+}

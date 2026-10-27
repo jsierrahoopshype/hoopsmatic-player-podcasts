@@ -117,3 +117,13 @@ def test_former_hosts_are_not_review_mentions_on_their_own_show():
     c = cat(vid(1, 100, title="What Makes a Great Player? | Kevin Durant & Jeff Teague | Full Episode"))
     conf, review = guests.build([s], {"UCx": c}, index=INDEX, manual={})
     assert conf == {} and not any(it["player"] == "kevin-durant" for it in review.values())
+
+
+def test_career_map_slugs_keep_a_suffix_like_career_map_does():
+    assert guests.cm_slug("Jaren Jackson Jr") == "jaren-jackson-jr"
+    assert guests.cm_slug("Matt Guokas, Sr.") == "matt-guokas-sr"
+    assert guests.cm_slug("Gary Payton II") == "gary-payton-ii"
+    idx = guests.PlayerIndex(["Jaren Jackson", "Jaren Jackson Jr", "Michael Porter"])
+    assert idx.lookup("Jaren Jackson Jr.") == ("jaren-jackson-jr", False)
+    assert idx.lookup("Jaren Jackson") == (None, True)          # guests: a plain shared name stays ambiguous
+    assert idx.lookup("Michael Porter Jr.") == ("michael-porter", False)

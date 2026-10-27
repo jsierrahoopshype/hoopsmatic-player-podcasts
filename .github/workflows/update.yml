@@ -1,11 +1,14 @@
 name: update
 
-# Daily at 06:15 UTC, and again at 18:15 UTC as a safety net (a scheduled run
-# GitHub skips is caught by the other; a second run the same day only
-# refreshes that day's numbers): read every show's public YouTube feeds and a
-# yt-dlp listing of its uploads from the last 90 days (no key), save the day's
-# view snapshot, rebuild the site and deploy it to GitHub Pages
-# (hoopsmatic.com/player-podcasts through the HoopsMatic Worker).
+# Twice a day at 06:37 and 18:37 UTC, on odd minutes because GitHub starts
+# scheduled runs late (or skips them) when everyone's :00/:15/:30/:45 jobs
+# pile up. Two backup slots, 09:41 and 21:41 UTC, run only when no run has
+# succeeded in the last 6 hours (a skipped or very late main slot); a second
+# run the same day only refreshes that day's numbers. Each run reads every
+# show's public YouTube feeds and a yt-dlp listing of its uploads from the
+# last 90 days (no key), saves the day's view snapshot, rebuilds the site and
+# deploys it to GitHub Pages (hoopsmatic.com/player-podcasts through the
+# HoopsMatic Worker). "Run workflow" on the Actions tab starts one by hand.
 # Mondays (first run of the day), and whenever run by hand with "listing"
 # ticked, it first runs the full yt-dlp listing of every tab (every upload's
 # length, views and date, Shorts included, plus subscriber counts). If YouTube
@@ -15,8 +18,10 @@ name: update
 
 on:
   schedule:
-    - cron: "15 6 * * *"
-    - cron: "15 18 * * *"
+    - cron: "37 6 * * *"     # main
+    - cron: "37 18 * * *"    # main
+    - cron: "41 9 * * *"     # backup: only if nothing succeeded in the last 6 hours
+    - cron: "41 21 * * *"    # backup
   workflow_dispatch:
     inputs:
       listing:
@@ -40,18 +45,42 @@ jobs:
   update:
     runs-on: ubuntu-latest
     timeout-minutes: 180
+    outputs:
+      skip: ${{ steps.gate.outputs.skip }}
     steps:
       - uses: actions/checkout@v4
 
+      # Backup slots stand down when a run succeeded in the last 6 hours
+      # (data/status.json "last_success", written by every good collection).
+      - name: Backup slot check
+        id: gate
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ] && { [ "${{ github.event.schedule }}" = "41 9 * * *" ] || [ "${{ github.event.schedule }}" = "41 21 * * *" ]; }; then
+            python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          from datetime import datetime, timezone
+          last = json.load(open("data/status.json")).get("last_success")
+          age = (datetime.now(timezone.utc) - datetime.fromisoformat(last.replace("Z", "+00:00"))).total_seconds() / 3600 if last else None
+          skip = age is not None and age < 6
+          print("skip=%s" % ("true" if skip else "false"))
+          import sys
+          print("backup slot: last success %s (%s h ago): %s" % (last, "%.1f" % age if age is not None else "?", "skipping" if skip else "running"), file=sys.stderr)
+          PY
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: actions/setup-python@v5
+        if: steps.gate.outputs.skip != 'true'
         with:
           python-version: "3.12"
 
       - name: Install dependencies
+        if: steps.gate.outputs.skip != 'true'
         run: pip install -r requirements.txt
 
       - name: Full yt-dlp listing (Mondays or when a week old; or when asked)
-        if: github.event_name != 'push'
+        if: github.event_name != 'push' && steps.gate.outputs.skip != 'true'
         continue-on-error: true
         run: |
           if [ "${{ inputs.listing }}" = "true" ]; then
@@ -69,17 +98,19 @@ jobs:
           PY
 
       - name: Daily feeds and 90-day listing
-        if: github.event_name != 'push'
+        if: github.event_name != 'push' && steps.gate.outputs.skip != 'true'
         run: python -m pp daily
 
       - name: Tests
+        if: steps.gate.outputs.skip != 'true'
         run: python -m pytest -q
 
       - name: Build site
+        if: steps.gate.outputs.skip != 'true'
         run: python -m pp build
 
       - name: Commit data
-        if: always()
+        if: always() && steps.gate.outputs.skip != 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -97,12 +128,14 @@ jobs:
           exit 1
 
       - name: Upload site
+        if: steps.gate.outputs.skip != 'true'
         uses: actions/upload-pages-artifact@v3
         with:
           path: site
 
   deploy:
     needs: update
+    if: needs.update.outputs.skip != 'true'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
