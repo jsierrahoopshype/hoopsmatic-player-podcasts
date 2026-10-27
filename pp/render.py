@@ -690,7 +690,7 @@ def _former_hosts(show, ctx):
     out = []
     for h in show.get("former_hosts") or []:
         slug = slug_from_url(h.get("url"))
-        out.append((h["name"], host_link(h.get("url")), slug if slug in ctx.get("headshots", ()) else None))
+        out.append((h["name"], host_link(h.get("url")), slug if slug in ctx.get("headshots", ()) else None, h.get("note")))
     return out
 
 
@@ -863,7 +863,8 @@ def show_page(ctx, s):
             '<div class="meta">%s</div>%s<div class="meta">%s</div><div class="meta">%s</div></div></div>\n'
             % (art_html(show, ctx), e(show["name"]),
                ('Hosted by ' + people_html(host_people(show, ctx), ctx)) if hosts else "",
-               ('<div class="meta">Former host%s: %s</div>' % ("s" if len(former) > 1 else "", people_html(former, ctx)))
+               ('<div class="meta">Former host%s: %s</div>' % ("s" if len(former) > 1 else "", "".join(
+                   people_html([f[:3]], ctx) + ((' <span class="g-n">(%s)</span>' % e(f[3])) if f[3] else "") for f in former)))
                if former else "", status, " · ".join(links))]
     if desc_txt:
         body.append('<p class="show-desc">%s</p>\n' % e(desc_txt))
