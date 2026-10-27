@@ -9,7 +9,7 @@ import shutil
 import sys
 from datetime import timedelta
 
-from . import catalog, config, guests, metrics, render, roster, sitemap, thumbs
+from . import catalog, config, embed, guests, headshots, home, metrics, render, roster, sitemap, thumbs, videos
 from .util import load_json, save_json, utcnow, today_str, parse_ts
 
 
@@ -74,6 +74,20 @@ def compute(now=None):
     uncertain = [s for s in stats if s["status"] == "uncertain"]
     appearances, review = guests.build(shows, cats)
 
+    # Every shown video, both show types; breakout scores use the new rule
+    # everywhere (same show, same format, the 90 days before, 8+ videos).
+    stats_by_slug = {s["slug"]: s for s in stats}
+    embeds = embed.load()
+    items, flags = videos.build_items(shows, cats, stats_by_slug, today, kinds=("podcast", "player_channel"))
+    items = [it for it in items if embed.status(embeds, it["id"]) != "gone"]
+    for it in items:
+        it["embed"] = embed.status(embeds, it["id"])
+    score = {it["id"]: it["breakout"] for it in items}
+    for st in stats:
+        st["episodes"] = [dict(v, breakout=score.get(v["id"])) for v in st["episodes"]
+                          if embed.status(embeds, v["id"]) != "gone"]
+    pod_items = [it for it in items if by_slug[it["show"]]["type"] == "podcast"]
+
     ranked_eps = [v for s in ranked for v in s["episodes"]]
     week = [v for v in ranked_eps if metrics.age_days(v, now) <= config.WEEK_DAYS]
     eow = max(week, key=lambda v: v["views"]) if week else None
@@ -95,12 +109,25 @@ def compute(now=None):
         "most_watched": mw, "mw_shows": sorted({v["slug"] for v in pool}),
         "updated_label": (last_run or now).strftime("%b %-d, %Y, %H:%M UTC"),
         "listing_label": render.fmt_date(last_ok + "T00:00:00Z") if last_ok else None,
-        "thumbs": set(),
+        "thumbs": set(), "thumbs_big": set(), "headshots": set(),
+        "items": items, "flags": flags, "home": home.sections(pod_items, now, flags),
+        "stream": home.stream_items(pod_items, now),
+        "stream_hosts": {s["slug"]: [h["name"] if isinstance(h, dict) else h for h in s.get("hosts") or []]
+                         for s in shows},
     }
 
 
+def home_ids(ctx):
+    h = ctx["home"]
+    ids = [it["id"] for k in ("week", "trending", "latest_eps", "breakouts") for it in h[k]]
+    if h["watch"]:
+        ids.insert(0, h["watch"]["id"])
+    return ids
+
+
 def displayed_ids(ctx):
-    ids = set()
+    ids = set(home_ids(ctx))
+    ids.update(it["id"] for it in ctx["stream"])
     if ctx["episode_of_week"]:
         ids.add(ctx["episode_of_week"]["id"])
     ids.update(v["id"] for v in ctx["breakouts"])
@@ -117,7 +144,24 @@ def build(now=None, fetch_thumbs=True, out=None):
     ctx = compute(now)
     out = out or config.SITE_OUT
     ids = displayed_ids(ctx)
-    ctx["thumbs"] = thumbs.ensure(ids) if fetch_thumbs else thumbs.available(ids)
+    big = [ctx["home"]["watch"]["id"]] if ctx["home"]["watch"] else []
+    host_slugs = {}
+    for show in ctx["shows"].values():
+        for h in show.get("hosts") or []:
+            if isinstance(h, dict) and h.get("url"):
+                host_slugs[h["url"].rstrip("/").rsplit("/", 1)[-1].replace(".html", "")] = h["name"]
+    if fetch_thumbs:
+        ctx["thumbs"], ctx["thumbs_big"] = thumbs.ensure(ids, big)
+        ctx["headshots"] = set(headshots.ensure(host_slugs))
+        # Embed checks: homepage first, then the stream, then the rest.
+        order = home_ids(ctx) + [it["id"] for it in ctx["stream"]] + sorted(ids)
+        cache = embed.update(order, ctx["today"])
+        for it in ctx["items"]:
+            it["embed"] = embed.status(cache, it["id"])
+    else:
+        ctx["thumbs"], ctx["thumbs_big"] = thumbs.available(ids, big)
+        ctx["headshots"] = set(headshots.available(host_slugs))
+    stream_files, ctx["stream_v"] = home.stream_files(ctx["stream"], ctx, ctx["flags"])
 
     css = (config.SITE_SRC / "style.css").read_bytes()
     js = (config.SITE_SRC / "app.js").read_bytes()
@@ -133,11 +177,19 @@ def build(now=None, fetch_thumbs=True, out=None):
     if out.exists():
         shutil.rmtree(out)
     (out / "assets").mkdir(parents=True)
-    (out / "thumbs").mkdir()
+    (out / "thumbs" / "big").mkdir(parents=True)
+    (out / "headshots").mkdir()
+    (out / "data").mkdir()
+    for rel, body in stream_files.items():
+        (out / rel).write_bytes(body)
+    for slug in ctx["headshots"]:
+        shutil.copyfile(headshots.path_for(slug), out / "headshots" / (slug + ".webp"))
+    for vid in ctx["thumbs_big"]:
+        shutil.copyfile(thumbs.path_for(vid, True), out / "thumbs" / "big" / (vid + ".webp"))
     (out / "assets" / "style.css").write_bytes(css)
     (out / "assets" / "app.js").write_bytes(js)
     for vid in ctx["thumbs"]:
-        shutil.copyfile(thumbs.path_for(vid), out / "thumbs" / (vid + ".jpg"))
+        shutil.copyfile(thumbs.path_for(vid), out / "thumbs" / (vid + ".webp"))
     for url, (rel, html) in pages.items():
         p = out / rel
         p.parent.mkdir(parents=True, exist_ok=True)

@@ -12,6 +12,9 @@ APPEARANCES_FILE = DATA / "appearances.json"              # confirmed guest appe
 APPEARANCES_REVIEW_FILE = DATA / "appearances_review.json"  # possible guests, not shown (generated)
 APPEARANCES_MANUAL_FILE = DATA / "appearances_manual.json"  # manual adds/removes, win over automatic
 THUMBS_DIR = DATA / "thumbs"          # small thumbnails, committed, served from our own domain
+HEADSHOTS_DIR = DATA / "headshots"    # player headshots from nba-headshots, committed
+HEADSHOTS_INDEX_FILE = DATA / "headshots_index.json"
+EMBED_FILE = DATA / "embed.json"      # oEmbed result per video (ok / no / gone)
 CHANNELS_FILE = DATA / "channels.json"
 SUBSCRIBERS_FILE = DATA / "subscribers.json"
 RANKS_FILE = DATA / "ranks.json"
@@ -33,7 +36,7 @@ DAILY_DAYS = 90         # videos this recent get a daily view count; older ones 
 MOMENTUM_DAYS = 30      # main ranking: views on full episodes posted in the last 30 days
 TYPICAL_DAYS = 90       # median window, episodes-per-month window, ranked window
 WEEK_DAYS = 7
-BREAKOUT_X = 5.0        # an episode at 5x its show's median or more is a breakout
+BREAKOUT_X = 5.0        # a breakout score of 5x or more is highlighted (score: see pp/videos.py)
 # Ranked: at least 4 full episodes in the last 90 days, or 1 to 3 in the last
 # 90 days with at least 4 in the last 180. Occasional: 1 to 3 in the last 90
 # days but fewer than 4 in the last 180 (not ranked). Dormant: none in the last

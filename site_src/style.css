@@ -303,3 +303,72 @@ table.lb.static tbody tr{cursor:default}
 /* host names linked to their HoopsMatic player page */
 a.host{color:inherit;text-decoration:underline;text-decoration-color:var(--border);text-underline-offset:2px}
 a.host:hover{color:var(--accent);text-decoration-color:var(--accent)}
+
+/* ==== video cards (stage B) ==== */
+.jump{display:flex;gap:.4rem;flex-wrap:wrap;margin:-.4rem 0 1.2rem}
+.jump a{font-family:'JetBrains Mono',monospace;font-size:.68rem;font-weight:600;padding:.28rem .6rem;border:1px solid var(--border);
+  border-radius:999px;background:var(--surface);color:var(--text-secondary)}
+.jump a:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.vc{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;min-width:0}
+.vc-media{position:relative;display:block;aspect-ratio:16/9;background:#0f0f10;overflow:hidden}
+.vc-media img,.vc-noimg{width:100%;height:100%;object-fit:cover;display:block}
+.vc-noimg{background:var(--surface-hover)}
+.vc-btn{position:absolute;left:50%;top:50%;width:54px;height:38px;margin:-19px 0 0 -27px;border-radius:10px;
+  background:rgba(0,0,0,.72);transition:background .15s}
+.vc-btn::after{content:"";position:absolute;left:21px;top:11px;border-style:solid;border-width:8px 0 8px 14px;
+  border-color:transparent transparent transparent #fff}
+.vc-media:hover .vc-btn,.vc-media:focus-visible .vc-btn{background:#e11d1d}
+.vc-media:focus-visible{outline:3px solid var(--accent);outline-offset:-3px}
+.vc-dur{position:absolute;right:6px;bottom:6px;font-family:'JetBrains Mono',monospace;font-size:.62rem;font-weight:600;
+  color:#fff;background:rgba(0,0,0,.78);padding:.05rem .35rem;border-radius:4px}
+.vc-ext{position:absolute;left:8px;bottom:8px;font-family:'JetBrains Mono',monospace;font-size:.64rem;font-weight:700;
+  color:#fff;background:rgba(0,0,0,.78);padding:.2rem .5rem;border-radius:6px}
+.vc-player iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.vc-body{padding:.6rem .7rem .7rem;display:flex;flex-direction:column;gap:.25rem;flex:1}
+.vc-top{display:flex;align-items:center;gap:.35rem;flex-wrap:wrap}
+.fmt{font-family:'JetBrains Mono',monospace;font-size:.56rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;
+  padding:.08rem .38rem;border-radius:4px;background:var(--surface-hover);color:var(--text-secondary)}
+.fmt-full{background:var(--accent-dim);color:var(--accent)}
+.fmt-clip{background:var(--green-dim);color:var(--green)}
+.fmt-short{background:var(--orange-dim);color:var(--orange)}
+.vc-t{font-size:.88rem;font-weight:600;line-height:1.3;margin:0}
+.vc-t a{color:var(--text);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.vc-t a:hover{color:var(--accent);text-decoration:none}
+.vc-show a{font-family:'JetBrains Mono',monospace;font-size:.7rem;font-weight:600}
+.vc-hosts{display:flex;flex-wrap:wrap;gap:.2rem .6rem;font-size:.72rem;color:var(--text-secondary)}
+.vc-hosts .host{display:inline-flex;align-items:center;gap:.3rem;color:var(--text-secondary);text-decoration:none}
+.vc-hosts a.host:hover{color:var(--accent)}
+.av{width:22px;height:22px;border-radius:50%;object-fit:cover;background:var(--surface-hover);flex-shrink:0}
+.av-i{display:inline-flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:.5rem;
+  font-weight:700;color:var(--text-secondary);border:1px solid var(--border)}
+.vc-meta{font-family:'JetBrains Mono',monospace;font-size:.66rem;color:var(--text-secondary);margin-top:auto}
+.vc-meta .gain{color:var(--green);font-weight:700}
+.vc-yt{font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--text-secondary)}
+.vc-yt:hover{color:var(--accent)}
+.vc-why{font-size:.78rem;color:var(--text-secondary)}
+.vc-feat{display:grid;grid-template-columns:1fr}
+.vc-feat .vc-t{font-size:1.05rem}
+@media(min-width:760px){.vc-feat{grid-template-columns:minmax(0,1.4fr) minmax(0,1fr)}.vc-feat .vc-media{aspect-ratio:16/9}}
+
+/* shelves scroll sideways inside themselves (never the page) */
+.shelf{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(240px,78%);gap:.7rem;overflow-x:auto;
+  scroll-snap-type:x mandatory;padding-bottom:.4rem;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
+.shelf>.vc{scroll-snap-align:start}
+@media(min-width:560px){.shelf{grid-auto-columns:minmax(240px,44%)}}
+@media(min-width:900px){.shelf{grid-auto-flow:row;grid-template-columns:repeat(4,minmax(0,1fr));overflow:visible}}
+
+/* stream */
+.grid{display:grid;grid-template-columns:1fr;gap:.7rem}
+@media(min-width:520px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(min-width:900px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(min-width:1200px){.grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.stream-tabs{margin-bottom:.6rem}
+.stream-filters{display:grid;grid-template-columns:1fr 1fr;gap:.4rem;margin-bottom:.4rem}
+.stream-filters .sf-q{grid-column:1/-1}
+.stream-filters .sel{width:100%;min-width:0}
+@media(min-width:900px){.stream-filters{grid-template-columns:2fr 1fr 1fr 1fr 1fr}.stream-filters .sf-q{grid-column:auto}}
+.loadmore{display:block;margin:.9rem auto 0;font-family:'JetBrains Mono',monospace;font-size:.74rem;font-weight:600;
+  padding:.55rem 1.2rem;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);cursor:pointer}
+.loadmore:hover{border-color:var(--accent);color:var(--accent)}
+.loadmore[hidden]{display:none}
+.stream-count:empty{display:none}
