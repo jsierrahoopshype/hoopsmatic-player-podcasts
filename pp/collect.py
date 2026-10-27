@@ -10,8 +10,8 @@ daily():  every source's public feeds (long-form, and Shorts for channels):
 weekly(): full listing of every tab of every source (every upload ever) plus
           subscriber counts: data/snapshots/weekly/<date>.json. Videos a
           complete listing no longer shows are marked gone. Also refreshes
-          Career Map's player names and rolls daily files older than 90 days
-          into weekly ones. Never raises: a blocked run is recorded in
+          Career Map's player names, the headshots index and show artwork,
+          and rolls daily files older than 90 days into weekly ones. Never raises: a blocked run is recorded in
           data/status.json and the last good data stays.
 """
 import sys
@@ -235,8 +235,12 @@ def weekly(now=None, only=None, workers=2):
     views, _ = _snapshot_from_catalogs(srcs, day, now, recent_only=False)
     history.write_weekly(day, views)
     refresh_careermap_names()
-    from . import headshots
+    from . import art, headshots
     headshots.refresh_index()
+    try:
+        art.refresh({src["channel_id"] for src in srcs.values()})
+    except Exception as e:   # artwork never stops the listing
+        _log("artwork: kept the last copies (%s)" % e)
     history.rollup(day)
 
     blocked = bool(failed) and not ok_sources
