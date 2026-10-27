@@ -310,7 +310,7 @@ def leaderboard(ctx, ranked=None):
             '<div class="ev">%s</div>'
             '<div class="card-foot"><span><span class="lbl">Typical episode</span>%s</span>'
             '<span><span class="lbl">%s</span>%s</span>'
-            '<span><span class="lbl">Videos, 30 days</span>%s</span></div></div>'
+            '<span><span class="lbl">Videos, 30 days</span><span class="cf-vids">%s</span></span></div></div>'
             % (data, compact(v30), "Views, 30 days", ("based on %d video%s" % (n30, "" if n30 == 1 else "s")) if v30 is not None else "",
                s["rank"], (" " + change_html(ch)) if show_chg else "", show_url(show["slug"]), e(show["name"]),
                hosts_html(show), compact(m["x"]["typf"][0]) if m["x"]["typf"][0] is not None else "no data",

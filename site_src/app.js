@@ -72,6 +72,8 @@
         var td = el.querySelector && el.querySelector('td[data-k="' + key + '"]');
         if (td) td.innerHTML = r[1];
       });
+      var cv = el.querySelector('.cf-vids');
+      if (cv) cv.textContent = String(pair(el, 'vids')[0]);
     });
     sortBy(cur.key, cur.dir);
   }
