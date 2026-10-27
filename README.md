@@ -98,7 +98,7 @@ lists, not in date windows.
 - `/player-podcasts/players/` and `/player-podcasts/players/<Career Map slug>/`:
   a page for every player with 3+ confirmed guest appearances or hosting a
   show with 3+ videos. Player names link there, or to NBA Career Map.
-- `/player-podcasts/player-channels/`, `/most-watched/`, `/dormant/`.
+- `/player-podcasts/player-channels/`, `/most-watched/`, `/dormant/`, `/methodology/`.
 - Videos play in the page through youtube-nocookie.com, only after a press.
 
 All numbers live in `pp/config.py`.
@@ -110,3 +110,13 @@ pip install -r requirements.txt
 python -m pytest -q
 python -m pp build      # from committed data; fetches only missing thumbnails, headshots and embed checks
 ```
+
+UI check (needs Playwright), against a local copy or the live site:
+
+```
+node tools/ui_check.js https://hoopsmatic.com/player-podcasts/
+```
+
+It loads the main pages, one show and one player page at 1280, 375 and 320
+px and fails on sideways scroll, a missing H1, canonical or footer, script
+errors, or anything loaded from YouTube before a play button is pressed.
