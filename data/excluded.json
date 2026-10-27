@@ -2,6 +2,13 @@
   "_about": "Shows not in the rankings and why. Rebuilt on every run; review and edit data/channels.json to change the roster.",
   "excluded_by_rules": [
     {
+      "channel_id": "UCB_4C2Gl7Zfg4uBXk_AcWwA",
+      "name": "Boardroom",
+      "reason": "network channel, not a player podcast",
+      "slug": "boardroom",
+      "type": "podcast"
+    },
+    {
       "channel_id": "UCd6K_nXCeWBk8YDwja0PPZg",
       "name": "Tyler Herro",
       "reason": "No full-length episodes (20+ minutes) found.",
@@ -58,5 +65,5 @@
       "reason": "Cut list."
     }
   ],
-  "updated": "2026-10-26"
+  "updated": "2026-10-27"
 }
