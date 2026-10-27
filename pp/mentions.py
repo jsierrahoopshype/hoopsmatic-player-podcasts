@@ -70,6 +70,11 @@ class Matcher:
     def __init__(self, index, nicknames, teams, active):
         self.index = index
         # nickname -> slug; patterns longest first so "Ant Edwards" beats "Ant"
+        self.suffixed = {}
+        for slug, disp in index.display.items():
+            m = re.match(r"^(.*)\s+(II|III|IV)$", disp)
+            if m:
+                self.suffixed[(norm(m.group(1)), m.group(2))] = slug
         self.nick = []
         for name, slug in sorted(nicknames.items(), key=lambda kv: -len(kv[0])):
             if slug in index.display:
@@ -86,6 +91,10 @@ class Matcher:
         self.active_full, self.active_last = {}, {}
         for full, last, abbrev in active:
             slug, _ = index.lookup(full)
+            if not slug and len(set(index.by_key.get(norm(full)) or [])) == 1:
+                # two Career Map players filed under one slug (a Jr. and his
+                # father): the team settles it, and the page is the same
+                slug = index.by_key[norm(full)][0]
             team = self.team_by_abbrev.get(abbrev)
             self.active_full.setdefault(norm(full), []).append((slug, team))
             self.active_last.setdefault(norm(last), []).append((slug, team))
@@ -121,6 +130,20 @@ class Matcher:
                     continue
                 name = " ".join(w[2] for w in win)
                 slug, amb = self.index.lookup(name)
+                # "Gary Payton II" is its own Career Map player, though the
+                # suffix is dropped when names are compared.
+                if amb:
+                    if win[-1][2] in ("II", "III", "IV"):
+                        exact = self.suffixed.get((norm(name), win[-1][2]))
+                    elif len(words) > i + size and words[i + size][2] in ("II", "III", "IV"):
+                        exact = self.suffixed.get((norm(name), words[i + size][2]))
+                        if exact:
+                            size += 1
+                            win = words[i:i + size]
+                    else:
+                        exact = None
+                    if exact:
+                        slug, amb = exact, False
                 if slug or amb:
                     taken.append((win[0][0], win[-1][1]))
                     if slug:
@@ -174,6 +197,11 @@ class Matcher:
             if len(hit) == 1:
                 players.setdefault(hit.pop(), "surname+team")
             elif key not in COMMON:
+                # after another capitalised word it is someone's surname
+                # ("Caitlin Clark", "Eddie Murphy"), not a player on his own
+                prv = words[k - 1] if k else None
+                if prv and prv[2][:1].isupper() and prv[2][1:2].islower() and not text[prv[1]:s].strip():
+                    continue
                 unresolved.append((w, "surname alone, no team in the same line settles who"))
         return players, teams, unresolved
 
@@ -209,6 +237,8 @@ def build(shows, cats, items, appearances, matcher=None, manual=None):
             slug, _ = matcher.index.lookup(name)
             if slug:
                 own.add(slug)
+        # the hosts' surnames on their own show are not "unresolved" names
+        own_names = {norm(matcher.index.display.get(sl, "")).split(" ")[-1] for sl in own} - {""}
         cat = cats.get(roster.source_id(show)) or {}
         for v in metrics.show_videos(show, cat):
             if v["id"] not in on_site:
@@ -223,6 +253,8 @@ def build(shows, cats, items, appearances, matcher=None, manual=None):
                 for slug in teams:
                     found.setdefault(("team", slug), {"kind": "team", "slug": slug, "src": src, "t": sec, "how": "nickname"})
                 for name, reason in unresolved:
+                    if norm(name) in own_names:
+                        continue
                     review.setdefault("%s:m:%s" % (v["id"], norm(name).replace(" ", "-")), {
                         "kind": "mention", "video": v["id"], "show": show["slug"], "name": name, "player": None,
                         "reason": "mention: " + reason, "source": src, "t": sec,

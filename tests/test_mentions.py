@@ -3,7 +3,7 @@ from datetime import timedelta
 from pp import chapters, guests, mentions, people, talk
 from tests.helpers import NOW, cat, vid
 
-INDEX = guests.PlayerIndex(["Victor Wembanyama", "LeBron James", "Kevin Durant", "Jayson Tatum", "Nikola Jokić",
+INDEX = guests.PlayerIndex(["Gary Payton", "Gary Payton II", "Victor Wembanyama", "LeBron James", "Kevin Durant", "Jayson Tatum", "Nikola Jokić",
                             "Charles Jones (1957)", "Charles Jones (1975)", "Jeff Teague", "Magic Johnson",
                             "Larry Bird", "Jaylen Brown"])
 TEAMS = [{"slug": "boston-celtics", "name": "Boston Celtics", "nickname": "Celtics", "abbrev": "BOS",
@@ -116,3 +116,8 @@ def test_player_pages_from_mentions_need_ten_discussions():
     ps = {"host": {"slug": "host"}}
     people.add_talked_about(ps, talk_map, {"a": "A"})
     assert set(ps) == {"host", "a"} and ps["a"]["talk_only"] and "talk_only" not in ps["host"]
+
+
+def test_a_numeral_suffix_picks_its_own_player():
+    assert M.find("Warriors title reaction w/ Gary Payton II")[0] == {"gary-payton-ii": "name"}
+    assert M.find("Gary Payton fight story")[2][0][0] == "Gary Payton"
