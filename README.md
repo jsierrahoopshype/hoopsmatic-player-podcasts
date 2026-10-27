@@ -58,6 +58,11 @@ lists, not in date windows.
   deliberately left out.
 - `data/format_overrides.json`: `{"<video id>": "full" | "clip" | "short"}`,
   wins over the automatic format.
+- `data/nicknames.json`: `{"<nickname>": "<Career Map slug>"}`, names that
+  always mean one player (Wemby, SGA, KD...).
+- `data/mentions_manual.json`: `add` / `remove` talked-about mentions
+  (`{"video", "player" or "team", optional "t" in seconds}`); wins over automatic ones.
+- `data/teams.json`: the 30 franchises with the nicknames and former names that mean each.
 - `data/appearances_manual.json`: `add` / `remove` guest appearances
   (`{"video": "<id>", "player": "<Career Map slug>"}`); wins over automatic
   matches. `data/appearances.json` (confirmed, shown) and
@@ -98,7 +103,23 @@ lists, not in date windows.
 - `/player-podcasts/players/` and `/player-podcasts/players/<Career Map slug>/`:
   a page for every player with 3+ confirmed guest appearances or hosting a
   show with 3+ videos. Player names link there, or to NBA Career Map.
+- `/player-podcasts/teams/` and `/player-podcasts/teams/<team slug>/`: all 30
+  teams and the videos that talk about them.
 - `/player-podcasts/player-channels/`, `/most-watched/`, `/dormant/`, `/methodology/`.
+
+## Talked about (mentions)
+
+Separate from appearances (hosts and guests). A video talks about a player or
+team when its title or a chapter line of its description (a line starting
+with a timestamp) names them; the rest of a description is never read.
+Chapters come from feeds only, so they cover videos seen in a feed. Players:
+full Career Map name or a nickname in `data/nicknames.json`; a shared name or
+a lone surname only when a team named in the same line settles it, otherwise
+it goes to the "mentions" list in `data/appearances_review.json`. Teams: by
+nickname or former franchise name (`data/teams.json`), never a city alone.
+A player's own appearance in a video, and a show's hosts on their own show,
+never count. Clips of one episode count once. Players with 10+ discussions
+get a page. Results: `data/mentions.json` (generated).
 - Videos play in the page through youtube-nocookie.com, only after a press.
 
 All numbers live in `pp/config.py`.

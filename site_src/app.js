@@ -144,7 +144,8 @@
   function play(a) {
     var id = a.getAttribute('data-play');
     var f = document.createElement('iframe');
-    f.src = 'https://www.youtube-nocookie.com/embed/' + encodeURIComponent(id) + '?autoplay=1&rel=0';
+    var start = parseInt(a.getAttribute('data-start') || '0', 10);
+    f.src = 'https://www.youtube-nocookie.com/embed/' + encodeURIComponent(id) + '?autoplay=1&rel=0' + (start > 0 ? '&start=' + start : '');
     f.title = a.getAttribute('aria-label') || 'YouTube video';
     f.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
     f.allowFullscreen = true;
@@ -316,4 +317,21 @@
     count.textContent = shown === cards.length ? '' : (shown === 1 ? '1 video' : shown + ' videos');
   }
   sels.forEach(function (s) { s.addEventListener('change', apply); });
+})();
+
+/* Homepage "Most talked about": switch between the 7-day and 30-day lists
+   (both are in the page). */
+(function () {
+  'use strict';
+  var bar = document.querySelector('.talk-toggle');
+  if (!bar) return;
+  bar.addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-days]');
+    if (!b) return;
+    var d = b.getAttribute('data-days');
+    bar.querySelectorAll('button').forEach(function (x) { x.classList.toggle('active', x === b); });
+    document.querySelectorAll('.talk-pane').forEach(function (p) { p.hidden = p.getAttribute('data-days') !== d; });
+    var h = bar.closest('section').querySelector('h2');
+    if (h) h.textContent = d === '7' ? 'Most talked about this week' : 'Most talked about in the last 30 days';
+  });
 })();

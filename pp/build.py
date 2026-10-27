@@ -9,7 +9,7 @@ import shutil
 import sys
 from datetime import timedelta
 
-from . import art, catalog, config, embed, guests, headshots, home, metrics, people, rankmetrics, render, roster, sitemap, thumbs, videos
+from . import art, catalog, config, embed, guests, headshots, home, mentions, metrics, people, rankmetrics, render, roster, sitemap, talk, thumbs, videos
 from .util import load_json, save_json, utcnow, today_str, parse_ts
 
 
@@ -95,8 +95,27 @@ def compute(now=None):
     shown = ranked + ranked_pc + occasional + dormant
     show_metrics = {s["slug"]: rank_metrics.get(s["slug"]) or
                     rankmetrics.show_metrics(per_show.get(s["slug"], []), s, now, flags, shared[s["slug"]]) for s in shown}
-    names = guests.PlayerIndex.load().display
+    pindex = guests.PlayerIndex.load()
+    names = pindex.display
     players = people.build(by_slug, [s["slug"] for s in shown], per_show, appearances, names)
+
+    # Talked about: players and teams the videos discuss (titles and chapter lines).
+    item_by_id = {it["id"]: it for it in items}
+    matcher = mentions.Matcher.load(pindex)
+    ments, mention_review = mentions.build([by_slug[s["slug"]] for s in shown], cats, items, appearances, matcher)
+    cat_videos = {}
+    for c in cats.values():
+        cat_videos.update(c["videos"])
+    talk_map = talk.build(ments, mentions.groups(ments, items, cat_videos), item_by_id)
+    people.add_talked_about(players, talk_map, names, appearances, item_by_id)
+    teams = (load_json(config.TEAMS_FILE, {}) or {}).get("teams", [])
+    active_by_team, player_team = {}, {}
+    for full, _, abbrev in (load_json(config.NBA_ACTIVE_FILE, {}) or {}).get("players", []):
+        slug, _ = pindex.lookup(full)
+        team = matcher.team_by_abbrev.get(abbrev)
+        if slug and team:
+            active_by_team.setdefault(team, []).append(slug)
+            player_team[slug] = team
 
     ranked_eps = [v for s in ranked for v in s["episodes"]]
     week = [v for v in ranked_eps if metrics.age_days(v, now) <= config.WEEK_DAYS]
@@ -118,7 +137,9 @@ def compute(now=None):
         "changes_day": metrics.comparable_day(history, today) if changes else None,
         "rank_metrics": rank_metrics, "metrics_have": rankmetrics.available(rank_metrics.values()),
         "show_metrics": show_metrics, "per_show": per_show, "players": players,
-        "item_by_id": {it["id"]: it for it in items}, "player_names": names,
+        "item_by_id": item_by_id, "player_names": names,
+        "mentions": ments, "mention_review": mention_review, "talk": talk_map, "teams": teams,
+        "team_by_slug": {t["slug"]: t for t in teams}, "active_by_team": active_by_team, "player_team": player_team,
         "stats_by_slug": stats_by_slug, "art": set(),
         "descriptions": {s["slug"]: (cats.get(roster.source_id(by_slug[s["slug"]])) or {}).get("description") for s in shown},
         "related": related_shows(shown, appearances, show_metrics),
@@ -186,6 +207,11 @@ def displayed_ids(ctx):
             ids.update(it["id"] for it in sorted((x for x in vids if x.get(k)), key=lambda x: -x[k])[:8])
     for p in ctx.get("players", {}).values():
         ids.update(it["id"] for it, _ in render.player_videos(p, ctx))
+    # Talked about: the cards on player and team pages.
+    for target, groups in ctx.get("talk", {}).items():
+        if (target[0] == "team" or target[1] in ctx.get("players", {})) and len(groups) >= 3:
+            for g in groups[:8] + sorted(groups, key=lambda g: -g.views)[:8]:
+                ids.add(g.lead["id"])
     return ids
 
 
@@ -240,6 +266,9 @@ def build(now=None, fetch_thumbs=True, out=None):
     for s in ctx["ranked"] + ctx["ranked_pc"] + ctx["occasional"] + ctx["dormant"]:
         pages[config.SITE_BASE + "/" + s["slug"] + "/"] = (s["slug"] + "/index.html", render.show_page(ctx, s))
     pages[config.SITE_BASE + "/methodology/"] = ("methodology/index.html", render.methodology_page(ctx))
+    pages[config.SITE_BASE + "/teams/"] = ("teams/index.html", render.teams_index_page(ctx))
+    for t in ctx["teams"]:
+        pages[config.SITE_BASE + "/teams/" + t["slug"] + "/"] = ("teams/%s/index.html" % t["slug"], render.team_page(ctx, t))
     if ctx["players"]:
         pages[config.SITE_BASE + "/players/"] = ("players/index.html", render.players_index_page(ctx))
     for p in ctx["players"].values():
@@ -294,6 +323,7 @@ def build(now=None, fetch_thumbs=True, out=None):
         "not_in_roster": roster_doc.get("not_ranked", []),
     })
     write_appearances(ctx)
+    write_mentions(ctx)
     _log("built %d pages: %d podcasts and %d player channels ranked, %d occasional, %d dormant, %d excluded, %d thumbnails"
          % (len(pages), len(ctx["ranked"]), len(ctx["ranked_pc"]), len(ctx["occasional"]), len(ctx["dormant"]),
             len(ctx["excluded"]),
@@ -302,6 +332,17 @@ def build(now=None, fetch_thumbs=True, out=None):
 
 
 REVIEW_MENTIONS = 1000   # plain title mentions kept in appearances_review.json
+
+
+def write_mentions(ctx):
+    """data/mentions.json: the players and teams each video talks about."""
+    items = {vid: [[m["kind"], m["slug"], m["src"], m["t"], m["how"]] for m in ms]
+             for vid, ms in sorted(ctx["mentions"].items())}
+    save_json(config.MENTIONS_FILE, {
+        "_about": ("Talked about: per video, [kind (player or team), Career Map or team slug, source (title, "
+                   "chapter or manual), seconds into the video (chapters) or null, how it was matched]. Generated on "
+                   "every build; edit data/mentions_manual.json to add or remove one."),
+        "items": items}, line_per_key="items")
 
 
 def write_appearances(ctx):
@@ -328,5 +369,10 @@ def write_appearances(ctx):
                    "in data/appearances_manual.json. Sorted by views. Generated on every build."
                    % (min(REVIEW_MENTIONS, len(plain)), len(plain))),
         "total_title_mentions": len(plain),
-        "items": [dict(v, key=k) for k, v in rev]}, line_per_key="items")
+        "items": [dict(v, key=k) for k, v in rev],
+        # Talked about: shared names and lone surnames no team settled.
+        "mentions_total": len(ctx["mention_review"]),
+        "mentions": [dict(v, key=k) for k, v in sorted(ctx["mention_review"].items(),
+                                                       key=lambda kv: -(kv[1].get("views") or 0))[:REVIEW_MENTIONS]]},
+        line_per_key="items", also=("mentions",))
 

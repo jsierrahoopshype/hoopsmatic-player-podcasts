@@ -2,7 +2,8 @@
 
 A player gets a page with 3 or more confirmed guest appearances (clips of
 the same episode count once), or as a host of a show on the site with 3 or
-more videos. Only players with a Career Map slug qualify (it is the page's
+more videos, or (without either) when 10 or more discussions on the site
+talk about him (pp/talk.py; such a page is "talk_only"). Only players with a Career Map slug qualify (it is the page's
 address). Everywhere else on the site, a player's name links to this page
 when there is one, and to their NBA Career Map page otherwise.
 """
@@ -62,6 +63,19 @@ def build(shows, shown, items_by_show, appearances, names):
             p = person(slug, names.get(slug))
             p["guest"] = apps
             p["groups"] = n
+    return people
+
+
+def add_talked_about(people, talk, names, appearances=None, on_site=()):
+    """Pages for players without one whom 10+ discussions talk about (with
+    their one or two guest appearances, if any)."""
+    from .talk import MIN_TALK_PAGE
+    for (kind, slug), groups in talk.items():
+        if kind == "player" and slug not in people and len(groups) >= MIN_TALK_PAGE:
+            apps = [a for a in (appearances or {}).values() if a["player"] == slug and a["video"] in on_site]
+            people[slug] = {"slug": slug, "name": names.get(slug, slug), "hosts": [], "former": [], "guest": apps,
+                            "groups": appearance_count({k: a for k, a in enumerate(apps)}, slug) if apps else 0,
+                            "talk_only": True}
     return people
 
 

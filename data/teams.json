@@ -1,0 +1,329 @@
+{
+  "_about": "The 30 NBA franchises. A video talks about a team when its title or a chapter line names the team by nickname: 'names' (current nickname and short forms) or 'historical' (earlier names of the same franchise). Matching is case-sensitive (or ALL CAPS) on whole words; a city alone never counts. slug is the team's NBA Career Map page and the address of its page here.",
+  "teams": [
+    {
+      "slug": "atlanta-hawks",
+      "name": "Atlanta Hawks",
+      "nickname": "Hawks",
+      "abbrev": "ATL",
+      "names": [
+        "Hawks"
+      ],
+      "historical": []
+    },
+    {
+      "slug": "boston-celtics",
+      "name": "Boston Celtics",
+      "nickname": "Celtics",
+      "abbrev": "BOS",
+      "names": [
+        "Celtics"
+      ],
+      "historical": []
+    },
+    {
+      "slug": "brooklyn-nets",
+      "name": "Brooklyn Nets",
+      "nickname": "Nets",
+      "abbrev": "BKN",
+      "names": [
+        "Nets"
+      ],
+      "historical": [
+        "New Jersey Nets"
+      ]
+    },
+    {
+      "slug": "charlotte-hornets",
+      "name": "Charlotte Hornets",
+      "nickname": "Hornets",
+      "abbrev": "CHA",
+      "names": [
+        "Hornets"
+      ],
+      "historical": [
+        "Bobcats",
+        "Charlotte Bobcats"
+      ]
+    },
+    {
+      "slug": "chicago-bulls",
+      "name": "Chicago Bulls",
+      "nickname": "Bulls",
+      "abbrev": "CHI",
+      "names": [
+        "Bulls"
+      ],
+      "historical": []
+    },
+    {
+      "slug": "cleveland-cavaliers",
+      "name": "Cleveland Cavaliers",
+      "nickname": "Cavaliers",
+      "abbrev": "CLE",
+      "names": [
+        "Cavaliers",
+        "Cavs"
+      ],
+      "historical": []
+    },
+    {
+      "slug": "dallas-mavericks",
+      "name": "Dallas Mavericks",
+      "nickname": "Mavericks",
+      "abbrev": "DAL",
+      "names": [
+        "Mavericks",
+        "Mavs"
+      ],
+      "historical": []
+    },
+    {
+      "slug": "denver-nuggets",
+      "name": "Denver Nuggets",
+      "nickname": "Nuggets",
+      "abbrev": "DEN",
+      "names": [
+        "Nuggets"
+      ],
+      "historical": []
+    },
+    {
+      "slug": "detroit-pistons",
+      "name": "Detroit Pistons",
+      "nickname": "Pistons",
+      "abbrev": "DET",
+      "names": [
+        "Pistons"
+      ],
+      "historical": []
+    },
+    {
+      "slug": "golden-state-warriors",
+      "name": "Golden State Warriors",
+      "nickname": "Warriors",
+      "abbrev": "GSW",
+      "names": [
+        "Warriors"
+      ],
+      "historical": []
+    },
+    {
+      "slug": "houston-rockets",
+      "name": "Houston Rockets",
+      "nickname": "Rockets",
+      "abbrev": "HOU",
+      "names": [
+        "Rockets"
+      ],
+      "historical": []
+    },
+    {
+      "slug": "indiana-pacers",
+      "name": "Indiana Pacers",
+      "nickname": "Pacers",
+      "abbrev": "IND",
+      "names": [
+        "Pacers"
+      ],
+      "historical": []
+    },
+    {
+      "slug": "la-clippers",
+      "name": "LA Clippers",
+      "nickname": "Clippers",
+      "abbrev": "LAC",
+      "names": [
+        "Clippers"
+      ],
+      "historical": []
+    },
+    {
+      "slug": "los-angeles-lakers",
+      "name": "Los Angeles Lakers",
+      "nickname": "Lakers",
+      "abbrev": "LAL",
+      "names": [
+        "Lakers"
+      ],
+      "historical": []
+    },
+    {
+      "slug": "memphis-grizzlies",
+      "name": "Memphis Grizzlies",
+      "nickname": "Grizzlies",
+      "abbrev": "MEM",
+      "names": [
+        "Grizzlies"
+      ],
+      "historical": [
+        "Vancouver Grizzlies"
+      ]
+    },
+    {
+      "slug": "miami-heat",
+      "name": "Miami Heat",
+      "nickname": "Heat",
+      "abbrev": "MIA",
+      "names": [
+        "Heat"
+      ],
+      "historical": []
+    },
+    {
+      "slug": "milwaukee-bucks",
+      "name": "Milwaukee Bucks",
+      "nickname": "Bucks",
+      "abbrev": "MIL",
+      "names": [
+        "Bucks"
+      ],
+      "historical": []
+    },
+    {
+      "slug": "minnesota-timberwolves",
+      "name": "Minnesota Timberwolves",
+      "nickname": "Timberwolves",
+      "abbrev": "MIN",
+      "names": [
+        "Timberwolves",
+        "Wolves",
+        "T-Wolves"
+      ],
+      "historical": []
+    },
+    {
+      "slug": "new-orleans-pelicans",
+      "name": "New Orleans Pelicans",
+      "nickname": "Pelicans",
+      "abbrev": "NOP",
+      "names": [
+        "Pelicans",
+        "Pels"
+      ],
+      "historical": [
+        "New Orleans Hornets"
+      ]
+    },
+    {
+      "slug": "new-york-knicks",
+      "name": "New York Knicks",
+      "nickname": "Knicks",
+      "abbrev": "NYK",
+      "names": [
+        "Knicks"
+      ],
+      "historical": []
+    },
+    {
+      "slug": "oklahoma-city-thunder",
+      "name": "Oklahoma City Thunder",
+      "nickname": "Thunder",
+      "abbrev": "OKC",
+      "names": [
+        "Thunder"
+      ],
+      "historical": [
+        "SuperSonics",
+        "Sonics",
+        "Seattle SuperSonics"
+      ]
+    },
+    {
+      "slug": "orlando-magic",
+      "name": "Orlando Magic",
+      "nickname": "Magic",
+      "abbrev": "ORL",
+      "names": [
+        "Magic"
+      ],
+      "historical": []
+    },
+    {
+      "slug": "philadelphia-76ers",
+      "name": "Philadelphia 76ers",
+      "nickname": "76ers",
+      "abbrev": "PHI",
+      "names": [
+        "76ers",
+        "Sixers"
+      ],
+      "historical": []
+    },
+    {
+      "slug": "phoenix-suns",
+      "name": "Phoenix Suns",
+      "nickname": "Suns",
+      "abbrev": "PHX",
+      "names": [
+        "Suns"
+      ],
+      "historical": []
+    },
+    {
+      "slug": "portland-trail-blazers",
+      "name": "Portland Trail Blazers",
+      "nickname": "Trail Blazers",
+      "abbrev": "POR",
+      "names": [
+        "Trail Blazers",
+        "Blazers"
+      ],
+      "historical": []
+    },
+    {
+      "slug": "sacramento-kings",
+      "name": "Sacramento Kings",
+      "nickname": "Kings",
+      "abbrev": "SAC",
+      "names": [
+        "Kings"
+      ],
+      "historical": [
+        "Kansas City Kings"
+      ]
+    },
+    {
+      "slug": "san-antonio-spurs",
+      "name": "San Antonio Spurs",
+      "nickname": "Spurs",
+      "abbrev": "SAS",
+      "names": [
+        "Spurs"
+      ],
+      "historical": []
+    },
+    {
+      "slug": "toronto-raptors",
+      "name": "Toronto Raptors",
+      "nickname": "Raptors",
+      "abbrev": "TOR",
+      "names": [
+        "Raptors"
+      ],
+      "historical": []
+    },
+    {
+      "slug": "utah-jazz",
+      "name": "Utah Jazz",
+      "nickname": "Jazz",
+      "abbrev": "UTA",
+      "names": [
+        "Jazz"
+      ],
+      "historical": []
+    },
+    {
+      "slug": "washington-wizards",
+      "name": "Washington Wizards",
+      "nickname": "Wizards",
+      "abbrev": "WAS",
+      "names": [
+        "Wizards"
+      ],
+      "historical": [
+        "Washington Bullets"
+      ]
+    }
+  ]
+}

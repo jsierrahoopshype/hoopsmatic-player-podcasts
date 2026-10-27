@@ -1,0 +1,5 @@
+{
+  "_about": "Manual 'talked about' mentions; they win over automatic ones. add: {\"video\": <id>, \"player\": <Career Map slug>} or {\"video\": <id>, \"team\": <team slug>}, optional \"t\" (seconds into the video). remove: the same shape without t.",
+  "add": [],
+  "remove": []
+}

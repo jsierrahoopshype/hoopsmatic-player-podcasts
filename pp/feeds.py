@@ -11,6 +11,8 @@ import urllib.request
 
 from defusedxml import ElementTree as ET
 
+from . import chapters
+
 NS = {
     "a": "http://www.w3.org/2005/Atom",
     "yt": "http://www.youtube.com/xml/schemas/2015",
@@ -75,6 +77,8 @@ def parse_feed(xml_bytes):
             "short": "/shorts/" in (href or ""),
             # Kept short: only for spotting guests ("ft. ...") and clip links.
             "desc": desc[:600],
+            # Chapter lines from the whole description ("12:30 Wemby's debut").
+            "chapters": chapters.parse(desc),
         })
     return title, vids
 

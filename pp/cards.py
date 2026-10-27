@@ -19,8 +19,9 @@ def e(s):
     return escape("" if s is None else str(s), quote=True)
 
 
-def yt(vid):
-    return "https://www.youtube.com/watch?v=" + vid
+def yt(vid, start=None):
+    """YouTube link; with start, it opens at that second (t= parameter)."""
+    return "https://www.youtube.com/watch?v=" + vid + ("&t=%ds" % start if start else "")
 
 
 def fmt_len(sec):
@@ -61,7 +62,7 @@ def hosts_html(show, ctx, avatars=True):
     return "".join(bits)
 
 
-def _media(it, ctx, big=False):
+def _media(it, ctx, big=False, start=None):
     vid = it["id"]
     thumb_set = ctx.get("thumbs_big" if big else "thumbs", ())
     w, h = (640, 360) if big else (320, 180)
@@ -73,9 +74,11 @@ def _media(it, ctx, big=False):
     dur = ('<span class="vc-dur">%s</span>' % fmt_len(it.get("duration"))) if it.get("duration") else ""
     if it.get("embed") == "no":
         return ('<a class="vc-media vc-noembed" href="%s" target="_blank" rel="noopener">%s'
-                '<span class="vc-ext">Watch on YouTube</span>%s</a>' % (e(yt(vid)), img, dur))
-    return ('<a class="vc-media" href="%s" target="_blank" rel="noopener" data-play="%s" aria-label="Play: %s">%s'
-            '<span class="vc-btn" aria-hidden="true"></span>%s</a>' % (e(yt(vid)), e(vid), e(it["title"]), img, dur))
+                '<span class="vc-ext">Watch on YouTube</span>%s</a>' % (e(yt(vid, start)), img, dur))
+    # data-start: the in-page player starts at that second too.
+    return ('<a class="vc-media" href="%s" target="_blank" rel="noopener" data-play="%s"%s aria-label="Play: %s">%s'
+            '<span class="vc-btn" aria-hidden="true"></span>%s</a>'
+            % (e(yt(vid, start)), e(vid), (' data-start="%d"' % start) if start else "", e(it["title"]), img, dur))
 
 
 def badge(it):
@@ -85,7 +88,9 @@ def badge(it):
     return '<span class="bo%s">%.1fx</span>' % (" hot" if b >= config.BREAKOUT_X else "", b)
 
 
-def video_card(it, ctx, show_breakout=False, extra="", label=""):
+def video_card(it, ctx, show_breakout=False, extra="", label="", start=None, more=""):
+    """start: open (and play) at that second, e.g. a chapter that talks
+    about someone; more: extra HTML under the meta line (related clips)."""
     from .render import fmt_date, full
     show = ctx["shows"][it["show"]]
     gain = ""
@@ -98,13 +103,30 @@ def video_card(it, ctx, show_breakout=False, extra="", label=""):
             '<h3 class="vc-t"><a href="%s" target="_blank" rel="noopener">%s</a></h3>'
             '<div class="vc-show"><a href="%s/%s/">%s</a></div>'
             '<div class="vc-hosts">%s</div>'
-            '<div class="vc-meta">%s · %s views%s</div>'
+            '<div class="vc-meta">%s · %s views%s%s</div>%s'
             '<a class="vc-yt" href="%s" target="_blank" rel="noopener">Watch on YouTube</a>'
             '</div></article>'
-            % (_media(it, ctx), e(it["fmt"]), FMT_LABEL.get(it["fmt"], "Video"),
+            % (_media(it, ctx, start=start), e(it["fmt"]), FMT_LABEL.get(it["fmt"], "Video"),
                badge(it) if show_breakout else "", ('<span class="role">%s</span>' % e(label)) if label else "",
-               e(yt(it["id"])), e(it["title"]), B, e(show["slug"]), e(show["name"]),
-               hosts_html(show, ctx), fmt_date(it["published"]), full(it["views"]), gain, e(yt(it["id"]))))
+               e(yt(it["id"], start)), e(it["title"]), B, e(show["slug"]), e(show["name"]),
+               hosts_html(show, ctx), fmt_date(it["published"]), full(it["views"]), gain,
+               (' · <span class="at">from %s</span>' % fmt_len(start)) if start else "", more, e(yt(it["id"], start))))
+
+
+def talk_card(g, ctx):
+    """One discussion: the full episode (or the most viewed video) as the
+    card, opening at the chapter that talks about them when there is one,
+    with the other clips of the same episode listed under it."""
+    more = ""
+    if g.clips:
+        links = "".join('<li><a href="%s" target="_blank" rel="noopener">%s</a>%s</li>'
+                        % (e(yt(c["id"], g.starts.get(c["id"]))), e(c["title"]),
+                           (' <span class="at">from %s</span>' % fmt_len(g.starts[c["id"]])) if g.starts.get(c["id"]) else "")
+                        for c in g.clips[:4])
+        extra = (' <span class="at">and %d more</span>' % (len(g.clips) - 4)) if len(g.clips) > 4 else ""
+        more = ('<div class="vc-more"><span class="lbl">Also from this episode</span><ul>%s</ul>%s</div>'
+                % (links, extra))
+    return video_card(g.lead, ctx, start=g.starts.get(g.lead["id"]), more=more)
 
 
 def featured(it, ctx, why):
