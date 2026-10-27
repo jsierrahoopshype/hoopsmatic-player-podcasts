@@ -1,17 +1,22 @@
 name: update
 
-# Daily at 06:15 UTC: read every show's public YouTube feed (no key), save the
-# day's snapshot, rebuild the site and deploy it to GitHub Pages
+# Daily at 06:15 UTC, and again at 18:15 UTC as a safety net (a scheduled run
+# GitHub skips is caught by the other; a second run the same day only
+# refreshes that day's numbers): read every show's public YouTube feeds and a
+# yt-dlp listing of its uploads from the last 90 days (no key), save the day's
+# view snapshot, rebuild the site and deploy it to GitHub Pages
 # (hoopsmatic.com/player-podcasts through the HoopsMatic Worker).
-# Mondays, and whenever run by hand with "listing" ticked, it first runs the
-# full yt-dlp channel listing (every upload's length, views and date, plus
-# subscriber counts). If YouTube blocks that from GitHub's servers the step
-# warns and the run carries on with the last good data.
+# Mondays (first run of the day), and whenever run by hand with "listing"
+# ticked, it first runs the full yt-dlp listing of every tab (every upload's
+# length, views and date, Shorts included, plus subscriber counts). If YouTube
+# blocks that from GitHub's servers the step warns and the run carries on with
+# the last good data.
 # A push to main rebuilds and redeploys from the committed data only.
 
 on:
   schedule:
     - cron: "15 6 * * *"
+    - cron: "15 18 * * *"
   workflow_dispatch:
     inputs:
       listing:
@@ -45,25 +50,25 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Weekly yt-dlp listing (Mondays, or when asked)
+      - name: Full yt-dlp listing (Mondays or when a week old; or when asked)
         if: github.event_name != 'push'
         continue-on-error: true
         run: |
-          if [ "${{ inputs.listing }}" = "true" ] || { [ "${{ github.event_name }}" = "schedule" ] && [ "$(date -u +%u)" = "1" ]; }; then
+          if [ "${{ inputs.listing }}" = "true" ]; then
             python -m pp weekly || echo "::warning::yt-dlp listing failed; keeping the last good data"
-            python - <<'PY'
+          else
+            python -m pp weekly-if-due || echo "::warning::yt-dlp listing failed; keeping the last good data"
+          fi
+          python - <<'PY'
           import json
           s = json.load(open("data/status.json")).get("ytdlp", {})
           if s.get("blocked"):
               print("::warning::YouTube blocked the yt-dlp listing from this server; last good listing: %s" % s.get("last_ok"))
           else:
-              print("yt-dlp listing: %s sources read, %s with errors" % (s.get("sources_ok"), s.get("sources_with_errors")))
+              print("yt-dlp listing: last %s, %s sources read, %s with errors" % (s.get("last_attempt"), s.get("sources_ok"), s.get("sources_with_errors")))
           PY
-          else
-            echo "Not Monday: no full listing today."
-          fi
 
-      - name: Daily feeds
+      - name: Daily feeds and 90-day listing
         if: github.event_name != 'push'
         run: python -m pp daily
 

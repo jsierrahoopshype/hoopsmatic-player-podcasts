@@ -7,9 +7,27 @@ from datetime import timedelta
 from statistics import median
 
 from . import config, roster
-from .util import parse_ts, as_date
+from .util import parse_ts, as_date, load_json
 
 FULL, CLIP, SHORT, UNKNOWN = "full", "clip", "short", "unknown"
+
+
+_OVERRIDES = None
+
+
+def format_overrides():
+    """data/format_overrides.json: {"<video id>": "full" | "clip" | "short"}.
+    Loaded once; tests can reset it with set_format_overrides()."""
+    global _OVERRIDES
+    if _OVERRIDES is None:
+        raw = load_json(config.FORMAT_OVERRIDES_FILE, {}) or {}
+        _OVERRIDES = {k: v for k, v in raw.items() if not k.startswith("_") and v in (FULL, CLIP, SHORT)}
+    return _OVERRIDES
+
+
+def set_format_overrides(d):
+    global _OVERRIDES
+    _OVERRIDES = d
 
 
 def video_type(duration, tab=None):
@@ -28,11 +46,18 @@ def video_type(duration, tab=None):
     return FULL
 
 
+def video_format(v, vid=None):
+    """A video's format: a manual override (data/format_overrides.json) wins,
+    otherwise video_type() from its length and tab."""
+    o = format_overrides().get(vid or v.get("id"))
+    return o or video_type(v.get("duration"), v.get("tab"))
+
+
 def counts_as_episode(v):
     """Rankings use full episodes only. A video whose length is not known yet
     (posted since the last listing) counts until its length is known; the
     daily run fills lengths in, so this window is normally under a day."""
-    return video_type(v.get("duration"), v.get("tab")) in (FULL, UNKNOWN)
+    return video_format(v) in (FULL, UNKNOWN)
 
 
 def age_days(v, now):
@@ -40,12 +65,16 @@ def age_days(v, now):
     return None if p is None else (now - p).total_seconds() / 86400.0
 
 
-def show_videos(show, cat):
+def show_videos(show, cat, need_date=True):
     """The source's videos that belong to this show (title filter applied),
-    with a publish date and a view count. Each gets its id under "id"."""
+    with a view count and (unless need_date=False) a publish date. Videos
+    marked gone (deleted, private or unavailable) are left out. Each gets its
+    id under "id"."""
     out = []
     for vid, v in (cat or {}).get("videos", {}).items():
-        if not v.get("published") or v.get("views") is None:
+        if v.get("views") is None or v.get("gone"):
+            continue
+        if need_date and not v.get("published"):
             continue
         if not roster.title_matches(show, v.get("title")):
             continue
@@ -140,9 +169,12 @@ def show_stats(show, cat, now, subs_history=None, shared=False):
 
     status = ranking_status(vids, now)
     reason = "No full-length episodes (20+ minutes) found." if status == "excluded" else None
-    # A show the roster leaves out on purpose (e.g. a network's own channel).
+    # A show the roster leaves out on purpose (e.g. a network's own channel),
+    # or one flagged uncertain until it is checked.
     if show.get("exclude_reason"):
         status, reason = "excluded", show["exclude_reason"]
+    elif show.get("uncertain"):
+        status, reason = "uncertain", "Marked uncertain in data/channels.json: kept out of the rankings until cleared."
 
     scored = []
     for v in eps:

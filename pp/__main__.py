@@ -1,4 +1,4 @@
-"""python -m pp daily | weekly | build"""
+"""python -m pp daily | weekly | weekly-if-due | build"""
 import sys
 
 from . import build, collect
@@ -10,6 +10,13 @@ def main(argv):
         collect.daily()
     elif cmd == "weekly":
         collect.weekly()          # never raises; a blocked run is recorded in data/status.json
+    elif cmd == "weekly-if-due":
+        # Mondays, or whenever the last full listing is a week old (a skipped
+        # Monday run is caught up by the next scheduled run).
+        if collect.weekly_due():
+            collect.weekly()
+        else:
+            print("full listing not due today")
     elif cmd == "build":
         build.build()
     else:

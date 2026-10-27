@@ -1,8 +1,9 @@
 """Channel listings through yt-dlp: flat listings only, nothing is downloaded.
 
-A flat listing reads a channel's Videos and Live tabs (the same pages a
-visitor scrolls) and returns every upload's title, length, rounded view count
-and "N days ago" text, plus the channel's subscriber count. No key, no login.
+A flat listing reads a channel's Videos, Live and Shorts tabs (the same pages
+a visitor scrolls) and returns every upload's title, length, rounded view
+count and "N days ago" text, plus the channel's subscriber count. The Shorts
+tab gives views only: no length, no date. No key, no login.
 
 YouTube sometimes blocks cloud servers. Every call here returns an error
 string instead of raising, so the workflow keeps the last good data and
@@ -70,12 +71,13 @@ def _rel_for(entry, now_ts):
     return "%d days ago" % days
 
 
-def list_tab(url, playlistend=None):
+def list_tab(url, playlistend=None, stop=None):
     """-> (meta, [entries], error). Entries keep listing order (newest first).
 
     The listing is read page by page; when YouTube refuses a later page the
     pages already read are kept and returned along with the error, so a long
-    channel still gets its newest uploads refreshed."""
+    channel still gets its newest uploads refreshed. stop(entries_so_far) ->
+    True ends the listing early (no more pages are requested)."""
     if yt_dlp is None:
         return None, [], "yt-dlp is not installed"
     _install_rel_hook()
@@ -98,6 +100,8 @@ def list_tab(url, playlistend=None):
                         "views": e.get("view_count"),
                         "rel": _rel_for(e, now_ts),
                     })
+                    if stop is not None and stop(out):
+                        break
             except Exception as ex:
                 err = str(ex)[:300]
     except Exception as ex:
@@ -109,13 +113,45 @@ def list_tab(url, playlistend=None):
     return meta, out, err
 
 
-def tab_urls(src):
+def tab_urls(src, shorts=True):
     if src["kind"] == "playlist":
         return [("videos", "https://www.youtube.com/playlist?list=" + src["playlist_id"])]
-    # No Shorts tab: it carries no upload dates and Shorts never count, so it
-    # would only make the weekly run longer.
     base = "https://www.youtube.com/channel/" + src["channel_id"]
-    return [("videos", base + "/videos"), ("streams", base + "/streams")]
+    out = [("videos", base + "/videos"), ("streams", base + "/streams")]
+    if shorts:
+        out.append(("shorts", base + "/shorts"))
+    return out
+
+
+def stop_past_days(days, run=3):
+    """Stop a dated listing once `run` entries in a row are older than `days`."""
+    def stop(entries):
+        tail = entries[-run:]
+        if len(tail) < run:
+            return False
+        for e in tail:
+            b = reldates.bucket(e.get("rel"))
+            if not b or b[0] <= days:
+                return False
+        return True
+    return stop
+
+
+def stop_at_known_shorts(catalog_videos, days, now, run=15):
+    """Stop a Shorts listing (no dates) once `run` Shorts in a row are ones we
+    already know and that are either undated or older than `days`."""
+    from .util import parse_ts
+
+    def old(e):
+        v = catalog_videos.get(e["id"])
+        if not v:
+            return False
+        p = parse_ts(v.get("published"))
+        return p is None or (now - p).days > days
+    def stop(entries):
+        tail = entries[-run:]
+        return len(tail) == run and all(old(e) for e in tail)
+    return stop
 
 
 def subscriber_url(channel_id):

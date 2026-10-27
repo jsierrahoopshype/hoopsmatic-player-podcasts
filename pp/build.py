@@ -9,7 +9,7 @@ import shutil
 import sys
 from datetime import timedelta
 
-from . import catalog, config, metrics, render, roster, sitemap, thumbs
+from . import catalog, config, guests, metrics, render, roster, sitemap, thumbs
 from .util import load_json, save_json, utcnow, today_str, parse_ts
 
 
@@ -71,6 +71,8 @@ def compute(now=None):
     occasional = sorted((s for s in stats if s["status"] == "occasional"),
                         key=lambda s: s["last_episode"] or "", reverse=True)
     excluded = [s for s in stats if s["status"] == "excluded"]
+    uncertain = [s for s in stats if s["status"] == "uncertain"]
+    appearances, review = guests.build(shows, cats)
 
     ranked_eps = [v for s in ranked for v in s["episodes"]]
     week = [v for v in ranked_eps if metrics.age_days(v, now) <= config.WEEK_DAYS]
@@ -84,12 +86,14 @@ def compute(now=None):
 
     status = load_json(config.STATUS_FILE, {}) or {}
     last_ok = (status.get("ytdlp") or {}).get("last_ok")
+    last_run = parse_ts(status.get("last_success"))
     return {
         "now": now, "today": today, "shows": by_slug, "shared": shared, "stats": stats,
-        "ranked": ranked, "ranked_pc": ranked_pc, "occasional": occasional, "dormant": dormant, "excluded": excluded, "changes": changes,
+        "ranked": ranked, "ranked_pc": ranked_pc, "occasional": occasional, "dormant": dormant, "excluded": excluded, "uncertain": uncertain,
+        "appearances": appearances, "appearances_review": review, "changes": changes,
         "history": history, "episode_of_week": eow, "breakouts": breakouts,
         "most_watched": mw, "mw_shows": sorted({v["slug"] for v in pool}),
-        "updated_label": now.strftime("%b %-d, %Y"),
+        "updated_label": (last_run or now).strftime("%b %-d, %Y, %H:%M UTC"),
         "listing_label": render.fmt_date(last_ok + "T00:00:00Z") if last_ok else None,
         "thumbs": set(),
     }
@@ -158,10 +162,44 @@ def build(now=None, fetch_thumbs=True, out=None):
         "excluded_by_rules": [{"slug": s["slug"], "name": ctx["shows"][s["slug"]]["name"], "type": s["type"],
                                "channel_id": ctx["shows"][s["slug"]]["channel_id"], "reason": s["reason"]}
                               for s in ctx["excluded"]],
+        "uncertain": [{"slug": s["slug"], "name": ctx["shows"][s["slug"]]["name"], "reason": s["reason"]}
+                      for s in ctx["uncertain"]],
         "not_in_roster": roster_doc.get("not_ranked", []),
     })
+    write_appearances(ctx)
     _log("built %d pages: %d podcasts and %d player channels ranked, %d occasional, %d dormant, %d excluded, %d thumbnails"
          % (len(pages), len(ctx["ranked"]), len(ctx["ranked_pc"]), len(ctx["occasional"]), len(ctx["dormant"]),
             len(ctx["excluded"]),
             len(ctx["thumbs"])))
     return ctx
+
+
+REVIEW_MENTIONS = 1000   # plain title mentions kept in appearances_review.json
+
+
+def write_appearances(ctx):
+    """data/appearances.json (confirmed guests, shown on the site) and
+    data/appearances_review.json (possible guests, not shown)."""
+    names = guests.PlayerIndex.load().display
+    items = {k: dict(v, name=names.get(v["player"], v["player"])) for k, v in ctx["appearances"].items()}
+    save_json(config.APPEARANCES_FILE, {
+        "_about": ("Confirmed guest appearances: stated explicitly in the title or description and matched to "
+                   "one NBA Career Map player, or added in data/appearances_manual.json. group: clips of the "
+                   "same episode share one group and count as one appearance. Generated on every build."),
+        "items": items}, line_per_key="items")
+    rev = sorted(ctx["appearances_review"].items(), key=lambda kv: -(kv[1].get("views") or 0))
+    # Plain title mentions run to tens of thousands: keep the most viewed
+    # ones, and every stated guest held back (same name, or a regular).
+    plain = [kv for kv in rev if kv[1]["reason"].startswith("named in the title")]
+    keep = {k for k, _ in plain[:REVIEW_MENTIONS]}
+    rev = [kv for kv in rev if kv[0] in keep or not kv[1]["reason"].startswith("named in the title")]
+    save_json(config.APPEARANCES_REVIEW_FILE, {
+        "_about": ("Possible guests, NOT shown on the site: players named in a title without being stated as "
+                   "guests (the %d most viewed of %d), a stated guest whose name belongs to more than one "
+                   "player, or someone stated in so many of one show's episodes that they are likely a co-host "
+                   "or regular. To confirm one, add {\"video\": ..., \"player\": <Career Map slug>} to \"add\" "
+                   "in data/appearances_manual.json. Sorted by views. Generated on every build."
+                   % (min(REVIEW_MENTIONS, len(plain)), len(plain))),
+        "total_title_mentions": len(plain),
+        "items": [dict(v, key=k) for k, v in rev]}, line_per_key="items")
+

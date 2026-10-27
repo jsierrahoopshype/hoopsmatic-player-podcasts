@@ -117,7 +117,7 @@ def page(title, desc, url, assets_v, active, body, extra_head=""):
 
 def stamp(ctx):
     """'Updated <date>' line, kept out of the sitemap hash."""
-    bits = ["Updated " + ctx["updated_label"]]
+    bits = ["Last updated " + ctx["updated_label"]]
     yd = ctx.get("listing_label")
     if yd:
         bits.append("lengths and subscribers from " + yd)

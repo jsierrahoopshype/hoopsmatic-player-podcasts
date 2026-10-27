@@ -21,3 +21,27 @@ def test_only_full_and_pending_count_as_episodes():
     assert metrics.counts_as_episode({"duration": None, "tab": "feed"})   # length pending
     assert not metrics.counts_as_episode({"duration": 600, "tab": "videos"})
     assert not metrics.counts_as_episode({"duration": 40, "tab": "videos"})
+
+
+def test_format_overrides_win():
+    try:
+        metrics.set_format_overrides({"abc": "clip", "def": "full"})
+        assert metrics.video_format({"duration": 3600, "tab": "videos"}, "abc") == metrics.CLIP
+        assert metrics.video_format({"duration": 30, "tab": "shorts"}, "def") == metrics.FULL
+        assert metrics.video_format({"duration": 3600, "tab": "videos", "id": "zzz"}) == metrics.FULL
+        assert not metrics.counts_as_episode({"duration": 3600, "tab": "videos", "id": "abc"})
+    finally:
+        metrics.set_format_overrides(None)
+
+
+def test_override_file_ignores_bad_values(tmp_path, monkeypatch):
+    import json
+    from pp import config
+    p = tmp_path / "o.json"
+    p.write_text(json.dumps({"_about": "x", "a": "clip", "b": "movie"}))
+    monkeypatch.setattr(config, "FORMAT_OVERRIDES_FILE", p)
+    metrics.set_format_overrides(None)
+    try:
+        assert metrics.format_overrides() == {"a": "clip"}
+    finally:
+        metrics.set_format_overrides(None)
