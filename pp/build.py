@@ -9,7 +9,7 @@ import shutil
 import sys
 from datetime import timedelta
 
-from . import catalog, config, embed, guests, headshots, home, metrics, rankmetrics, render, roster, sitemap, thumbs, videos
+from . import art, catalog, config, embed, guests, headshots, home, metrics, people, rankmetrics, render, roster, sitemap, thumbs, videos
 from .util import load_json, save_json, utcnow, today_str, parse_ts
 
 
@@ -92,6 +92,11 @@ def compute(now=None):
         per_show.setdefault(it["show"], []).append(it)
     rank_metrics = {s["slug"]: rankmetrics.show_metrics(per_show.get(s["slug"], []), s, now, flags, shared[s["slug"]])
                     for s in ranked + ranked_pc}
+    shown = ranked + ranked_pc + occasional + dormant
+    show_metrics = {s["slug"]: rank_metrics.get(s["slug"]) or
+                    rankmetrics.show_metrics(per_show.get(s["slug"], []), s, now, flags, shared[s["slug"]]) for s in shown}
+    names = guests.PlayerIndex.load().display
+    players = people.build(by_slug, [s["slug"] for s in shown], per_show, appearances, names)
 
     ranked_eps = [v for s in ranked for v in s["episodes"]]
     week = [v for v in ranked_eps if metrics.age_days(v, now) <= config.WEEK_DAYS]
@@ -112,6 +117,11 @@ def compute(now=None):
         "appearances": appearances, "appearances_review": review, "changes": changes,
         "changes_day": metrics.comparable_day(history, today) if changes else None,
         "rank_metrics": rank_metrics, "metrics_have": rankmetrics.available(rank_metrics.values()),
+        "show_metrics": show_metrics, "per_show": per_show, "players": players,
+        "item_by_id": {it["id"]: it for it in items}, "player_names": names,
+        "stats_by_slug": stats_by_slug, "art": set(),
+        "descriptions": {s["slug"]: (cats.get(roster.source_id(by_slug[s["slug"]])) or {}).get("description") for s in shown},
+        "related": related_shows(shown, appearances, show_metrics),
         "history": history, "episode_of_week": eow, "breakouts": breakouts,
         "most_watched": mw, "mw_shows": sorted({v["slug"] for v in pool}),
         "updated_label": (last_run or now).strftime("%b %-d, %Y, %H:%M UTC"),
@@ -123,6 +133,24 @@ def compute(now=None):
         "stream_hosts": {s["slug"]: [h["name"] if isinstance(h, dict) else h for h in s.get("hosts") or []]
                          for s in shows},
     }
+
+
+def related_shows(shown, appearances, show_metrics, n=3):
+    """{show: [3 other shows]}: the same type first, then most confirmed
+    guests in common, then the closest typical full-episode views."""
+    import math
+    guests_of = {}
+    for it in appearances.values():
+        guests_of.setdefault(it["show"], set()).add(it["player"])
+    typ = {s["slug"]: (show_metrics[s["slug"]]["x"]["typf"][0] or 1) for s in shown}
+    out = {}
+    for s in shown:
+        mine = guests_of.get(s["slug"], set())
+        others = [o for o in shown if o["slug"] != s["slug"]]
+        others.sort(key=lambda o: (o["type"] != s["type"], -len(mine & guests_of.get(o["slug"], set())),
+                                   abs(math.log(typ[o["slug"]]) - math.log(typ[s["slug"]])), o["slug"]))
+        out[s["slug"]] = [o["slug"] for o in others[:n]]
+    return out
 
 
 def _add_top(ctx):
@@ -150,6 +178,14 @@ def displayed_ids(ctx):
         eps = s["episodes"]
         ids.update(v["id"] for v in sorted(eps, key=lambda v: v["published"], reverse=True)[:12])
         ids.update(v["id"] for v in sorted(eps, key=lambda v: -v["views"])[:10])
+        vids = ctx["per_show"].get(s["slug"], [])
+        ids.update(it["id"] for it in sorted(vids, key=lambda it: it["published"], reverse=True)[:12])
+        for fmt in (metrics.FULL, metrics.CLIP):
+            ids.update(it["id"] for it in sorted((x for x in vids if x["fmt"] == fmt), key=lambda x: -x["views"])[:8])
+        for k in ("gain24", "gain7"):
+            ids.update(it["id"] for it in sorted((x for x in vids if x.get(k)), key=lambda x: -x[k])[:8])
+    for p in ctx.get("players", {}).values():
+        ids.update(it["id"] for it, _ in render.player_videos(p, ctx))
     return ids
 
 
@@ -170,11 +206,18 @@ def build(now=None, fetch_thumbs=True, out=None):
     out = out or config.SITE_OUT
     ids = displayed_ids(ctx)
     big = [ctx["home"]["watch"]["id"]] if ctx["home"]["watch"] else []
+    people.CURRENT = ctx["players"]
     host_slugs = {}
     for show in ctx["shows"].values():
-        for h in show.get("hosts") or []:
+        for h in (show.get("hosts") or []) + (show.get("former_hosts") or []):
             if isinstance(h, dict) and h.get("url"):
                 host_slugs[h["url"].rstrip("/").rsplit("/", 1)[-1].replace(".html", "")] = h["name"]
+    # Players with a page, and the guests named on show pages.
+    for p in ctx["players"].values():
+        host_slugs.setdefault(p["slug"], p["name"])
+    for it in ctx["appearances"].values():
+        host_slugs.setdefault(it["player"], ctx["player_names"].get(it["player"], it["player"]))
+    ctx["art"] = art.available({s["channel_id"] for s in ctx["shows"].values()})
     if fetch_thumbs:
         ctx["thumbs"], ctx["thumbs_big"] = thumbs.ensure(ids, big)
         ctx["headshots"] = set(headshots.ensure(host_slugs))
@@ -196,12 +239,20 @@ def build(now=None, fetch_thumbs=True, out=None):
              config.SITE_BASE + "/dormant/": ("dormant/index.html", render.dormant_page(ctx))}
     for s in ctx["ranked"] + ctx["ranked_pc"] + ctx["occasional"] + ctx["dormant"]:
         pages[config.SITE_BASE + "/" + s["slug"] + "/"] = (s["slug"] + "/index.html", render.show_page(ctx, s))
+    if ctx["players"]:
+        pages[config.SITE_BASE + "/players/"] = ("players/index.html", render.players_index_page(ctx))
+    for p in ctx["players"].values():
+        pages[config.SITE_BASE + "/players/" + p["slug"] + "/"] = ("players/%s/index.html" % p["slug"],
+                                                                   render.player_page(ctx, p))
 
     if out.exists():
         shutil.rmtree(out)
     (out / "assets").mkdir(parents=True)
     (out / "thumbs" / "big").mkdir(parents=True)
     (out / "headshots").mkdir()
+    (out / "art").mkdir()
+    for cid in ctx["art"]:
+        shutil.copyfile(art.path_for(cid), out / "art" / (cid + ".webp"))
     (out / "data").mkdir()
     for rel, body in stream_files.items():
         (out / rel).write_bytes(body)
