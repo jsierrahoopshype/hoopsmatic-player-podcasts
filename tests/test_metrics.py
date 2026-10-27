@@ -1,4 +1,4 @@
-from pp import metrics
+from pp import config, metrics
 from tests.helpers import NOW, SHOW, cat, vid
 
 
@@ -46,9 +46,21 @@ def test_rank_order_and_changes():
     ranked = metrics.rank_shows(stats)
     assert [s["slug"] for s in ranked] == ["b", "c", "a"]
     assert metrics.rank_changes(ranked, {}, "2026-10-26") == {}
-    hist = {"2026-10-19": {"a": 1, "b": 2}, "2026-10-25": {"a": 3}}
+    R = config.RANK_RULE
+    hist = {"2026-10-19": {"a": 1, "b": 2, "_rule": R}, "2026-10-25": {"a": 3, "_rule": R}}
     ch = metrics.rank_changes(ranked, hist, "2026-10-26")
     assert ch == {"b": 1, "c": "NEW", "a": -2}
+    assert metrics.comparable_day(hist, "2026-10-26") == "2026-10-19"
+
+
+def test_rank_changes_need_a_ranking_made_with_the_same_rules():
+    stats = [{"slug": "a", "status": "ranked", "momentum": 10, "typical": 1}]
+    ranked = metrics.rank_shows(stats)
+    # No rule tag (older rankings) or another rule: not comparable, so no arrows.
+    assert metrics.rank_changes(ranked, {"2026-10-19": {"a": 2}}, "2026-10-26") == {}
+    assert metrics.rank_changes(ranked, {"2026-10-19": {"a": 2, "_rule": "old"}}, "2026-10-26") == {}
+    # Less than a week old: not used either.
+    assert metrics.rank_changes(ranked, {"2026-10-21": {"a": 2, "_rule": config.RANK_RULE}}, "2026-10-26") == {}
 
 
 def test_podcasts_and_player_channels_rank_separately():

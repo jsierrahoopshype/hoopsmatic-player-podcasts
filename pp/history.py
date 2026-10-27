@@ -134,8 +134,8 @@ def rollup(today, keep_days=None):
 
 
 def views_on(day, tolerance=1):
-    """{vid: views} as of `day`: that day's daily file, else the nearest
-    daily or weekly file within `tolerance` days (None when there is none).
+    """{vid: views} as of `day`: that day's files, else the nearest day with
+    a daily or weekly file within `tolerance` days (None when there is none).
     Returns (actual_day, {vid: views})."""
     want = date.fromisoformat(day)
     best = None
@@ -146,10 +146,14 @@ def views_on(day, tolerance=1):
                 best = (gap, kind, d)
     if best is None:
         return None, None
-    doc = load_daily(best[2]) if best[1] == "daily" else load_weekly(best[2])
+    # A day with both files: the weekly reading (every video) under the
+    # daily one (the last 90 days, read later in the day).
+    docs = [load_weekly(best[2]) if best[2] in days_on_file("weekly") else {},
+            load_daily(best[2]) if best[2] in days_on_file("daily") else {}]
     flat = {}
-    for vv in (doc.get("v") or {}).values():
-        flat.update(vv)
+    for doc in docs:
+        for vv in ((doc or {}).get("v") or {}).values():
+            flat.update(vv)
     return best[2], flat
 
 

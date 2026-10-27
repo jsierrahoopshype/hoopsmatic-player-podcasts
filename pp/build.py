@@ -9,7 +9,7 @@ import shutil
 import sys
 from datetime import timedelta
 
-from . import catalog, config, embed, guests, headshots, home, metrics, render, roster, sitemap, thumbs, videos
+from . import catalog, config, embed, guests, headshots, home, metrics, rankmetrics, render, roster, sitemap, thumbs, videos
 from .util import load_json, save_json, utcnow, today_str, parse_ts
 
 
@@ -87,6 +87,11 @@ def compute(now=None):
         st["episodes"] = [dict(v, breakout=score.get(v["id"])) for v in st["episodes"]
                           if embed.status(embeds, v["id"]) != "gone"]
     pod_items = [it for it in items if by_slug[it["show"]]["type"] == "podcast"]
+    per_show = {}
+    for it in items:
+        per_show.setdefault(it["show"], []).append(it)
+    rank_metrics = {s["slug"]: rankmetrics.show_metrics(per_show.get(s["slug"], []), s, now, flags, shared[s["slug"]])
+                    for s in ranked + ranked_pc}
 
     ranked_eps = [v for s in ranked for v in s["episodes"]]
     week = [v for v in ranked_eps if metrics.age_days(v, now) <= config.WEEK_DAYS]
@@ -105,6 +110,8 @@ def compute(now=None):
         "now": now, "today": today, "shows": by_slug, "shared": shared, "stats": stats,
         "ranked": ranked, "ranked_pc": ranked_pc, "occasional": occasional, "dormant": dormant, "excluded": excluded, "uncertain": uncertain,
         "appearances": appearances, "appearances_review": review, "changes": changes,
+        "changes_day": metrics.comparable_day(history, today) if changes else None,
+        "rank_metrics": rank_metrics, "metrics_have": rankmetrics.available(rank_metrics.values()),
         "history": history, "episode_of_week": eow, "breakouts": breakouts,
         "most_watched": mw, "mw_shows": sorted({v["slug"] for v in pool}),
         "updated_label": (last_run or now).strftime("%b %-d, %Y, %H:%M UTC"),
@@ -112,9 +119,14 @@ def compute(now=None):
         "thumbs": set(), "thumbs_big": set(), "headshots": set(),
         "items": items, "flags": flags, "home": home.sections(pod_items, now, flags),
         "stream": home.stream_items(pod_items, now),
+        "top_pool": home.top_pool(pod_items, now),
         "stream_hosts": {s["slug"]: [h["name"] if isinstance(h, dict) else h for h in s.get("hosts") or []]
                          for s in shows},
     }
+
+
+def _add_top(ctx):
+    ctx["top"] = home.top_sections(ctx["top_pool"], ctx["now"], ctx["flags"])
 
 
 def home_ids(ctx):
@@ -128,6 +140,7 @@ def home_ids(ctx):
 def displayed_ids(ctx):
     ids = set(home_ids(ctx))
     ids.update(it["id"] for it in ctx["stream"])
+    ids.update(it["id"] for it in ctx["top_pool"])
     if ctx["episode_of_week"]:
         ids.add(ctx["episode_of_week"]["id"])
     ids.update(v["id"] for v in ctx["breakouts"])
@@ -141,7 +154,19 @@ def displayed_ids(ctx):
 
 
 def build(now=None, fetch_thumbs=True, out=None):
+    now = now or utcnow()
     ctx = compute(now)
+    _add_top(ctx)
+    if fetch_thumbs:
+        # Embed checks first (homepage, then the stream, then the rest), so a
+        # video found deleted or private is left out of this very build.
+        order = home_ids(ctx) + [it["id"] for it in ctx["stream"]] + [it["id"] for it in ctx["top_pool"]] \
+            + sorted(displayed_ids(ctx))
+        before = embed.load()
+        cache = embed.update(order, ctx["today"])
+        if any(embed.status(cache, i) == "gone" and embed.status(before, i) != "gone" for i in order):
+            ctx = compute(now)
+            _add_top(ctx)
     out = out or config.SITE_OUT
     ids = displayed_ids(ctx)
     big = [ctx["home"]["watch"]["id"]] if ctx["home"]["watch"] else []
@@ -153,15 +178,12 @@ def build(now=None, fetch_thumbs=True, out=None):
     if fetch_thumbs:
         ctx["thumbs"], ctx["thumbs_big"] = thumbs.ensure(ids, big)
         ctx["headshots"] = set(headshots.ensure(host_slugs))
-        # Embed checks: homepage first, then the stream, then the rest.
-        order = home_ids(ctx) + [it["id"] for it in ctx["stream"]] + sorted(ids)
-        cache = embed.update(order, ctx["today"])
-        for it in ctx["items"]:
-            it["embed"] = embed.status(cache, it["id"])
     else:
         ctx["thumbs"], ctx["thumbs_big"] = thumbs.available(ids, big)
         ctx["headshots"] = set(headshots.available(host_slugs))
     stream_files, ctx["stream_v"] = home.stream_files(ctx["stream"], ctx, ctx["flags"])
+    top_files, ctx["top_v"] = home.top_files(ctx["top_pool"], ctx, ctx["flags"])
+    stream_files.update(top_files)
 
     css = (config.SITE_SRC / "style.css").read_bytes()
     js = (config.SITE_SRC / "app.js").read_bytes()
@@ -169,6 +191,7 @@ def build(now=None, fetch_thumbs=True, out=None):
 
     pages = {config.SITE_BASE + "/": ("index.html", render.index_page(ctx)),
              config.SITE_BASE + "/most-watched/": ("most-watched/index.html", render.most_watched_page(ctx)),
+             config.SITE_BASE + "/top-videos/": ("top-videos/index.html", render.top_videos_page(ctx)),
              config.SITE_BASE + "/player-channels/": ("player-channels/index.html", render.player_channels_page(ctx)),
              config.SITE_BASE + "/dormant/": ("dormant/index.html", render.dormant_page(ctx))}
     for s in ctx["ranked"] + ctx["ranked_pc"] + ctx["occasional"] + ctx["dormant"]:
@@ -203,7 +226,7 @@ def build(now=None, fetch_thumbs=True, out=None):
 
     # Today's ranking, for next week's arrows. Kept 120 days.
     hist = ctx["history"]
-    hist[ctx["today"]] = {s["slug"]: s["rank"] for s in ctx["ranked"] + ctx["ranked_pc"]}
+    hist[ctx["today"]] = dict({s["slug"]: s["rank"] for s in ctx["ranked"] + ctx["ranked_pc"]}, _rule=config.RANK_RULE)
     cutoff = (ctx["now"].date() - timedelta(days=120)).isoformat()
     save_json(config.RANKS_FILE, {d: r for d, r in hist.items() if d >= cutoff})
 

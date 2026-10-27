@@ -37,16 +37,27 @@ def test_gains_need_two_readings_with_coverage(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "SNAPSHOTS_DIR", tmp_path)
     today = NOW.date().isoformat()
     assert videos.gains(today, 1) is None
-    history.write_daily(today, "t", {"UCa": {"a": 100, "b": 50, "c": 10, "d": 5}})
-    history.write_daily((NOW - timedelta(days=1)).date().isoformat(), "t", {"UCa": {"a": 80}})
-    assert videos.gains(today, 1) is None                           # yesterday read 1 of 4: too partial
-    history.write_daily((NOW - timedelta(days=1)).date().isoformat(), "t", {"UCa": {"b": 40, "c": 9}})
+    yday = (NOW - timedelta(days=1)).date().isoformat()
+    history.write_daily(yday, "t", {"UCa": {"a": 80, "x1": 1, "x2": 1, "x3": 1}})
+    history.write_daily(today, "t", {"UCa": {"a": 100, "d": 5}})
+    assert videos.gains(today, 1) is None                           # today re-read 1 of yesterday's 4: partial run
+    history.write_daily(today, "t", {"UCa": {"x1": 2, "x2": 3, "b": 50, "c": 10}})
     g = videos.gains(today, 1)
     assert g and g["day_then"] == "2026-10-25"
     item = {"id": "a", "published": "2026-10-01T00:00:00Z"}
     assert videos._gain(item, g) == 20
     assert videos._gain({"id": "d", "published": "2026-10-26T01:00:00Z"}, g) == 5      # new since: all its views
     assert videos._gain({"id": "zz", "published": "2026-10-01T00:00:00Z"}, g) is None
+    assert videos._gain({"id": "b", "published": "2026-10-01T00:00:00Z"}, g) is None    # not read yesterday
+
+
+def test_gains_compare_rounded_listing_counts_at_the_same_precision():
+    g = {"day_then": "2026-10-25", "then": {"a": 1249321, "b": 1240000}, "now": {"a": 1250000, "b": 1251873}}
+    old = {"published": "2026-10-01T00:00:00Z"}
+    assert videos._gain(dict(old, id="a"), g) == 0                  # exact 1,249,321 vs listing "1.25M": no fake gain
+    assert videos._gain(dict(old, id="b"), g) == 10000              # listing "1.24M" vs exact: 1.24M -> 1.25M
+    g2 = {"day_then": "2026-10-25", "then": {"c": 523}, "now": {"c": 911}}
+    assert videos._gain(dict(old, id="c"), g2) == 388               # small counts are exact both ways
 
 
 def ctx_for():
