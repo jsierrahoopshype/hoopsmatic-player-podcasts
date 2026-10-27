@@ -12,11 +12,24 @@ def load_json(path, default=None):
 
 
 def save_json(path, data, line_per_key=None):
-    """Write JSON with sorted keys. With line_per_key, the dict under that key is
-    written one entry per line so a daily change to one video is a one-line diff."""
+    """Write JSON with sorted keys. With line_per_key, the dict (or list) under
+    that key is written one entry per line so a daily change to one video is a
+    one-line diff; a list keeps its order."""
     p = Path(path)
     p.parent.mkdir(parents=True, exist_ok=True)
-    if line_per_key and isinstance(data.get(line_per_key), dict):
+    if line_per_key and isinstance(data.get(line_per_key), list):
+        head = {k: v for k, v in data.items() if k != line_per_key}
+        lines = ["{"]
+        for k in sorted(head):
+            lines.append("  %s: %s," % (json.dumps(k), json.dumps(head[k], ensure_ascii=False, sort_keys=True)))
+        items = data[line_per_key]
+        lines.append("  %s: [" % json.dumps(line_per_key))
+        for i, it in enumerate(items):
+            lines.append("    %s%s" % (json.dumps(it, ensure_ascii=False, sort_keys=True), "," if i < len(items) - 1 else ""))
+        lines.append("  ]")
+        lines.append("}")
+        text = "\n".join(lines) + "\n"
+    elif line_per_key and isinstance(data.get(line_per_key), dict):
         head = {k: v for k, v in data.items() if k != line_per_key}
         lines = ["{"]
         for k in sorted(head):

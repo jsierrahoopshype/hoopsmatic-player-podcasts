@@ -5,7 +5,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
 VIDEOS_DIR = DATA / "videos"          # one catalog file per source (channel or playlist)
-SNAPSHOTS_DIR = DATA / "snapshots"    # one file per day, straight from the public feeds
+SNAPSHOTS_DIR = DATA / "snapshots"    # daily/ (videos of the last 90 days) and weekly/ (every video)
+FORMAT_OVERRIDES_FILE = DATA / "format_overrides.json"   # manual format by video ID
+CAREERMAP_PLAYERS_FILE = DATA / "careermap_players.json"  # Career Map's player names (its slugs)
+APPEARANCES_FILE = DATA / "appearances.json"              # confirmed guest appearances (generated)
+APPEARANCES_REVIEW_FILE = DATA / "appearances_review.json"  # possible guests, not shown (generated)
+APPEARANCES_MANUAL_FILE = DATA / "appearances_manual.json"  # manual adds/removes, win over automatic
 THUMBS_DIR = DATA / "thumbs"          # small thumbnails, committed, served from our own domain
 CHANNELS_FILE = DATA / "channels.json"
 SUBSCRIBERS_FILE = DATA / "subscribers.json"
@@ -24,6 +29,7 @@ SITE_BASE = SITE_ORIGIN + BASE_PATH
 SHORT_MAX = 60          # under 1 minute: Short
 FULL_MIN = 20 * 60      # 20 minutes and up: full episode; anything between is a clip
 
+DAILY_DAYS = 90         # videos this recent get a daily view count; older ones weekly
 MOMENTUM_DAYS = 30      # main ranking: views on full episodes posted in the last 30 days
 TYPICAL_DAYS = 90       # median window, episodes-per-month window, ranked window
 WEEK_DAYS = 7

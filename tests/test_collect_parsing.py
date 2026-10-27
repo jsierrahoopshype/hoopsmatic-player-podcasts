@@ -25,7 +25,7 @@ def test_parse_feed():
     title, vids = feeds.parse_feed(FEED)
     assert title == "Club 520 Podcast"
     assert vids[0] == {"id": "QqKUdpiP1XI", "title": "Jeff Teague ARGUES", "published": "2026-10-22T21:00:39+00:00",
-                       "views": 60668, "likes": 513, "short": False}
+                       "views": 60668, "likes": 513, "short": False, "desc": ""}
     assert vids[1]["short"] and vids[1]["views"] is None
 
 

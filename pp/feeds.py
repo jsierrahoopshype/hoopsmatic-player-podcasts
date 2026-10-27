@@ -64,6 +64,7 @@ def parse_feed(xml_bytes):
         rating = e.find("m:group/m:community/m:starRating", NS)
         views = int(stats.get("views")) if stats is not None and stats.get("views") is not None else None
         likes = int(rating.get("count")) if rating is not None and rating.get("count") is not None else None
+        desc = e.findtext("m:group/m:description", namespaces=NS) or ""
         vids.append({
             "id": vid,
             "title": e.findtext("a:title", namespaces=NS) or "",
@@ -72,8 +73,34 @@ def parse_feed(xml_bytes):
             "likes": likes,
             # The plain channel feed links Shorts as /shorts/<id>.
             "short": "/shorts/" in (href or ""),
+            # Kept short: only for spotting guests ("ft. ...") and clip links.
+            "desc": desc[:600],
         })
     return title, vids
+
+
+def shorts_feed_url(src):
+    """The Shorts-only playlist feed (UUSH<id>): exact dates for the latest
+    15 Shorts, which a channel's Shorts tab never shows."""
+    cid = src["channel_id"]
+    if src["kind"] != "channel" or not cid.startswith("UC"):
+        return None
+    return FEED + "playlist_id=UUSH" + cid[2:]
+
+
+def fetch_shorts(src):
+    """-> [video dict] from the Shorts feed, [] when it fails (one try only:
+    from cloud servers it usually does)."""
+    url = shorts_feed_url(src)
+    if not url:
+        return []
+    try:
+        _, vids = parse_feed(http_get(url, tries=1))
+    except Exception:
+        return []
+    for v in vids:
+        v["short"] = True
+    return vids
 
 
 def fetch_source(src):

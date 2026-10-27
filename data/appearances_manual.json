@@ -1,0 +1,5 @@
+{
+  "_about": "Manual guest appearances. They win over automatic matches. add: {\"video\": \"<YouTube ID>\", \"player\": \"<Career Map slug, e.g. kevin-garnett>\", \"role\": \"guest\"} (show is found from the video). remove: {\"video\": ..., \"player\": ...} drops an automatic match.",
+  "add": [],
+  "remove": []
+}

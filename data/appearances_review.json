@@ -1,0 +1,5 @@
+{
+  "_about": "Possible guests, NOT shown on the site: players named in a title without being stated as guests, or a stated guest whose name belongs to more than one player. To confirm one, add {\"video\": ..., \"player\": <Career Map slug>} to \"add\" in data/appearances_manual.json. Sorted by views. Generated on every build.",
+  "items": [
+  ]
+}

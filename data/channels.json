@@ -1,5 +1,5 @@
 {
-  "_about": "Roster for hoopsmatic.com/player-podcasts. One record per show. channel_id is the YouTube channel; playlist_id (optional) collects a show from one playlist on a shared channel; title_filter (optional, case-insensitive regex) keeps only the videos whose title matches include and not exclude, so one channel can feed several shows. shared_channel hides channel subscriber numbers, which belong to the whole channel. hosts is a list of {\"name\", \"url\"}: url is the host's HoopsMatic player page (NBA Career Map), null when there is none. exclude_reason (optional) leaves a show out of every list, with that reason in data/excluded.json. type is \"podcast\" (a recurring show with episodes or guests: main rankings) or \"player_channel\" (a player's personal channel of vlogs, behind-the-scenes and highlights: ranked separately on /player-podcasts/player-channels/).",
+  "_about": "Roster for hoopsmatic.com/player-podcasts. One record per show. channel_id is the YouTube channel; playlist_id (optional) collects a show from one playlist on a shared channel; title_filter (optional, case-insensitive regex) keeps only the videos whose title matches include and not exclude, so one channel can feed several shows. shared_channel hides channel subscriber numbers, which belong to the whole channel. hosts is a list of {\"name\", \"url\"}: url is the host's HoopsMatic player page (NBA Career Map), null when there is none. exclude_reason (optional) leaves a show out of every list, with that reason in data/excluded.json. uncertain (optional, true) keeps a show out of the rankings and off the site until cleared. type is \"podcast\" (a recurring show with episodes or guests: main rankings) or \"player_channel\" (a player's personal channel of vlogs, behind-the-scenes and highlights: ranked separately on /player-podcasts/player-channels/).",
   "not_ranked": [
     {
       "name": "The Jon Krawczynski Show",
@@ -207,14 +207,12 @@
         }
       ],
       "channel_id": "UCB_4C2Gl7Zfg4uBXk_AcWwA",
-      "youtube_url": "https://www.youtube.com/channel/UCB_4C2Gl7Zfg4uBXk_AcWwA",
+      "youtube_url": "https://www.youtube.com/playlist?list=PLs1_uaCOn-vHGPH9kxYHTNaA2iFM4r053",
       "origin": "keep list",
-      "title_filter": {
-        "include": "\\bETCs\\b"
-      },
       "shared_channel": true,
-      "note": "Lives on the Boardroom channel; only videos with \"ETCs\" in the title count.",
-      "type": "podcast"
+      "note": "Collected from its official playlist on the Boardroom channel (\"The ETCs with Kevin Durant\").",
+      "type": "podcast",
+      "playlist_id": "PLs1_uaCOn-vHGPH9kxYHTNaA2iFM4r053"
     },
     {
       "slug": "podcast-p",

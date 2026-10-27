@@ -109,4 +109,13 @@ def estimate(entries, now):
             age[i] = nxt
         nxt = age[i] if nxt is None else min(nxt, age[i])
 
+    # Entries with no date text at all (a Shorts tab lists none) that sit
+    # between two dated entries are spread evenly between them. Nothing is
+    # guessed before the first or after the last dated entry.
+    known = [i for i in range(n) if age[i] is not None]
+    for a_i, b_i in zip(known, known[1:]):
+        gap = b_i - a_i
+        for r in range(1, gap):
+            age[a_i + r] = age[a_i] + (age[b_i] - age[a_i]) * r / gap
+
     return [None if a is None else now - timedelta(days=a) for a in age]
