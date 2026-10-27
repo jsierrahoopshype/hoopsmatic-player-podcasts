@@ -81,3 +81,17 @@ def test_views_history_waits_for_three_weekly_readings(tmp_path, monkeypatch):
 def test_description_drops_links_and_emails():
     t = render._clean_desc("Best show. Business: deals@x.com https://x.com/y " + "word " * 100)
     assert "@" not in t and "http" not in t and t.endswith("…") and len(t) <= 330
+
+
+def test_embed_run_with_too_many_gone_answers_is_ignored(tmp_path, monkeypatch):
+    from pp import embed
+    monkeypatch.setattr(embed.config, "EMBED_FILE", tmp_path / "embed.json")
+    monkeypatch.setattr(embed, "_check", lambda vid: "gone")
+    cache = embed.update(["v%02d" % i for i in range(30)], "2026-10-27")
+    assert cache == {}                                      # 30 of 30 "gone": a refusing server, not 30 deleted videos
+    monkeypatch.setattr(embed, "_check", lambda vid: "gone" if vid == "v00" else "ok")
+    cache = embed.update(["v%02d" % i for i in range(30)], "2026-10-27")
+    assert cache["v00"][0] == "gone" and cache["v01"][0] == "ok"
+    monkeypatch.setattr(embed, "_check", lambda vid: "no")
+    cache = embed.update(["w%02d" % i for i in range(30)], "2026-10-27")
+    assert not any(k.startswith("w") for k in cache)        # mass "embedding off": ignored too
