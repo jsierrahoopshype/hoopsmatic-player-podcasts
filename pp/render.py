@@ -102,6 +102,7 @@ def head(title, desc, url, assets_v, extra=""):
 
 def tabs(active):
     items = [("rankings", "Rankings", B + "/"), ("player-channels", "Player channels", B + "/player-channels/"),
+             ("top-videos", "Top videos", B + "/top-videos/"),
              ("most-watched", "Most watched", B + "/most-watched/"),
              ("dormant", "Occasional & dormant", B + "/dormant/")]
     return '<nav class="tabs">' + "".join(
@@ -155,15 +156,16 @@ def ep_row(v, ctx, show=None, rank=None, extra_attrs=""):
 
 
 def change_html(ch):
+    """Rank arrow. Nothing at all without a comparable earlier ranking."""
     if ch is None:
-        return '<span class="chg flat">–</span>'
+        return ""
     if ch == "NEW":
         return '<span class="chg new">NEW</span>'
     if ch > 0:
         return '<span class="chg up">▲%d</span>' % ch
     if ch < 0:
         return '<span class="chg down">▼%d</span>' % -ch
-    return '<span class="chg flat">–</span>'
+    return '<span class="chg flat" title="Same place as a week earlier">=</span>'
 
 
 def change_sort(ch):
@@ -202,72 +204,161 @@ def hosts_html(show):
 
 # ── pages ──
 
+# Rankings table metrics: key, column header, sort-menu label, default
+# direction. Format-dependent ones change with the format filter.
+LB_METRICS = [
+    ("v7", "Views, 7 days", "Views on videos from the last 7 days", "desc"),
+    ("v30", "Views, 30 days", "Views on videos from the last 30 days", "desc"),
+    ("g7", "Gained, 7 days", "Views gained in 7 days", "desc"),
+    ("g30", "Gained, 30 days", "Views gained in 30 days", "desc"),
+    ("typf", "Typical full episode", "Typical full-episode views", "desc"),
+    ("typc", "Typical clip", "Typical clip views", "desc"),
+    ("total", "Total views", "Total views", "desc"),
+    ("subs", "Channel subscribers", "Channel subscribers", "desc"),
+    ("subg", "Subscriber growth", "Subscriber growth", "desc"),
+    ("vids", "Videos, 30 days", "Videos published", "desc"),
+    ("likes", "Likes per 1K", "Likes per 1,000 views", "desc"),
+]
+LB_FORMATS = [("full", "Full episodes"), ("clip", "Clips"), ("short", "Shorts"), ("all", "All formats")]
+
+
+def lb_definitions(ctx):
+    """One line per metric: what it is and the period it covers."""
+    f = ctx["flags"]
+    span = lambda since: ("%s to %s" % (fmt_date(since + "T00:00:00Z"), fmt_date(f["gain_day"] + "T00:00:00Z"))
+                          if since and f.get("gain_day") else "")
+    subs_day = ctx.get("listing_label")
+    d = {
+        "rank": "Rank: by views in the last 30 days on full episodes (20 minutes or longer), among ranked shows.",
+        "chg": ("Change: places moved since the ranking of %s." % fmt_date(ctx["changes_day"] + "T00:00:00Z"))
+        if ctx.get("changes_day") else "",
+        "v7": "Views, 7 days: current views on videos posted in the last 7 days.",
+        "v30": "Views, 30 days: current views on videos posted in the last 30 days (full episodes: the number the rank is based on).",
+        "g7": "Gained, 7 days: views gained by videos posted in the last 90 days, %s." % span(f.get("g7_since")),
+        "g30": "Gained, 30 days: views gained by videos posted in the last 90 days, %s." % span(f.get("g30_since")),
+        "typf": "Typical full episode: median views of full episodes (20 minutes or longer) posted in the last 90 days.",
+        "typc": "Typical clip: median views of clips (1 to 20 minutes) posted in the last 90 days.",
+        "total": "Total views: current views on every video of the show on YouTube, all time.",
+        "subs": ("Channel subscribers: YouTube's public, rounded count for the show's channel%s; "
+                 "\"shared channel\" when the channel carries other shows too." % ((", read " + subs_day) if subs_day else "")),
+        "subg": "Subscriber growth: change in channel subscribers since the reading a week or more earlier.",
+        "vids": "Videos, 30 days: videos posted in the last 30 days.",
+        "likes": "Likes per 1K: likes per 1,000 views on videos from the last 90 days that YouTube's feed gave likes for.",
+    }
+    return d
+
+
+def _lb_cell(key, val, n, shared=False, pct_=None):
+    """(sort value, html) for one number with the count it is based on."""
+    if key == "subs" and shared:
+        return -1, '<span class="nd">shared channel</span>'
+    if val is None:
+        return "", '<span class="nd">no data</span>'
+    if key == "likes":
+        txt = "%.1f" % val
+    elif key == "subg":
+        txt = signed(val) + ((' <span class="pc">%s</span>' % pct(pct_)) if pct_ is not None else "")
+        return val, txt
+    elif key == "subs":
+        return val, compact(val)
+    elif key == "vids":
+        return val, "%d" % val
+    elif key in ("g7", "g30"):
+        txt = "+" + compact(val) if val else "0"
+    else:
+        txt = compact(val)
+    return val, '%s<span class="bn">%d video%s</span>' % (txt, n, "" if n == 1 else "s")
+
+
 def leaderboard(ctx, ranked=None):
+    """The rankings table (cards on phones), sortable by every metric that
+    has data, with a format filter. Numbers for every format sit in each
+    row's data-m; the page shows full episodes first."""
+    ranked = ctx["ranked"] if ranked is None else ranked
+    have = ctx["metrics_have"]
+    cols = [m for m in LB_METRICS if m[0] in have]
+    show_chg = bool(ctx["changes"])
+    defs = lb_definitions(ctx)
     rows, cards = [], []
-    for s in (ctx["ranked"] if ranked is None else ranked):
+    for s in ranked:
         show = ctx["shows"][s["slug"]]
-        ch = ctx["changes"].get(s["slug"]) if ctx["changes"] else None
         shared = ctx["shared"][s["slug"]]
-        subs_txt = "shared" if shared else compact(s["subs"])
-        cells = [
-            ('rank', s["rank"], '<td class="rank">%d</td>' % s["rank"]),
-            ('chg', change_sort(ch), '<td>%s</td>' % change_html(ch)),
-            ('name', show["name"].lower(),
-             '<td class="name"><a class="q" href="%s">%s</a><span class="ev">%s</span></td>'
-             % (show_url(show["slug"]), e(show["name"]), hosts_html(show))),
-            ('mom', s["momentum"], '<td class="pct">%s</td>' % compact(s["momentum"])),
-            ('typ', s["typical"] or 0, '<td>%s</td>' % compact(s["typical"])),
-            ('subs', -1 if shared else (s["subs"] or 0), '<td>%s</td>' % subs_txt),
-            ('subw', -1e12 if (shared or s["subs_change"] is None) else s["subs_change"],
-             '<td>%s</td>' % subs_change_html(s, shared)),
-            ('subp', -1e12 if (shared or s["subs_change_pct"] is None) else s["subs_change_pct"], None),
-            ('likes', s["likes_per_1k"] or 0, '<td>%s</td>' % one_dec(s["likes_per_1k"])),
-            ('epm', s["episodes_per_month"], '<td>%s</td>' % one_dec(s["episodes_per_month"])),
-        ]
-        attrs = " ".join('data-%s="%s"' % (k, e(v)) for k, v, _ in cells)
-        rows.append('<tr %s>%s</tr>' % (attrs, "".join(c for _, _, c in cells if c)))
+        m = ctx["rank_metrics"][s["slug"]]
+        ch = ctx["changes"].get(s["slug"]) if show_chg else None
+        tds, attrs = [], {"rank": s["rank"], "name": show["name"].lower()}
+        for key, *_ in cols:
+            src = m["x"] if key in ("typf", "typc", "subs", "subg") else m["full"]
+            val, n = src[key]
+            sv, html = _lb_cell(key, val, n, shared, n if key == "subg" else None)
+            attrs[key] = sv
+            tds.append('<td data-k="%s">%s</td>' % (key, html))
+        if show_chg:
+            attrs["chg"] = change_sort(ch)
+        data = " ".join('data-%s="%s"' % (k, e(v)) for k, v in attrs.items())
+        data += " data-m='%s'" % e(json.dumps(m, separators=(",", ":")))
+        if shared:
+            data += ' data-shared="1"'
+        rows.append('<tr %s><td class="rank">%d</td>%s<td class="name"><a class="q" href="%s">%s</a>'
+                    '<span class="ev">%s</span></td>%s</tr>'
+                    % (data, s["rank"], ('<td>%s</td>' % change_html(ch)) if show_chg else "",
+                       show_url(show["slug"]), e(show["name"]), hosts_html(show), "".join(tds)))
+        v30, n30 = m["full"]["v30"]
         cards.append(
-            '<div class="card" %s><div class="now"><span class="p">%s</span><span class="lbl">30-day views</span></div>'
-            '<div class="q"><span class="crank">%d</span> %s <a href="%s">%s</a></div>'
+            '<div class="card" %s><div class="now"><span class="p">%s</span><span class="lbl">%s</span>'
+            '<span class="bn">%s</span></div>'
+            '<div class="q"><span class="crank">%d</span>%s <a href="%s">%s</a></div>'
             '<div class="ev">%s</div>'
-            '<div class="card-foot"><span><span class="lbl">Typical</span>%s</span>'
-            '<span><span class="lbl">Subs</span>%s</span>'
-            '<span><span class="lbl">Likes/1K</span>%s</span>'
-            '<span><span class="lbl">Eps/mo</span>%s</span></div></div>'
-            % (attrs, compact(s["momentum"]), s["rank"], change_html(ch), show_url(show["slug"]), e(show["name"]),
-               hosts_html(show), compact(s["typical"]), subs_txt, one_dec(s["likes_per_1k"]),
-               one_dec(s["episodes_per_month"])))
-    head_cells = [("rank", "#", "asc"), ("chg", "Change", "desc"), ("name", "Show", "asc"),
-                  ("mom", "30-day views", "desc"), ("typ", "Typical episode", "desc"),
-                  ("subs", "Subscribers", "desc"), ("subw", "Subs this week", "desc"),
-                  ("likes", "Likes per 1K", "desc"), ("epm", "Episodes / month", "desc")]
-    th = "".join('<th class="sortable%s%s" data-sort="%s" data-dir="%s">%s</th>'
-                 % (" left" if k == "name" else "", " sorted-by" if k == "rank" else "", k, d, lbl)
-                 for k, lbl, d in head_cells)
-    sort_opts = "".join('<option value="%s:%s">%s</option>' % (k, d, "Rank" if k == "rank" else lbl) for k, lbl, d in head_cells
-                        if k not in ("chg",)) + '<option value="subp:desc">Subs this week (%)</option><option value="chg:desc">Rank change</option>'
-    return ('<div class="sortbar"><label for="lb-sort">Sort by</label> <select id="lb-sort" class="sel">%s</select></div>'
-            '<div class="table-wrap"><table class="lb" id="lb"><thead><tr>%s</tr></thead><tbody>%s</tbody></table></div>'
+            '<div class="card-foot"><span><span class="lbl">Typical episode</span>%s</span>'
+            '<span><span class="lbl">%s</span>%s</span>'
+            '<span><span class="lbl">Videos, 30 days</span>%s</span></div></div>'
+            % (data, compact(v30), "Views, 30 days", ("based on %d video%s" % (n30, "" if n30 == 1 else "s")) if v30 is not None else "",
+               s["rank"], (" " + change_html(ch)) if show_chg else "", show_url(show["slug"]), e(show["name"]),
+               hosts_html(show), compact(m["x"]["typf"][0]) if m["x"]["typf"][0] is not None else "no data",
+               "Channel subscribers", "shared channel" if shared else compact(m["x"]["subs"][0]) if m["x"]["subs"][0] is not None else "no data",
+               m["full"]["vids"][0]))
+    th = ['<th class="sortable sorted-by" data-sort="rank" data-dir="asc" title="%s">#</th>' % e(defs["rank"])]
+    if show_chg:
+        th.append('<th class="sortable" data-sort="chg" data-dir="desc" title="%s">Change</th>' % e(defs["chg"]))
+    th.append('<th class="sortable left" data-sort="name" data-dir="asc">Show</th>')
+    th += ['<th class="sortable" data-sort="%s" data-dir="%s" title="%s">%s</th>' % (k, d, e(defs[k]), h)
+           for k, h, _, d in cols]
+    opts = ['<option value="rank:asc">Rank</option>'] + \
+           ['<option value="%s:%s">%s</option>' % (k, d, lbl) for k, _, lbl, d in cols] + \
+           (['<option value="chg:desc">Rank change</option>'] if show_chg else []) + ['<option value="name:asc">Show name</option>']
+    deflines = [defs["rank"]] + ([defs["chg"]] if show_chg else []) + [defs[k] for k, *_ in cols]
+    defs_json = {k: defs[k] for k in ["rank"] + [c[0] for c in cols] + (["chg"] if show_chg else [])}
+    defs_json["name"] = defs["rank"]
+    return ('<div class="lb-tools" data-defs=\'%s\'>'
+            '<label><span>Sort by</span> <select id="lb-sort" class="sel">%s</select></label>'
+            '<label><span>Videos</span> <select id="lb-fmt" class="sel">%s</select></label></div>'
+            '<p class="lb-def hint-below" id="lb-def">%s</p>'
+            '<div class="table-wrap lbw"><table class="lb" id="lb"><thead><tr>%s</tr></thead><tbody>%s</tbody></table></div>'
             '<div class="cards" id="lb-cards">%s</div>'
-            % (sort_opts, th, "\n".join(rows), "\n".join(cards)))
+            '<p class="hint-below">Numbers for full episodes unless another format is picked; typical episode and clip, '
+            'subscribers and subscriber growth do not change with it. The small line under a number is how many '
+            'videos it is based on.</p>'
+            '<details class="defs"><summary>What the numbers mean</summary><ul>%s</ul></details>'
+            % (e(json.dumps(defs_json, separators=(",", ":"))), "".join(opts),
+               "".join('<option value="%s">%s</option>' % kv for kv in LB_FORMATS), e(defs["rank"]),
+               "".join(th), "\n".join(rows), "\n".join(cards),
+               "".join("<li>%s</li>" % e(x) for x in deflines if x)))
 
 
 STREAM_FMTS = [("", "All formats"), ("full", "Full episodes"), ("clip", "Clips"), ("short", "Shorts")]
 STREAM_RANGES = [("90", "Last 90 days"), ("30", "Last 30 days"), ("7", "Last 7 days"), ("1", "Last 24 hours")]
+TOP_RANGES = [("0", "All time")] + STREAM_RANGES
 
 
-def stream_html(ctx):
-    """Latest Videos: the first cards in the page, the rest loaded in chunks."""
+def explorer_html(ctx, prefix, ver, items, tabs, first_tab, ranges, note="", extra=""):
+    """A filterable list of video cards (tabs, search, show, host, format and
+    date filters, "Load more"): the first 12 cards in the page, the rest
+    loaded from data/<prefix>-*.json by the page script."""
     from .cards import video_card
-    st = ctx["stream"]
-    if len(st) < 3:
-        return ""
-    shows = sorted({it["show"] for it in st}, key=lambda x: ctx["shows"][x]["name"].lower())
+    shows = sorted({it["show"] for it in items}, key=lambda x: ctx["shows"][x]["name"].lower())
     hosts = sorted({n for x in shows for n in ctx["stream_hosts"].get(x, [])})
-    tabs = [("latest", "Latest"), ("views", "Most viewed")] + ([("trending", "Trending")] if ctx["flags"].get("g24") else [])
     opt = lambda pairs: "".join('<option value="%s">%s</option>' % (e(v), e(l)) for v, l in pairs)
-    return ('<section class="block" id="latest-videos"><div class="block-head"><h2>Latest videos</h2></div>'
-            '<div class="stream" data-meta="%s/data/stream-meta.json?v=%s" data-base="%s">'
+    return ('<div class="stream" data-meta="%s/data/%s-meta.json?v=%s" data-base="%s" data-prefix="%s" '
+            'data-first-tab="%s" data-range="%s">'
             '<div class="toggle stream-tabs" role="tablist">%s</div>'
             '<div class="stream-filters">'
             '<label class="sr" for="sf-q">Search</label><input id="sf-q" class="sel sf-q" type="search" '
@@ -276,15 +367,25 @@ def stream_html(ctx):
             '<label class="sr" for="sf-host">Host</label><select id="sf-host" class="sel"><option value="">All hosts</option>%s</select>'
             '<label class="sr" for="sf-fmt">Format</label><select id="sf-fmt" class="sel">%s</select>'
             '<label class="sr" for="sf-range">Date range</label><select id="sf-range" class="sel">%s</select>'
-            '</div><p class="stream-count hint-below" aria-live="polite"></p>'
+            '</div>%s<p class="stream-count hint-below" aria-live="polite"></p>'
             '<div class="grid stream-grid">%s</div>'
-            '<button class="loadmore" type="button">Load more</button></div></section>\n'
-            % (B, ctx["stream_v"], B,
-               "".join('<button type="button" data-tab="%s"%s>%s</button>' % (k, ' class="active"' if k == "latest" else "", l)
+            '<button class="loadmore" type="button">Load more</button></div>\n'
+            % (B, prefix, ver, B, prefix, first_tab, ranges[0][0],
+               "".join('<button type="button" data-tab="%s"%s>%s</button>' % (k, ' class="active"' if k == first_tab else "", l)
                        for k, l in tabs),
                opt([(x, ctx["shows"][x]["name"]) for x in shows]), opt([(h, h) for h in hosts]),
-               opt(STREAM_FMTS), opt(STREAM_RANGES),
-               "".join(video_card(it, ctx) for it in st[:12])))
+               opt(STREAM_FMTS), opt(ranges), ('<p class="hint-below">%s</p>' % note) if note else "",
+               "".join(video_card(it, ctx, extra=extra) for it in items[:12])))
+
+
+def stream_html(ctx):
+    """Latest Videos: the first cards in the page, the rest loaded in chunks."""
+    st = ctx["stream"]
+    if len(st) < 3:
+        return ""
+    tabs = [("latest", "Latest"), ("views", "Most viewed")] + ([("trending", "Trending")] if ctx["flags"].get("g24") else [])
+    return ('<section class="block" id="latest-videos"><div class="block-head"><h2>Latest videos</h2></div>%s</section>\n'
+            % explorer_html(ctx, "stream", ctx["stream_v"], st, tabs, "latest", STREAM_RANGES))
 
 
 def index_page(ctx):
@@ -331,22 +432,21 @@ def index_page(ctx):
 
 
 def method_html(ctx):
-    rc = ("Rank change compares with the ranking from a week earlier." if ctx["changes"]
-          else "Rank changes start once there is a ranking from a week earlier.")
+    rc = ("Rank change compares with the ranking from a week earlier made with the same rules."
+          if ctx["changes"] else "Rank changes appear once there is a ranking from a week earlier made with the same rules.")
     return ('<section class="section method"><h2>How the rankings work</h2>'
-            '<p>Only YouTube numbers count, and only full episodes (20 minutes or longer); clips (1 to 20 minutes) '
-            'and Shorts (under a minute) are left out. 30-day views add up the current views of every full episode '
-            'posted in the last 30 days. Typical episode is the median views of full episodes from the last 90 days. '
-            'A breakout score is a video\'s views divided by the median views of the same show\'s videos of the same '
-            'format published in the 90 days before it, when there are at least 8 of them (otherwise there is no '
-            'score); 5x or more is highlighted. Likes per 1K is likes per '
-            '1,000 views on recent full episodes. Subscribers come from YouTube\'s public (rounded) counts; shows '
-            'that share a channel with another show say "shared". %s</p>'
+            '<p>Only YouTube numbers count. The rank uses full episodes (20 minutes or longer): the current views of '
+            'every full episode posted in the last 30 days. Clips (1 to 20 minutes) and Shorts (under a minute) do '
+            'not count toward the rank; pick them in the Videos menu to see their numbers. Each number says how '
+            'many videos it is based on, and one that cannot be worked out yet says "no data". %s</p>'
             '<p>A show is ranked with at least 4 full episodes in the last 90 days, or 1 to 3 in the last 90 days '
             'and at least 4 in the last 180. Shows with 1 to 3 in the last 90 days (and fewer than 4 in 180) are '
             '<a href="%s/dormant/">occasional</a>, and shows with none in the last 90 days are dormant; neither is '
             'ranked until it posts more. Podcasts and players\' personal channels are ranked separately, with the '
-            'same numbers and rules.</p></section>\n' % (rc, B))
+            'same numbers and rules.</p>'
+            '<p>A breakout score is a video\'s views divided by the median views of the same show\'s videos of the '
+            'same format published in the 90 days before it, when there are at least 8 of them (otherwise there is '
+            'no score: not enough data); 5x or more is highlighted.</p></section>\n' % (rc, B))
 
 
 def most_watched_page(ctx):
@@ -440,6 +540,44 @@ def player_channels_page(ctx):
     body.append(method_html(ctx))
     return page("NBA Player YouTube Channels Ranked by Views | HoopsMatic", desc, url, ctx["assets_v"],
                 "player-channels", "".join(body))
+
+
+BREAKOUT_NOTE = ("Breakout = a video's views divided by the median views of the same show's videos of the same "
+                 "format published in the 90 days before it, when there are at least 8 of them; with fewer there "
+                 "is no score (not enough data).")
+
+
+def top_videos_page(ctx):
+    from .cards import shelf
+    url = config.SITE_BASE + "/top-videos/"
+    t = ctx["top"]
+    f = ctx["flags"]
+    tabs = [("views", "Most viewed")] + ([("trending", "Gained, 24 hours")] if f.get("g24") else []) + \
+           ([("gain7", "Gained, 7 days")] if f.get("g7") else []) + [("breakout", "Breakouts")]
+    body = ['<div class="hdr"><h1>Top NBA player podcast videos</h1></div>\n'
+            '<p class="subtitle">The most viewed full episodes, clips and Shorts from NBA player podcasts on '
+            'YouTube, the biggest gainers and the breakouts, playable right here. %s</p>\n' % stamp(ctx),
+            '<section class="block" id="most-viewed"><div class="block-head"><h2>Most viewed overall</h2></div>%s</section>\n'
+            % explorer_html(ctx, "top", ctx["top_v"], t["views"], tabs, "views", TOP_RANGES,
+                            note="All time: each show's 12 most viewed videos of each format and the 100 most viewed "
+                                 "overall; the last 90 days: every video. " + BREAKOUT_NOTE)]
+    body.append(shelf("Most viewed full episodes", t["full"], ctx, "Full episodes (20 minutes or longer), all time."))
+    body.append(shelf("Most viewed clips", t["clip"], ctx, "Clips (1 to 20 minutes), all time."))
+    body.append(shelf("Most viewed Shorts", t["short"], ctx, "Shorts (under a minute, or from the Shorts tab), all time."))
+    if t["gain24"]:
+        body.append(shelf("Most gained in 24 hours", t["gain24"], ctx, "Views gained in the last 24 hours, from our "
+                          "daily view counts.", extra="gain24"))
+    if t["gain7"]:
+        body.append(shelf("Most gained in 7 days", t["gain7"], ctx, "Views gained in the last 7 days, from our daily "
+                          "view counts.", extra="gain7"))
+    body.append(shelf("Breakouts", t["breakout"], ctx, "Highest breakout scores among videos from the last 90 days. "
+                      + BREAKOUT_NOTE, show_breakout=True))
+    top1 = t["views"][:1]
+    desc = "The most viewed NBA player podcast videos on YouTube: full episodes, clips and Shorts, the biggest gainers and the breakouts."
+    if top1:
+        desc += " No. 1: %s (%s views)." % (top1[0]["title"][:80], compact(top1[0]["views"]))
+    return page("Top NBA Player Podcast Videos: Most Viewed Episodes, Clips and Shorts | HoopsMatic", desc, url,
+                ctx["assets_v"], "top-videos", "".join(body))
 
 
 def chart_svg(eps, med):

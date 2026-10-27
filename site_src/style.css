@@ -372,3 +372,21 @@ a.host:hover{color:var(--accent);text-decoration-color:var(--accent)}
 .loadmore:hover{border-color:var(--accent);color:var(--accent)}
 .loadmore[hidden]{display:none}
 .stream-count:empty{display:none}
+
+/* ==== stage C: rankings metrics ==== */
+.lb-tools{display:flex;flex-wrap:wrap;gap:.5rem .9rem;align-items:center;margin-bottom:.4rem;
+  font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--text-secondary)}
+.lb-tools label{display:flex;align-items:center;gap:.4rem;min-width:0;max-width:100%}
+.lb-tools .sel{min-width:0;max-width:16rem}
+.lb-def{margin:0 0 .6rem}
+.table-wrap.lbw{overflow-x:auto}
+table.lb td .bn,.card .now .bn{display:block;font-size:.58rem;color:var(--text-secondary);font-weight:400;margin-top:.1rem}
+table.lb td .pc{font-size:.66rem;color:var(--text-secondary)}
+.nd{color:var(--text-secondary);font-size:.68rem;font-weight:400}
+.card .now{max-width:7rem}
+.card .now .p .nd{font-size:.7rem}
+details.defs{margin-top:.6rem;font-size:.8rem;color:var(--text-secondary)}
+details.defs summary{cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--accent)}
+details.defs ul{margin:.4rem 0 0 1.1rem;padding:0}
+details.defs li{margin:.2rem 0}
+@media(max-width:560px){.lb-tools label{flex:1 1 100%}.lb-tools .sel{flex:1;max-width:none}}

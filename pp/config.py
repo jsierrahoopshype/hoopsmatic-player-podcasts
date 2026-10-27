@@ -36,6 +36,9 @@ DAILY_DAYS = 90         # videos this recent get a daily view count; older ones 
 MOMENTUM_DAYS = 30      # main ranking: views on full episodes posted in the last 30 days
 TYPICAL_DAYS = 90       # median window, episodes-per-month window, ranked window
 WEEK_DAYS = 7
+# Saved with each day's ranking (data/ranks.json); rank arrows compare only
+# rankings made with the same rule. Change it whenever the ranking rules change.
+RANK_RULE = "full-30d-2026-10-27"
 BREAKOUT_X = 5.0        # a breakout score of 5x or more is highlighted (score: see pp/videos.py)
 # Ranked: at least 4 full episodes in the last 90 days, or 1 to 3 in the last
 # 90 days with at least 4 in the last 180. Occasional: 1 to 3 in the last 90

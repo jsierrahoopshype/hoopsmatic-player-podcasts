@@ -2,7 +2,8 @@
 the Latest Videos stream.
 
 Each item: id, show (slug), fmt (full / clip / short / unknown), published,
-views, duration, title, breakout (or None), gain24 / gain7 (or None).
+views, duration, title, likes / likes_views (or None), breakout (or None),
+gain24 / gain7 / gain30 (or None).
 
 Breakout: a video's views divided by the median views of the same show's
 videos of the same format published in the 90 days before it. At least 8
@@ -10,7 +11,7 @@ videos are needed in that baseline; otherwise there is no score ("not enough
 data").
 
 Views gained come from the daily snapshots (data/snapshots/): today's reading
-minus the reading 1 or 7 days earlier. They exist only when both readings do
+minus the reading 1, 7 or 30 days earlier. They exist only when both readings do
 and the earlier one covered most of the videos the later one did; until then
 they are None and the pages leave them out instead of showing zeros.
 """
@@ -70,6 +71,7 @@ def build_items(shows, cats, stats_by_slug, today, kinds=("podcast",)):
     the site (ranked, occasional or dormant)."""
     g24 = gains(today, 1)
     g7 = gains(today, 7)
+    g30 = gains(today, 30)
     items = []
     for show in shows:
         st = stats_by_slug.get(show["slug"])
@@ -80,15 +82,18 @@ def build_items(shows, cats, stats_by_slug, today, kinds=("podcast",)):
         for v in metrics.show_videos(show, cat):
             mine.append({"id": v["id"], "show": show["slug"], "fmt": metrics.video_format(v),
                          "published": v["published"], "views": v["views"], "duration": v.get("duration"),
-                         "title": v.get("title") or "", "embed": v.get("embed", True)})
+                         "title": v.get("title") or "", "embed": v.get("embed", True),
+                         "likes": v.get("likes"), "likes_views": v.get("likes_views")})
         scores = breakout_scores(mine)
         for it in mine:
             it["breakout"] = scores.get(it["id"])
             it["gain24"] = _gain(it, g24)
             it["gain7"] = _gain(it, g7)
+            it["gain30"] = _gain(it, g30)
         items.extend(mine)
-    return items, {"g24": g24 is not None, "g7": g7 is not None,
-                   "g24_since": g24 and g24["day_then"], "g7_since": g7 and g7["day_then"]}
+    return items, {"g24": g24 is not None, "g7": g7 is not None, "g30": g30 is not None,
+                   "g24_since": g24 and g24["day_then"], "g7_since": g7 and g7["day_then"],
+                   "g30_since": g30 and g30["day_then"], "gain_day": (g24 or g7 or g30 or {}).get("day_now")}
 
 
 def _gain(it, g):

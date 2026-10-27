@@ -211,16 +211,24 @@ def rank_shows(stats, kind=None):
     return ranked
 
 
+def comparable_day(history, today):
+    """The latest saved ranking at least 7 days old that was made with the
+    same rules (config.RANK_RULE), or None."""
+    cutoff = (as_date(today) - timedelta(days=7)).isoformat()
+    old_days = sorted(d for d, r in (history or {}).items()
+                      if d <= cutoff and isinstance(r, dict) and r.get("_rule") == config.RANK_RULE)
+    return old_days[-1] if old_days else None
+
+
 def rank_changes(ranked, history, today):
-    """Rank change vs the latest saved ranking at least 7 days old.
+    """Rank change vs the latest comparable ranking at least 7 days old.
 
     Returns {slug: int delta (positive = moved up) or "NEW"}; empty when there
-    is no ranking from a week ago yet."""
-    cutoff = (as_date(today) - timedelta(days=7)).isoformat()
-    old_days = sorted(d for d in (history or {}) if d <= cutoff)
-    if not old_days:
+    is no comparable ranking from a week ago yet."""
+    day = comparable_day(history, today)
+    if not day:
         return {}
-    prev = history[old_days[-1]]
+    prev = {k: v for k, v in history[day].items() if not k.startswith("_")}
     out = {}
     for s in ranked:
         p = prev.get(s["slug"])
