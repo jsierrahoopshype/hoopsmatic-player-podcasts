@@ -1,6 +1,6 @@
 {
   "https://hoopsmatic.com/player-podcasts/": {
-    "hash": "5f39830a80eea2eb46576c7faf26272a05d72aebfd39a89a2d97d5cd45b0ffe1",
+    "hash": "e65fd1a3c82fc5838c59941654004fdb7bd2554c883aed499e4272d4da87529a",
     "lastmod": "2026-10-28"
   },
   "https://hoopsmatic.com/player-podcasts/7pm-in-brooklyn/": {
@@ -16,7 +16,7 @@
     "lastmod": "2026-10-28"
   },
   "https://hoopsmatic.com/player-podcasts/all-the-smoke/": {
-    "hash": "7b9b5202a14df04a9aa2e561aea83d6a9648abe95562d9bc5a7781481ec502fb",
+    "hash": "6a7b50278d44077de121721bf8a1b2ec114b96626d5522c14abe9cceb7e042a3",
     "lastmod": "2026-10-28"
   },
   "https://hoopsmatic.com/player-podcasts/andre-drummond/": {
@@ -100,7 +100,7 @@
     "lastmod": "2026-10-28"
   },
   "https://hoopsmatic.com/player-podcasts/gils-arena/": {
-    "hash": "23192c22691b94a3313d72e3b5421e34c47680170dc436865abb6ca4a3f16a05",
+    "hash": "d7c510151feb7f5349e457755748f383c45c32d36f25df494a3d37ab504952ac",
     "lastmod": "2026-10-28"
   },
   "https://hoopsmatic.com/player-podcasts/gimme-the-hot-sauce/": {
@@ -144,7 +144,7 @@
     "lastmod": "2026-10-28"
   },
   "https://hoopsmatic.com/player-podcasts/methodology/": {
-    "hash": "e596ecdac8d70be3ecf4454f39ffcd274240559075c3f0bd8f834ca2fbb6fd83",
+    "hash": "72f2959c70072dd6f43f8438d5d4e77e56019717b09a97e9b055b5db462e909b",
     "lastmod": "2026-10-28"
   },
   "https://hoopsmatic.com/player-podcasts/mind-the-game/": {
@@ -184,7 +184,7 @@
     "lastmod": "2026-10-28"
   },
   "https://hoopsmatic.com/player-podcasts/players/": {
-    "hash": "ccb55c1a220cbca494511d39bd3ac4c06f426b74b9fc2c190ad92ac3105f26bb",
+    "hash": "b70da8f2d4d01aa9afce1a10669ac86cbc28b4fda61d5c7baa84deb597bde49f",
     "lastmod": "2026-10-28"
   },
   "https://hoopsmatic.com/player-podcasts/players/aaron-gordon/": {
@@ -452,7 +452,7 @@
     "lastmod": "2026-10-28"
   },
   "https://hoopsmatic.com/player-podcasts/players/devin-booker/": {
-    "hash": "3d4eea71c83afbb7095a83b387004b3d916cc488344422167a5784bab5b9993f",
+    "hash": "c36696f07d495e907d34ef334f9f557d8af38cf3341a3e9976cb8a74a30ae582",
     "lastmod": "2026-10-28"
   },
   "https://hoopsmatic.com/player-podcasts/players/devonte-graham/": {
@@ -584,11 +584,11 @@
     "lastmod": "2026-10-28"
   },
   "https://hoopsmatic.com/player-podcasts/players/jalen-brunson/": {
-    "hash": "73c6ac6460ab09cc302bda8e320a07d1a598d4bf171ebb20514e27909cb61667",
+    "hash": "a7c4bf65095ad0f2dc226eadd45bee959bb4d214b151b2a92012a39c9c580b8d",
     "lastmod": "2026-10-28"
   },
   "https://hoopsmatic.com/player-podcasts/players/jalen-duren/": {
-    "hash": "1baae71304b8e217b3f6c7cf69c1ede1013db2d37cef7f3b072a0f1ab9cb7974",
+    "hash": "0bb6de988cce71c5d08ba205f452355ee7cbbfdd08933cf71127d4bc25ce790f",
     "lastmod": "2026-10-28"
   },
   "https://hoopsmatic.com/player-podcasts/players/jalen-green/": {
@@ -736,7 +736,7 @@
     "lastmod": "2026-10-28"
   },
   "https://hoopsmatic.com/player-podcasts/players/kendrick-perkins/": {
-    "hash": "2a3ad447eba150069e1f9ded7f302db1522b5b950d8cfc847ad1d070d772ffa3",
+    "hash": "f3918c8840488a9fe99a201f6746bf76933c252fb41e634617b537c7d8817ec8",
     "lastmod": "2026-10-28"
   },
   "https://hoopsmatic.com/player-podcasts/players/kentavious-caldwell-pope/": {
@@ -915,6 +915,10 @@
     "hash": "3cb5aee6f04a2ac8dec85f5ab6dfdd45ac3e505d563c87053d158a6ae2fbec10",
     "lastmod": "2026-10-28"
   },
+  "https://hoopsmatic.com/player-podcasts/players/og-anunoby/": {
+    "hash": "e60fe11e5ad8b432e3abbf1677a87745c832b8526d23d898abbaa5ce4bfed3dd",
+    "lastmod": "2026-10-28"
+  },
   "https://hoopsmatic.com/player-podcasts/players/paolo-banchero/": {
     "hash": "83cb2d4c111e229877980aa8a7c589e178a04d42f6bf857f5ce61f4931259e55",
     "lastmod": "2026-10-28"
@@ -1036,7 +1040,7 @@
     "lastmod": "2026-10-28"
   },
   "https://hoopsmatic.com/player-podcasts/players/stephen-curry/": {
-    "hash": "18827990a97feb638277af2c627c9539cbfb941ba66f76ea587f5596e9f44a7a",
+    "hash": "cfca5ffd4efe8b9fb94adaa9c41d3044667eed9a751d1470062a7262c630a145",
     "lastmod": "2026-10-28"
   },
   "https://hoopsmatic.com/player-podcasts/players/stephen-jackson/": {
@@ -1164,11 +1168,11 @@
     "lastmod": "2026-10-28"
   },
   "https://hoopsmatic.com/player-podcasts/richard-jefferson/": {
-    "hash": "01a8d02decf20f1cc36eed83b0485b213a2a32e2ad018b516a679dc25f435188",
+    "hash": "8fc8e39bd04a60b2461676956c32939d28005440bdf34620aa511add8886162d",
     "lastmod": "2026-10-28"
   },
   "https://hoopsmatic.com/player-podcasts/road-trippin/": {
-    "hash": "5fe052aa8e9460c5d9a870dd582930030a4c178884be8ee681567909e6a7db26",
+    "hash": "1fb2f319685b536b04c0931e7440d81e349d5ea9f44ba0a4b23057c6a842b660",
     "lastmod": "2026-10-28"
   },
   "https://hoopsmatic.com/player-podcasts/rogue-bogues/": {
@@ -1188,7 +1192,7 @@
     "lastmod": "2026-10-28"
   },
   "https://hoopsmatic.com/player-podcasts/shump-street/": {
-    "hash": "5819c11baa2b4b8be9e13d0ab8d51727e8574e9b828d4f92177018daad719769",
+    "hash": "f795647ce2b3b0293299456a88c68e4ad4eda1443cd0d1be76cdf5ae184cb76f",
     "lastmod": "2026-10-28"
   },
   "https://hoopsmatic.com/player-podcasts/straight-game/": {
@@ -1200,7 +1204,7 @@
     "lastmod": "2026-10-28"
   },
   "https://hoopsmatic.com/player-podcasts/teams/": {
-    "hash": "c70fa8384b660037c70d421406c64f519312d501bbbe10349da63b7eddda81b1",
+    "hash": "9596a8fad16b8d33a9303daf29fc60f62cfed1e82b77b83852d7aa069426ce2d",
     "lastmod": "2026-10-28"
   },
   "https://hoopsmatic.com/player-podcasts/teams/atlanta-hawks/": {
@@ -1208,7 +1212,7 @@
     "lastmod": "2026-10-28"
   },
   "https://hoopsmatic.com/player-podcasts/teams/boston-celtics/": {
-    "hash": "44fdbf13e936b003a8ee813c1a01ad97053e5ac3b49a0177f996d2e7a974179f",
+    "hash": "b79fff449bc481414416ec050708e97692f9f04ee4b55ecdf00f71542a966272",
     "lastmod": "2026-10-28"
   },
   "https://hoopsmatic.com/player-podcasts/teams/brooklyn-nets/": {
@@ -1236,7 +1240,7 @@
     "lastmod": "2026-10-28"
   },
   "https://hoopsmatic.com/player-podcasts/teams/detroit-pistons/": {
-    "hash": "81b2534d0e2d1054a15ff0cca06c92bc39739c9001d16e61a2f01b8213a22314",
+    "hash": "a04c21ad4a641e75421707c4bd6b0095d15fdbe4ec79ca9cefb6fad69f09142d",
     "lastmod": "2026-10-28"
   },
   "https://hoopsmatic.com/player-podcasts/teams/golden-state-warriors/": {
@@ -1272,7 +1276,7 @@
     "lastmod": "2026-10-28"
   },
   "https://hoopsmatic.com/player-podcasts/teams/minnesota-timberwolves/": {
-    "hash": "2af11e05ce746996ef4121e04974b79c256e9d0b615f2e39ed1544b5ae7f80a4",
+    "hash": "3cd5f8a586e722c6cb855fa3d2e19fd7cc1719dd9d4062e749b3b85addfeafef",
     "lastmod": "2026-10-28"
   },
   "https://hoopsmatic.com/player-podcasts/teams/new-orleans-pelicans/": {

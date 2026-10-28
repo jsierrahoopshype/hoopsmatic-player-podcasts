@@ -133,8 +133,11 @@ goes to the "mentions" list in `data/appearances_review.json`. Lone first names 
 they are nicknames. Teams: by
 nickname or former franchise name (`data/teams.json`), never a city alone.
 A player's own appearance in a video, and a show's hosts on their own show,
-never count. Clips of one episode count once. Players with 10+ discussions
-get a page. Results: `data/mentions.json` (generated).
+never count, nor do names in `data/mention_ignore.json` (Michael Jackson).
+Clips of one episode count once. Players with 10+ discussions get a page;
+once published, a player page stays (`data/published_players.json`, updated
+by every build) even if the player falls under the thresholds later.
+Results: `data/mentions.json` (generated).
 - Videos play in the page through youtube-nocookie.com, only after a press.
 
 All numbers live in `pp/config.py`.

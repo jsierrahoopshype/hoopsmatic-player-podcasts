@@ -1,6 +1,7 @@
 {
-  "_about": "Old page addresses under /player-podcasts/ that moved, and where to. Each old address gets a small page that sends visitors (and search engines, via canonical) to the new one; it is not in the sitemap. darius-acuff: Career Map's address keeps the Jr. (fixed Oct 28, 2026).",
+  "_about": "Old page addresses under /player-podcasts/ that moved, and where to. Each old address gets a small page that sends visitors (and search engines, via canonical) to the new one; it is not in the sitemap. darius-acuff: Career Map's address keeps the Jr. (fixed Oct 28, 2026). michael-jackson: the page counted the singer, not the player (removed Oct 28, 2026); it now points at the players index.",
   "moved": {
-    "players/darius-acuff/": "players/darius-acuff-jr/"
+    "players/darius-acuff/": "players/darius-acuff-jr/",
+    "players/michael-jackson/": "players/"
   }
 }

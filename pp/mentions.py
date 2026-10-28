@@ -22,7 +22,8 @@ Nets), never by a city alone. A word inside a matched player's name ("Magic"
 in "Magic Johnson") is not a team.
 
 Not counted: a player's own appearance (host or confirmed guest) in that
-video, and any mention of a show's host or former host on that show.
+video, any mention of a show's host or former host on that show, and names
+in data/mention_ignore.json (they mean someone else: Michael Jackson).
 data/mentions_manual.json adds or removes mentions and wins over all of this.
 
 Clips of the same episode are grouped (as for guests: a description link to
@@ -70,8 +71,10 @@ def _cased_forms(name):
 
 
 class Matcher:
-    def __init__(self, index, nicknames, teams, active, always_review=(), stopwords=(), defaults=None):
+    def __init__(self, index, nicknames, teams, active, always_review=(), stopwords=(), defaults=None, ignore=()):
         self.index = index
+        # names that mean someone else (Michael Jackson the singer): never a player, never review
+        self.ignore = {norm(n) for n in ignore}
         self.always_review = {norm(n) for n in always_review}
         # name -> default player, used only where the name would go to review
         self.defaults = {norm(n): (v["player"] if isinstance(v, dict) else v)
@@ -119,7 +122,8 @@ class Matcher:
                    (load_json(config.NBA_ACTIVE_FILE, {}) or {}).get("players", []),
                    (load_json(config.ALWAYS_REVIEW_FILE, {}) or {}).get("names", []),
                    (load_json(config.SURNAME_STOPWORDS_FILE, {}) or {}).get("words", []),
-                   (load_json(config.SURNAME_DEFAULTS_FILE, {}) or {}).get("defaults", {}))
+                   (load_json(config.SURNAME_DEFAULTS_FILE, {}) or {}).get("defaults", {}),
+                   (load_json(config.MENTION_IGNORE_FILE, {}) or {}).get("names", []))
 
     def _plain_name(self, name):
         """A full name written without a suffix -> (slug or None, ambiguous,
@@ -165,6 +169,12 @@ class Matcher:
                         and not text[win[-1][1]:words[i + size][0]].strip(" ,"):
                     win = words[i:i + size + 1]
                 name = " ".join(w[2] for w in win)
+                if norm(name) in self.ignore:
+                    # the whole name is used up, so "Jackson" is not read alone either
+                    taken.append((win[0][0], win[-1][1]))
+                    i += len(win)
+                    done = True
+                    break
                 slug, amb, how = self._plain_name(name)
                 if slug or amb:
                     taken.append((win[0][0], win[-1][1]))
