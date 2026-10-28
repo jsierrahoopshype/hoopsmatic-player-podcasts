@@ -9,7 +9,7 @@ import shutil
 import sys
 from datetime import timedelta
 
-from . import art, catalog, config, embed, guests, headshots, home, mentions, metrics, people, rankmetrics, render, roster, sitemap, talk, thumbs, videos
+from . import art, catalog, config, embed, feed, guests, headshots, home, mentions, metrics, people, rankmetrics, render, roster, sitemap, talk, thumbs, videos
 from .util import load_json, save_json, utcnow, today_str, parse_ts
 
 
@@ -151,7 +151,7 @@ def compute(now=None):
         "most_watched": mw, "mw_shows": sorted({v["slug"] for v in pool}),
         "updated_label": (last_run or now).strftime("%b %-d, %Y, %H:%M UTC"),
         "listing_label": render.fmt_date(last_ok + "T00:00:00Z") if last_ok else None,
-        "thumbs": set(), "thumbs_big": set(), "headshots": set(),
+        "thumbs": set(), "thumbs_big": set(), "thumbs_v": set(), "headshots": set(),
         "items": items, "flags": flags, "home": home.sections(pod_items, now, flags),
         "stream": home.stream_items(pod_items, now),
         "top_pool": home.top_pool(pod_items, now),
@@ -180,6 +180,8 @@ def related_shows(shown, appearances, show_metrics, n=3):
 
 def _add_top(ctx):
     ctx["top"] = home.top_sections(ctx["top_pool"], ctx["now"], ctx["flags"])
+    # Every page's video feed (pp/feed.py), so its videos get thumbnails.
+    ctx["feeds"] = feed.all_feeds(ctx)
 
 
 def home_ids(ctx):
@@ -203,20 +205,15 @@ def displayed_ids(ctx):
         eps = s["episodes"]
         ids.update(v["id"] for v in sorted(eps, key=lambda v: v["published"], reverse=True)[:12])
         ids.update(v["id"] for v in sorted(eps, key=lambda v: -v["views"])[:10])
-        vids = ctx["per_show"].get(s["slug"], [])
-        ids.update(it["id"] for it in sorted(vids, key=lambda it: it["published"], reverse=True)[:12])
-        for fmt in (metrics.FULL, metrics.CLIP):
-            ids.update(it["id"] for it in sorted((x for x in vids if x["fmt"] == fmt), key=lambda x: -x["views"])[:8])
-        for k in ("gain24", "gain7"):
-            ids.update(it["id"] for it in sorted((x for x in vids if x.get(k)), key=lambda x: -x[k])[:8])
-    for p in ctx.get("players", {}).values():
-        ids.update(it["id"] for it, _ in render.player_videos(p, ctx))
-    # Talked about: the cards on player and team pages.
-    for target, groups in ctx.get("talk", {}).items():
-        if (target[0] == "team" and len(groups) >= 3) or target[1] in ctx.get("players", {}):
-            for g in groups[:8] + sorted(groups, key=lambda g: -g.views)[:8]:
-                ids.add(g.lead["id"])
+    # The video feeds on every page (homepage, Top videos, shows, players, teams).
+    for fd in (ctx.get("feeds") or {}).values():
+        ids.update(fd.ids(ctx["now"]))
     return ids
+
+
+def short_ids(ctx, ids):
+    """The Shorts among ids: they get a vertical (9:16) thumbnail too."""
+    return {i for i in ids if (ctx["item_by_id"].get(i) or {}).get("fmt") == metrics.SHORT}
 
 
 def build(now=None, fetch_thumbs=True, out=None):
@@ -235,7 +232,7 @@ def build(now=None, fetch_thumbs=True, out=None):
             _add_top(ctx)
     out = out or config.SITE_OUT
     ids = displayed_ids(ctx)
-    big = [ctx["home"]["watch"]["id"]] if ctx["home"]["watch"] else []
+    big = []   # no page shows a large thumbnail now (the homepage feed replaced the featured card)
     people.CURRENT = ctx["players"]
     host_slugs = {}
     for show in ctx["shows"].values():
@@ -250,17 +247,17 @@ def build(now=None, fetch_thumbs=True, out=None):
     ctx["art"] = art.available({s["channel_id"] for s in ctx["shows"].values()})
     if fetch_thumbs:
         ctx["thumbs"], ctx["thumbs_big"] = thumbs.ensure(ids, big)
+        ctx["thumbs_v"] = thumbs.ensure_vertical(short_ids(ctx, ids))
         ctx["headshots"] = set(headshots.ensure(host_slugs))
     else:
         ctx["thumbs"], ctx["thumbs_big"] = thumbs.available(ids, big)
+        ctx["thumbs_v"] = thumbs.available_vertical(short_ids(ctx, ids))
         ctx["headshots"] = set(headshots.available(host_slugs))
     # Player pages draw the head at 88px: those use the 320px face-fill copy.
     page_heads = {p["slug"]: p["name"] for p in ctx["players"].values() if p["slug"] in ctx["headshots"]}
     ctx["headshots_big"] = set(headshots.ensure(page_heads, big=True) if fetch_thumbs
                                else headshots.available(page_heads, big=True))
-    stream_files, ctx["stream_v"] = home.stream_files(ctx["stream"], ctx, ctx["flags"])
-    top_files, ctx["top_v"] = home.top_files(ctx["top_pool"], ctx, ctx["flags"])
-    stream_files.update(top_files)
+    ctx["feed_files"] = {}   # data/feed-<id>.json, filled in as the pages render
 
     css = (config.SITE_SRC / "style.css").read_bytes()
     js = (config.SITE_SRC / "app.js").read_bytes()
@@ -287,19 +284,22 @@ def build(now=None, fetch_thumbs=True, out=None):
         shutil.rmtree(out)
     (out / "assets").mkdir(parents=True)
     (out / "thumbs" / "big").mkdir(parents=True)
+    (out / "thumbs" / "v").mkdir(parents=True)
     (out / "headshots" / "320").mkdir(parents=True)
     (out / "art").mkdir()
     for cid in ctx["art"]:
         shutil.copyfile(art.path_for(cid), out / "art" / (cid + ".webp"))
     (out / "data").mkdir()
-    for rel, body in stream_files.items():
-        (out / rel).write_bytes(body)
+    for rel, body in ctx["feed_files"].items():
+        (out / rel).write_text(body, encoding="utf-8")
     for slug in ctx["headshots"]:
         shutil.copyfile(headshots.path_for(slug), out / "headshots" / (slug + ".webp"))
     for slug in ctx["headshots_big"]:
         shutil.copyfile(headshots.path_for(slug, True), out / "headshots" / "320" / (slug + ".webp"))
     for vid in ctx["thumbs_big"]:
         shutil.copyfile(thumbs.path_for(vid, True), out / "thumbs" / "big" / (vid + ".webp"))
+    for vid in ctx["thumbs_v"]:
+        shutil.copyfile(thumbs.path_for_vertical(vid), out / "thumbs" / "v" / (vid + ".webp"))
     (out / "assets" / "style.css").write_bytes(css)
     (out / "assets" / "app.js").write_bytes(js)
     for vid in ctx["thumbs"]:

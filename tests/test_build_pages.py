@@ -73,8 +73,13 @@ def test_build_writes_player_channels_page_and_sitemap(tmp_path, monkeypatch):
     show = (out / "pod" / "index.html").read_text()
     assert "<title>The Pod: Episodes, Clips and YouTube Rankings | HoopsMatic</title>" in show
     assert '"@type": "BreadcrumbList"' in show and '"@type": "VideoObject"' in show
-    # page thresholds: 4 full episodes and no clips -> episodes shelf, no clips shelf
-    assert "<h2>Most viewed episodes</h2>" in show and "<h2>Most viewed clips</h2>" not in show
+    # the show's video feed: an Episodes chip, no Clips chip (it has none), no
+    # carousel, and its data file
+    assert 'class="block feed"' in show and 'data-chip="episodes"' in show and 'data-chip="clips"' not in show
+    assert 'class="shelf"' not in show
+    assert json.loads((out / "data" / "feed-show-pod.json").read_text())["rows"]
+    home = json.loads((out / "data" / "feed-home.json").read_text())
+    assert home["rows"] and home["shows"] and 'data-src="/player-podcasts/data/feed-home.json?v=' in index
     # methodology page: own title, canonical on hoopsmatic.com, in the sitemap
     meth = (out / "methodology" / "index.html").read_text()
     assert "<h1>How NBA Player Podcasts works</h1>" in meth
