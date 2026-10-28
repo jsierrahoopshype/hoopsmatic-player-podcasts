@@ -348,79 +348,21 @@ def leaderboard(ctx, ranked=None):
                "".join("<li>%s</li>" % e(x) for x in deflines if x)))
 
 
-STREAM_FMTS = [("", "All formats"), ("full", "Full episodes"), ("clip", "Clips"), ("short", "Shorts")]
-STREAM_RANGES = [("90", "Last 90 days"), ("30", "Last 30 days"), ("7", "Last 7 days"), ("1", "Last 24 hours")]
-TOP_RANGES = [("0", "All time")] + STREAM_RANGES
-
-
-def explorer_html(ctx, prefix, ver, items, tabs, first_tab, ranges, note="", extra=""):
-    """A filterable list of video cards (tabs, search, show, host, format and
-    date filters, "Load more"): the first 12 cards in the page, the rest
-    loaded from data/<prefix>-*.json by the page script."""
-    from .cards import video_card
-    shows = sorted({it["show"] for it in items}, key=lambda x: ctx["shows"][x]["name"].lower())
-    hosts = sorted({n for x in shows for n in ctx["stream_hosts"].get(x, [])})
-    opt = lambda pairs: "".join('<option value="%s">%s</option>' % (e(v), e(l)) for v, l in pairs)
-    return ('<div class="stream" data-meta="%s/data/%s-meta.json?v=%s" data-base="%s" data-prefix="%s" '
-            'data-first-tab="%s" data-range="%s">'
-            '<div class="toggle stream-tabs" role="tablist">%s</div>'
-            '<div class="stream-filters">'
-            '<label class="sr" for="sf-q">Search</label><input id="sf-q" class="sel sf-q" type="search" '
-            'placeholder="Search title, show or host" autocomplete="off">'
-            '<label class="sr" for="sf-show">Show</label><select id="sf-show" class="sel"><option value="">All shows</option>%s</select>'
-            '<label class="sr" for="sf-host">Host</label><select id="sf-host" class="sel"><option value="">All hosts</option>%s</select>'
-            '<label class="sr" for="sf-fmt">Format</label><select id="sf-fmt" class="sel">%s</select>'
-            '<label class="sr" for="sf-range">Date range</label><select id="sf-range" class="sel">%s</select>'
-            '</div>%s<p class="stream-count hint-below" aria-live="polite"></p>'
-            '<div class="grid stream-grid">%s</div>'
-            '<button class="loadmore" type="button">Load more</button></div>\n'
-            % (B, prefix, ver, B, prefix, first_tab, ranges[0][0],
-               "".join('<button type="button" data-tab="%s"%s>%s</button>' % (k, ' class="active"' if k == first_tab else "", l)
-                       for k, l in tabs),
-               opt([(x, ctx["shows"][x]["name"]) for x in shows]), opt([(h, h) for h in hosts]),
-               opt(STREAM_FMTS), opt(ranges), ('<p class="hint-below">%s</p>' % note) if note else "",
-               "".join(video_card(it, ctx, extra=extra) for it in items[:12])))
-
-
-def stream_html(ctx):
-    """Latest Videos: the first cards in the page, the rest loaded in chunks."""
-    st = ctx["stream"]
-    if len(st) < 3:
-        return ""
-    tabs = [("latest", "Latest"), ("views", "Most viewed")] + ([("trending", "Trending")] if ctx["flags"].get("g24") else [])
-    return ('<section class="block" id="latest-videos"><div class="block-head"><h2>Latest videos</h2></div>%s</section>\n'
-            % explorer_html(ctx, "stream", ctx["stream_v"], st, tabs, "latest", STREAM_RANGES))
-
-
 def index_page(ctx):
-    from .cards import featured, shelf
+    from .feed import feed_html
     url = config.SITE_BASE + "/"
     top = ctx["ranked"][:3]
     top_names = ", ".join(ctx["shows"][s["slug"]]["name"] for s in top)
     desc = ("Watch the latest NBA player podcast episodes and clips, the most watched videos this week and the "
             "rankings by YouTube views. Top right now: %s." % top_names) if top else \
         "Watch the latest NBA player podcast episodes and clips, and the rankings by YouTube views."
-    h = ctx["home"]
     body = ['<div class="hdr"><h1>NBA Player Podcasts: Rankings, Episodes and Clips</h1></div>\n'
             '<p class="subtitle">Episodes, clips and Shorts from %d podcasts hosted by NBA players, playable right '
             'here, with the rankings by YouTube views on full episodes (20 minutes or longer) from the last 30 days. '
             '%s</p>\n' % (len(ctx["ranked"]), stamp(ctx)),
-            '<nav class="jump"><a href="#latest-videos">Latest videos</a><a href="#rankings">Rankings</a>'
-            '<a href="%s/most-watched/">Most watched</a></nav>\n' % B]
-    if h["watch"]:
-        body.append('<section class="block"><div class="block-head"><h2>Watch now</h2></div>%s</section>\n'
-                    % featured(h["watch"], ctx, "The most viewed podcast video posted in the last 48 hours."))
-    body.append(shelf("Most watched this week", h["week"], ctx, "Videos posted in the last 7 days, by views."))
-    body.append(talked_home(ctx))
-    if h["trending"]:
-        lbl = "24 hours" if h["trend_label"] == "gain24" else "7 days"
-        body.append(shelf("Trending", h["trending"], ctx, "Views gained in the last %s, from our daily view counts." % lbl,
-                          extra=h["trend_label"]))
-    body.append(shelf("Latest episodes", h["latest_eps"], ctx, "Full episodes (20 minutes or longer), newest first."))
-    body.append(shelf("Biggest breakouts", h["breakouts"], ctx,
-                      "Breakout = a video's views divided by the median views of the same show's videos of the same "
-                      "format from the 90 days before it (at least 8 of them). Last 30 days.", show_breakout=True))
-    body.append(stream_html(ctx))
+            '<nav class="jump"><a href="#latest-videos">Videos</a><a href="#rankings">Rankings</a>'
+            '<a href="%s/top-videos/">Top videos</a></nav>\n' % B]
+    body.append(feed_html(ctx["feeds"]["home"], ctx, feed_modules(ctx), anchor="latest-videos"))
     body.append('<section class="block" id="rankings"><div class="block-head"><h2>Rankings</h2></div>')
     body.append(leaderboard(ctx))
     body.append('<p class="hint-below">Players\' personal channels (vlogs, behind the scenes, highlights) are '
@@ -554,34 +496,18 @@ BREAKOUT_NOTE = ("Breakout = a video's views divided by the median views of the 
 
 
 def top_videos_page(ctx):
-    from .cards import shelf
+    from .feed import feed_html
     url = config.SITE_BASE + "/top-videos/"
-    t = ctx["top"]
-    f = ctx["flags"]
-    tabs = [("views", "Most viewed")] + ([("trending", "Gained, 24 hours")] if f.get("g24") else []) + \
-           ([("gain7", "Gained, 7 days")] if f.get("g7") else []) + [("breakout", "Breakouts")]
+    pool = ctx["top_pool"]
     body = ['<div class="hdr"><h1>Top NBA player podcast videos</h1></div>\n'
             '<p class="subtitle">The most viewed full episodes, clips and Shorts from NBA player podcasts on '
             'YouTube, the biggest gainers and the breakouts, playable right here. %s</p>\n' % stamp(ctx),
-            '<section class="block" id="most-viewed"><div class="block-head"><h2>Most viewed overall</h2></div>%s</section>\n'
-            % explorer_html(ctx, "top", ctx["top_v"], t["views"], tabs, "views", TOP_RANGES,
-                            note="All time: each show's 12 most viewed videos of each format and the 100 most viewed "
-                                 "overall; the last 90 days: every video. " + BREAKOUT_NOTE)]
-    body.append(shelf("Most viewed full episodes", t["full"], ctx, "Full episodes (20 minutes or longer), all time."))
-    body.append(shelf("Most viewed clips", t["clip"], ctx, "Clips (1 to 20 minutes), all time."))
-    body.append(shelf("Most viewed Shorts", t["short"], ctx, "Shorts (under a minute, or from the Shorts tab), all time."))
-    if t["gain24"]:
-        body.append(shelf("Most gained in 24 hours", t["gain24"], ctx, "Views gained in the last 24 hours, from our "
-                          "daily view counts.", extra="gain24"))
-    if t["gain7"]:
-        body.append(shelf("Most gained in 7 days", t["gain7"], ctx, "Views gained in the last 7 days, from our daily "
-                          "view counts.", extra="gain7"))
-    body.append(shelf("Breakouts", t["breakout"], ctx, "Highest breakout scores among videos from the last 90 days. "
-                      + BREAKOUT_NOTE, show_breakout=True))
-    top1 = t["views"][:1]
+            feed_html(ctx["feeds"]["top"], ctx, feed_modules(ctx), anchor="most-viewed",
+                      hint="All time: each show's 12 most viewed videos of each format and the 100 most viewed of each "
+                           "format; the last 90 days: every video. " + BREAKOUT_NOTE)]
     desc = "The most viewed NBA player podcast videos on YouTube: full episodes, clips and Shorts, the biggest gainers and the breakouts."
-    if top1:
-        desc += " No. 1: %s (%s views)." % (top1[0]["title"][:80], compact(top1[0]["views"]))
+    if pool:
+        desc += " No. 1: %s (%s views)." % (pool[0]["title"][:80], compact(pool[0]["views"]))
     return page("Top NBA Player Podcast Videos: Most Viewed Episodes, Clips and Shorts | HoopsMatic", desc, url,
                 ctx["assets_v"], "top-videos", "".join(body))
 
@@ -835,8 +761,9 @@ def related_html(ctx, slug):
 
 
 def show_page(ctx, s):
-    from .cards import host_people, shelf, video_card
-    from .metrics import FULL, CLIP
+    from .cards import host_people
+    from .feed import feed_html
+    from .metrics import FULL
     show = ctx["shows"][s["slug"]]
     url = config.SITE_BASE + "/" + show["slug"] + "/"
     eps = s["episodes"]
@@ -872,21 +799,9 @@ def show_page(ctx, s):
         body.append('<p class="show-desc">%s</p>\n' % e(desc_txt))
     body.append('<p class="hint-below">%s</p>' % stamp(ctx))
     body.append(_metric_cards(ctx, s))
-    if len(vids) >= 3:
-        body.append('<section class="block" id="latest"><div class="block-head"><h2>Latest videos</h2></div>'
-                    '<div class="grid">%s</div></section>\n' % "".join(video_card(it, ctx) for it in vids[:12]))
-    trend_key = "gain24" if ctx["flags"].get("g24") else "gain7" if ctx["flags"].get("g7") else None
-    if trend_key:
-        tr = sorted((it for it in vids if it.get(trend_key)), key=lambda it: -it[trend_key])[:8]
-        if len(tr) >= 3:
-            body.append(shelf("Trending", tr, ctx, "Views gained in the last %s, from our daily view counts."
-                              % ("24 hours" if trend_key == "gain24" else "7 days"), extra=trend_key))
-    top_eps = sorted((it for it in vids if it["fmt"] == FULL), key=lambda it: -it["views"])[:8]
-    top_clips = sorted((it for it in vids if it["fmt"] == CLIP), key=lambda it: -it["views"])[:8]
-    if len(top_eps) >= 3:
-        body.append(shelf("Most viewed episodes", top_eps, ctx, "Full episodes (20 minutes or longer), all time.", show_breakout=True))
-    if len(top_clips) >= 3:
-        body.append(shelf("Most viewed clips", top_clips, ctx, "Clips (1 to 20 minutes), all time.", show_breakout=True))
+    fd = ctx["feeds"].get("show-" + s["slug"])
+    if fd:
+        body.append(feed_html(fd, ctx, heading="Videos", anchor="latest"))
     hist = weekly_history([it["id"] for it in vids if it["fmt"] == FULL])
     if hist:
         body.append('<section class="section"><h2>Views over time</h2><p class="hint">Total views of the full '
@@ -975,10 +890,10 @@ def weeks_svg(rows, label):
 
 
 def talk_section(ctx, target, name, pronoun="them", min_groups=3):
-    """'Talked about' for one player or team: counts, most recent, most
-    viewed, the shows that talk about them most, and mentions per week."""
+    """'Talked about' for one player or team: counts, the shows that talk
+    about them most and discussions per week. The videos themselves are in
+    the page's feed (its Talked about chip on player pages)."""
     from . import talk
-    from .cards import talk_card
     groups = ctx["talk"].get(target) or []
     if len(groups) < min_groups or not groups:
         return ""
@@ -986,16 +901,12 @@ def talk_section(ctx, target, name, pronoun="them", min_groups=3):
     c7, v7 = talk.window(groups, now, 7)
     c30, v30 = talk.window(groups, now, 30)
     vids = sum(len(g.items) for g in groups)
-    recent = groups[:8]
-    viewed = sorted(groups, key=lambda g: -g.views)[:8]
     shows = talk.top_shows(groups)
     out = ['<section class="block talk" id="talked-about"><div class="block-head"><h2>Talked about</h2></div>'
            '<p class="talk-sum">%d discussions (%d videos) talk about %s: %d in the last 7 days, %d in the last 30.</p>'
            '<p class="hint-below">Videos whose title or chapters name %s, apart from %s own appearances. Clips of the '
            'same episode count once and are listed under the episode.</p>'
            % (len(groups), vids, e(name), c7, c30, e(name), "their" if target[0] == "team" else "his")]
-    out.append('<h3 class="sub-h">Most recent</h3><div class="grid">%s</div>' % "".join(talk_card(g, ctx) for g in recent))
-    out.append('<h3 class="sub-h">Most viewed</h3><div class="grid">%s</div>' % "".join(talk_card(g, ctx) for g in viewed))
     out.append('<h3 class="sub-h">Shows that talk about %s most</h3><ol class="talk-shows">%s</ol>'
                % (pronoun, "".join('<li><a href="%s">%s</a> <span class="g-n">%d discussion%s</span></li>'
                                    % (show_url(sl), e(ctx["shows"][sl]["name"]), n, "" if n == 1 else "s") for sl, n in shows)))
@@ -1007,14 +918,14 @@ def talk_section(ctx, target, name, pronoun="them", min_groups=3):
     return "".join(out)
 
 
-def talked_home(ctx):
-    """Homepage: most talked about players and teams, this week and in the
-    last 30 days (a toggle between two lists already in the page)."""
+def module_talked(ctx, n=5):
+    """Feed module: the most talked about players and teams, 7 days (a 30-day
+    toggle switches to the second list, already in the page)."""
     from . import talk
     now = ctx["now"]
 
     def lst(kind, days):
-        rows = talk.leaders(ctx["talk"], kind, now, days)
+        rows = talk.leaders(ctx["talk"], kind, now, days, n)
         if len(rows) < 3:
             return ""
         items = []
@@ -1029,29 +940,64 @@ def talked_home(ctx):
                          % (i, who, c, "" if c == 1 else "s", v, "" if v == 1 else "s"))
         return '<ol class="talk-list">%s</ol>' % "".join(items)
 
-    cols = []
+    panes = []
     for days in (7, 30):
         p, t = lst("player", days), lst("team", days)
-        if not (p or t):
-            continue
-        cols.append('<div class="talk-pane" data-days="%d"%s><div class="talk-cols">'
-                    '<div><h3 class="sub-h">Players</h3>%s</div><div><h3 class="sub-h">Teams</h3>%s</div></div></div>'
-                    % (days, "" if days == 7 else " hidden", p, t))
-    if not cols:
+        if p or t:
+            panes.append('<div class="talk-pane" data-days="%d"%s><div class="talk-cols">'
+                         '<div><h4 class="sub-h">Players</h4>%s</div><div><h4 class="sub-h">Teams</h4>%s</div></div></div>'
+                         % (days, "" if days == 7 else " hidden", p, t))
+    if not panes:
         return ""
-    return ('<section class="block" id="talked-about"><div class="block-head"><h2>Most talked about this week</h2></div>'
-            '<div class="toggle talk-toggle" role="tablist"><button type="button" data-days="7" class="active">7 days</button>'
+    return ('<div class="vc-mod" data-mod="talked"><h3 class="mod-h">Most talked about this week</h3>'
+            '<div class="toggle talk-toggle"><button type="button" data-days="7" class="active">7 days</button>'
             '<button type="button" data-days="30">30 days</button></div>%s'
-            '<p class="hint-below">Distinct episodes (clips of one episode count once) whose title or chapters name the '
-            'player or team, posted in the last 7 or 30 days, apart from a player\'s own appearances. '
-            '<a href="%s/teams/">All teams</a> · <a href="%s/methodology/#talked-about">How it works</a></p></section>\n'
-            % ("".join(cols), B, B))
+            '<p class="hint-below">Distinct episodes whose title or chapters name them. '
+            '<a href="%s/teams/">All teams</a> · <a href="%s/players/">All players</a></p></div>'
+            % ("".join(panes), B, B))
+
+
+def module_breakouts(ctx, n=3):
+    """Feed module: the biggest breakouts of the last 30 days."""
+    from .cards import _media
+    rows = ctx["home"]["breakouts"][:n]
+    if not rows:
+        return ""
+    items = "".join('<li class="mini">%s<div class="mini-b"><a class="mini-t" href="%s" target="_blank" rel="noopener"%s>%s</a>'
+                    '<span class="mini-m"><a href="%s">%s</a> · <span class="bo%s">%.1fx</span> its usual views</span></div></li>'
+                    % (_media(it, ctx), e(yt_url(it["id"])),
+                       (' data-play="%s"' % e(it["id"])) if it.get("embed") != "no" else "", e(it["title"]),
+                       show_url(it["show"]), e(ctx["shows"][it["show"]]["name"]),
+                       " hot" if it["breakout"] >= config.BREAKOUT_X else "", it["breakout"]) for it in rows)
+    return ('<div class="vc-mod" data-mod="breakouts"><h3 class="mod-h">Biggest breakouts</h3><ol class="minis">%s</ol>'
+            '<p class="hint-below">Views divided by the median of the same show\'s videos of the same format from the '
+            '90 days before (at least 8 of them). Last 30 days. <a href="%s/top-videos/">Top videos</a></p></div>'
+            % (items, B))
+
+
+def module_rankings(ctx, n=5):
+    """Feed module: the top of the show rankings."""
+    rows = ctx["ranked"][:n]
+    if not rows:
+        return ""
+    items = "".join('<li><span class="tl-r">%d</span><a class="host" href="%s">%s</a>'
+                    '<span class="tl-n">%s<span class="bn">views, 30 days</span></span></li>'
+                    % (s_["rank"], show_url(s_["slug"]), e(ctx["shows"][s_["slug"]]["name"]), compact(s_["momentum"]))
+                    for s_ in rows)
+    return ('<div class="vc-mod" data-mod="rankings"><h3 class="mod-h">Show rankings</h3><ol class="talk-list">%s</ol>'
+            '<p class="hint-below">By views on full episodes from the last 30 days. '
+            '<a href="%s/#rankings">Full rankings</a></p></div>' % (items, B))
+
+
+def feed_modules(ctx):
+    return [("talked", module_talked(ctx)), ("breakouts", module_breakouts(ctx)), ("rankings", module_rankings(ctx))]
 
 
 # ── player pages ──
 
 def player_page(ctx, p):
-    from .cards import avatar, video_card
+    from .cards import avatar
+    from .feed import feed_html
     from .people import CAREER_MAP
     url = config.SITE_ORIGIN + config.BASE_PATH + "/players/" + p["slug"] + "/"
     main = _player_main_show(p, ctx)
@@ -1078,29 +1024,12 @@ def player_page(ctx, p):
             '<div class="meta"><a href="%s">NBA career on NBA Career Map</a></div></div></div>\n'
             % (avatar(p["name"], head, 88, big=head in ctx.get("headshots_big", ())).replace('class="av', 'class="art av'), e(h1),
                "".join('<div class="meta">%s</div>' % r for r in roles), e(CAREER_MAP % p["slug"]))]
-    if vids and not talk_only:
-        shows_in = sorted({it["show"] for it, _ in vids}, key=lambda x: ctx["shows"][x]["name"].lower())
-        role_opts = [("", "All roles")] + ([("host", "Host")] if p["hosts"] or p["former"] else []) + ([("guest", "Guest")] if p["guest"] else [])
-        opt = lambda pairs: "".join('<option value="%s">%s</option>' % (e(v), e(l)) for v, l in pairs)
-        body.append('<div class="pfilter" data-target="#pv">'
-                    '<label class="sr" for="pf-role">Role</label><select id="pf-role" class="sel" data-attr="role">%s</select>'
-                    '<label class="sr" for="pf-show">Show</label><select id="pf-show" class="sel" data-attr="show"><option value="">All shows</option>%s</select>'
-                    '<label class="sr" for="pf-fmt">Format</label><select id="pf-fmt" class="sel" data-attr="fmt">%s</select></div>'
-                    '<p class="pf-count hint-below" aria-live="polite"></p>'
-                    % (opt(role_opts), opt([(x, ctx["shows"][x]["name"]) for x in shows_in]), opt(STREAM_FMTS)))
-        cards = []
-        for it, role in vids:
-            r = "guest" if role == "guest" else "host"
-            c = video_card(it, ctx, label=role.capitalize())
-            cards.append(c.replace('<article class="vc">', '<article class="vc" data-role="%s" data-show="%s" data-fmt="%s">'
-                                   % (r, e(it["show"]), e(it["fmt"])), 1))
-        body.append('<div class="grid" id="pv">%s</div>\n' % "".join(cards))
-        body.append('<p class="hint-below">Guest appearances: the player is stated as a guest in the title or description '
-                    '(or added by hand) and matched to one NBA Career Map player. As a host: the latest 12 and the 6 most '
-                    'viewed videos of each show.</p>')
-    elif vids:
-        body.append('<section class="block"><div class="block-head"><h2>Appearances</h2></div><div class="grid">%s</div></section>\n'
-                    % "".join(video_card(it, ctx, label=role.capitalize()) for it, role in vids))
+    fd = ctx["feeds"].get("player-" + p["slug"])
+    if fd:
+        body.append(feed_html(fd, ctx, heading="Videos", anchor="videos", hint=(
+            "Guest: the player is stated as a guest in the title or description (or added by hand) and matched to "
+            "one NBA Career Map player. Host: the latest 12 and the 6 most viewed videos of each show. Talked "
+            "about: videos whose title or chapters name him, one card per episode with its clips under it.")))
     # A kept (sticky) page shows whatever discussions there are.
     body.append(talk_section(ctx, ("player", p["slug"]), p["name"], "him", 1 if p.get("sticky") else 3))
     body.append('<p class="hint-below">%s</p>' % stamp(ctx))
@@ -1163,6 +1092,7 @@ TEAM_CM = "https://hoopsmatic.com/nba-career-map/team/%s.html"
 
 def team_page(ctx, t):
     from . import talk
+    from .feed import feed_html
     url = config.SITE_BASE + "/teams/" + t["slug"] + "/"
     trail = TRAIL_HOME + [("Teams", config.SITE_BASE + "/teams/"), (t["name"], url)]
     groups = ctx["talk"].get(("team", t["slug"])) or []
@@ -1172,6 +1102,11 @@ def team_page(ctx, t):
             '<div class="meta">Matched by: %s</div>'
             '<div class="meta"><a href="%s">%s on NBA Career Map</a></div></div>\n'
             % (e(t["name"]), e(", ".join(names)), e(TEAM_CM % t["slug"]), e(t["name"]))]
+    fd = ctx["feeds"].get("team-" + t["slug"])
+    if fd:
+        body.append(feed_html(fd, ctx, heading="Videos", anchor="videos", hint=(
+            "Videos whose title or chapters name the %s. Clips of the same episode count once and are listed "
+            "under the episode." % e(t["nickname"]))))
     body.append(talk_section(ctx, ("team", t["slug"]), "the " + t["nickname"]))
     rows = talk.team_players(ctx["talk"], ctx["active_by_team"], t["slug"], ctx["now"])
     if rows:

@@ -1,10 +1,13 @@
-"""Video cards, shelves and the featured card.
+"""Video cards.
 
-A card's thumbnail is a link to the video on YouTube. The page script turns a
-click on it into YouTube's player (youtube-nocookie.com), loaded only then and
-only for that video; without the script the link simply opens YouTube. Videos
-whose owner turned embedding off get a plain "Watch on YouTube" link instead
-of a play button. Every card also has a small "Watch on YouTube" link.
+A card's thumbnail (and its title) is a link to the video on YouTube. The
+page script turns a tap on it into YouTube's player (youtube-nocookie.com),
+loaded only then, in place, and only one at a time; without the script the
+link simply opens YouTube. Videos whose owner turned embedding off say "Watch
+on YouTube" on the thumbnail instead of a play button. Each card also has a
+small YouTube icon linking to the video. Shorts get a vertical (9:16)
+thumbnail; episodes and clips 16:9. site_src/app.js writes the same card for
+the videos it loads later.
 """
 from html import escape
 
@@ -63,11 +66,17 @@ def hosts_html(show, ctx, avatars=True):
     return "".join(bits)
 
 
+YT_ICON = ('<svg viewBox="0 0 24 17" width="22" height="16" aria-hidden="true"><rect width="24" height="17" rx="4" '
+           'fill="#ff0033"/><path d="M9.5 4.5v8l6.5-4z" fill="#fff"/></svg>')
+
+
 def _media(it, ctx, big=False, start=None):
     vid = it["id"]
-    thumb_set = ctx.get("thumbs_big" if big else "thumbs", ())
-    w, h = (640, 360) if big else (320, 180)
-    if vid in thumb_set:
+    vertical = it["fmt"] == SHORT
+    if vertical and vid in ctx.get("thumbs_v", ()):
+        img = '<img src="%s/thumbs/v/%s.webp" width="270" height="480" loading="lazy" alt="">' % (B, e(vid))
+    elif vid in ctx.get("thumbs_big" if big else "thumbs", ()):
+        w, h = (640, 360) if big else (320, 180)
         img = ('<img src="%s/thumbs/%s%s.webp" width="%d" height="%d"%s alt="">'
                % (B, "big/" if big else "", e(vid), w, h, "" if big else ' loading="lazy"'))
     else:
@@ -91,70 +100,53 @@ def badge(it):
 
 def video_card(it, ctx, show_breakout=False, extra="", label="", start=None, more=""):
     """start: open (and play) at that second, e.g. a chapter that talks
-    about someone; more: extra HTML under the meta line (related clips)."""
-    from .render import fmt_date, full
+    about someone; more: extra HTML under the card (related clips); extra:
+    "gain24" / "gain7" adds the views gained; label: a role ("Guest")."""
+    from .render import compact, fmt_date
     show = ctx["shows"][it["show"]]
-    gain = ""
+    meta = [fmt_date(it["published"]), compact(it["views"]) + " views"]
+    if it.get("duration"):
+        meta.append(fmt_len(it["duration"]))
     if extra == "gain24" and it.get("gain24") is not None:
-        gain = ' · <span class="gain">+%s in 24h</span>' % full(it["gain24"])
+        meta.append('<span class="gain">+%s in 24h</span>' % compact(it["gain24"]))
     elif extra == "gain7" and it.get("gain7") is not None:
-        gain = ' · <span class="gain">+%s in 7 days</span>' % full(it["gain7"])
-    return ('<article class="vc">%s<div class="vc-body">'
-            '<div class="vc-top"><span class="fmt fmt-%s">%s</span>%s%s</div>'
-            '<h3 class="vc-t"><a href="%s" target="_blank" rel="noopener">%s</a></h3>'
+        meta.append('<span class="gain">+%s in 7 days</span>' % compact(it["gain7"]))
+    if start:
+        meta.append('<span class="at">from %s</span>' % fmt_len(start))
+    play = ' data-play="%s"%s' % (e(it["id"]), (' data-start="%d"' % start) if start else "") \
+        if it.get("embed") != "no" else ""
+    return ('<article class="vc vc-%s">%s<div class="vc-body">'
+            '<h3 class="vc-t"><a href="%s" target="_blank" rel="noopener"%s>%s</a></h3>'
             '<div class="vc-show"><a href="%s/%s/">%s</a></div>'
             '<div class="vc-hosts">%s</div>'
-            '<div class="vc-meta">%s · %s views%s%s</div>%s'
-            '<a class="vc-yt" href="%s" target="_blank" rel="noopener">Watch on YouTube</a>'
+            '<div class="vc-meta">%s</div>'
+            '<div class="vc-foot"><span class="fmt fmt-%s">%s</span>%s%s'
+            '<a class="vc-ytic" href="%s" target="_blank" rel="noopener" aria-label="Watch on YouTube" '
+            'title="Watch on YouTube">%s</a></div>%s'
             '</div></article>'
-            % (_media(it, ctx, start=start), e(it["fmt"]), FMT_LABEL.get(it["fmt"], "Video"),
+            % (e(it["fmt"]), _media(it, ctx, start=start), e(yt(it["id"], start)), play, e(it["title"]),
+               B, e(show["slug"]), e(show["name"]), hosts_html(show, ctx), " · ".join(meta),
+               e(it["fmt"]), FMT_LABEL.get(it["fmt"], "Video"),
                badge(it) if show_breakout else "", ('<span class="role">%s</span>' % e(label)) if label else "",
-               e(yt(it["id"], start)), e(it["title"]), B, e(show["slug"]), e(show["name"]),
-               hosts_html(show, ctx), fmt_date(it["published"]), full(it["views"]), gain,
-               (' · <span class="at">from %s</span>' % fmt_len(start)) if start else "", more, e(yt(it["id"], start))))
+               e(yt(it["id"], start)), YT_ICON, more))
 
 
-def talk_card(g, ctx):
-    """One discussion: the full episode (or the most viewed video) as the
-    card, opening at the chapter that talks about them when there is one,
-    with the other clips of the same episode listed under it."""
-    more = ""
-    if g.clips:
-        links = "".join('<li><a href="%s" target="_blank" rel="noopener">%s</a>%s</li>'
-                        % (e(yt(c["id"], g.starts.get(c["id"]))), e(c["title"]),
-                           (' <span class="at">from %s</span>' % fmt_len(g.starts[c["id"]])) if g.starts.get(c["id"]) else "")
-                        for c in g.clips[:4])
-        extra = (' <span class="at">and %d more</span>' % (len(g.clips) - 4)) if len(g.clips) > 4 else ""
-        more = ('<div class="vc-more"><span class="lbl">Also from this episode</span><ul>%s</ul>%s</div>'
-                % (links, extra))
-    return video_card(g.lead, ctx, start=g.starts.get(g.lead["id"]), more=more)
-
-
-def featured(it, ctx, why):
-    from .render import fmt_date, full
-    show = ctx["shows"][it["show"]]
-    return ('<article class="vc vc-feat">%s<div class="vc-body">'
-            '<div class="vc-top"><span class="fmt fmt-%s">%s</span></div>'
-            '<h3 class="vc-t"><a href="%s" target="_blank" rel="noopener">%s</a></h3>'
-            '<div class="vc-show"><a href="%s/%s/">%s</a></div>'
-            '<div class="vc-hosts">%s</div>'
-            '<div class="vc-meta">%s · %s · <strong>%s</strong> views</div>'
-            '<p class="vc-why">%s</p>'
-            '<a class="vc-yt" href="%s" target="_blank" rel="noopener">Watch on YouTube</a>'
-            '</div></article>'
-            % (_media(it, ctx, big=True), e(it["fmt"]), FMT_LABEL.get(it["fmt"], "Video"),
-               e(yt(it["id"])), e(it["title"]), B, e(show["slug"]), e(show["name"]),
-               hosts_html(show, ctx), fmt_date(it["published"]), fmt_len(it.get("duration")) or "",
-               full(it["views"]), e(why), e(yt(it["id"]))))
-
-
-def shelf(title, items, ctx, note="", extra="", show_breakout=False, anchor=None):
-    """A titled row of cards: scrolls sideways inside itself on small screens
-    (never the page), a grid on wide ones."""
-    if not items:
+def clips_more(clips):
+    """'Also from this episode': [(id, title, seconds or None)]."""
+    if not clips:
         return ""
-    return ('<section class="block"%s><div class="block-head"><h2>%s</h2></div>'
-            '<div class="shelf">%s</div>%s</section>\n'
-            % ((' id="%s"' % anchor) if anchor else "", e(title),
-               "".join(video_card(it, ctx, show_breakout, extra) for it in items),
-               ('<p class="hint-below">%s</p>' % note) if note else ""))
+    links = "".join('<li><a href="%s" target="_blank" rel="noopener">%s</a>%s</li>'
+                    % (e(yt(c, t)), e(title), (' <span class="at">from %s</span>' % fmt_len(t)) if t else "")
+                    for c, title, t in clips[:4])
+    extra = (' <span class="at">and %d more</span>' % (len(clips) - 4)) if len(clips) > 4 else ""
+    return '<div class="vc-more"><span class="lbl">Also from this episode</span><ul>%s</ul>%s</div>' % (links, extra)
+
+
+def talk_extra(g):
+    """A discussion's feed extra: where to start and its other clips."""
+    x = {"r": "talk"}
+    if g.starts.get(g.lead["id"]):
+        x["t"] = g.starts[g.lead["id"]]
+    if g.clips:
+        x["c"] = [[c["id"], c["title"], g.starts.get(c["id"])] for c in g.clips]
+    return x
