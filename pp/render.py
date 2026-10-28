@@ -1076,7 +1076,7 @@ def player_page(ctx, p):
     body = [crumbs_html(trail),
             '<div class="phead show-head">%s<div class="sh-b"><h1>%s</h1>%s'
             '<div class="meta"><a href="%s">NBA career on NBA Career Map</a></div></div></div>\n'
-            % (avatar(p["name"], head, 88).replace('class="av', 'class="art av'), e(h1),
+            % (avatar(p["name"], head, 88, big=head in ctx.get("headshots_big", ())).replace('class="av', 'class="art av'), e(h1),
                "".join('<div class="meta">%s</div>' % r for r in roles), e(CAREER_MAP % p["slug"]))]
     if vids and not talk_only:
         shows_in = sorted({it["show"] for it, _ in vids}, key=lambda x: ctx["shows"][x]["name"].lower())

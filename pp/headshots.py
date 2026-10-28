@@ -1,6 +1,9 @@
 """Player headshots from the jsierrahoopshype/nba-headshots repo, copied into
 this repo (data/headshots/<Career Map slug>.webp, 160px, about 3 KB) so
-visitors never load them from GitHub.
+visitors never load them from GitHub. They are the one HoopsMatic headshot
+look, face-fill (the face fills the circle, transparent). Player pages draw
+the head at 88px, so those players also get the 320px copy
+(data/headshots/320/<slug>.webp).
 
 data/headshots_index.json maps a normalised player name to that repo's file
 name; it is refreshed with the weekly listing. A player without a headshot
@@ -15,7 +18,8 @@ from .feeds import UA
 from .util import load_json, save_json
 
 INDEX_URL = "https://raw.githubusercontent.com/jsierrahoopshype/nba-headshots/main/players/metadata/players_all.json"
-FILE_URL = "https://raw.githubusercontent.com/jsierrahoopshype/nba-headshots/main/players/headshots/face2-160/%s.webp"
+FILE_URL = "https://raw.githubusercontent.com/jsierrahoopshype/nba-headshots/main/players/headshots/face-fill/%s.webp"
+FILE_URL_BIG = "https://raw.githubusercontent.com/jsierrahoopshype/nba-headshots/main/players/headshots/face-fill-320/%s.webp"
 
 
 def _norm(name):
@@ -53,18 +57,18 @@ def refresh_index():
     return None
 
 
-def path_for(slug):
-    return config.HEADSHOTS_DIR / (slug + ".webp")
+def path_for(slug, big=False):
+    return config.HEADSHOTS_DIR / ("320" if big else "") / (slug + ".webp")
 
 
-def ensure(players):
-    """players: {Career Map slug: display name}. Downloads missing headshots.
-    Returns {slug: True} for those that have one."""
+def ensure(players, big=False):
+    """players: {Career Map slug: display name}. Downloads missing headshots
+    (the 320px copies when big). Returns {slug: True} for those that have one."""
     idx = (load_json(config.HEADSHOTS_INDEX_FILE, {}) or {}).get("files") or {}
-    config.HEADSHOTS_DIR.mkdir(parents=True, exist_ok=True)
+    path_for("", big).parent.mkdir(parents=True, exist_ok=True)
     have = {}
     for slug, name in players.items():
-        p = path_for(slug)
+        p = path_for(slug, big)
         if p.exists() and p.stat().st_size > 0:
             have[slug] = True
             continue
@@ -72,7 +76,7 @@ def ensure(players):
         if not stem:
             continue
         try:
-            req = urllib.request.Request(FILE_URL % stem, headers={"User-Agent": UA})
+            req = urllib.request.Request((FILE_URL_BIG if big else FILE_URL) % stem, headers={"User-Agent": UA})
             with urllib.request.urlopen(req, timeout=20) as r:
                 body = r.read()
             if body[:4] == b"RIFF":
@@ -83,8 +87,8 @@ def ensure(players):
     return have
 
 
-def available(players):
-    return {s: True for s in players if path_for(s).exists()}
+def available(players, big=False):
+    return {s: True for s in players if path_for(s, big).exists()}
 
 
 def initials(name):

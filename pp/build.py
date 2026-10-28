@@ -250,6 +250,10 @@ def build(now=None, fetch_thumbs=True, out=None):
     else:
         ctx["thumbs"], ctx["thumbs_big"] = thumbs.available(ids, big)
         ctx["headshots"] = set(headshots.available(host_slugs))
+    # Player pages draw the head at 88px: those use the 320px face-fill copy.
+    page_heads = {p["slug"]: p["name"] for p in ctx["players"].values() if p["slug"] in ctx["headshots"]}
+    ctx["headshots_big"] = set(headshots.ensure(page_heads, big=True) if fetch_thumbs
+                               else headshots.available(page_heads, big=True))
     stream_files, ctx["stream_v"] = home.stream_files(ctx["stream"], ctx, ctx["flags"])
     top_files, ctx["top_v"] = home.top_files(ctx["top_pool"], ctx, ctx["flags"])
     stream_files.update(top_files)
@@ -279,7 +283,7 @@ def build(now=None, fetch_thumbs=True, out=None):
         shutil.rmtree(out)
     (out / "assets").mkdir(parents=True)
     (out / "thumbs" / "big").mkdir(parents=True)
-    (out / "headshots").mkdir()
+    (out / "headshots" / "320").mkdir(parents=True)
     (out / "art").mkdir()
     for cid in ctx["art"]:
         shutil.copyfile(art.path_for(cid), out / "art" / (cid + ".webp"))
@@ -288,6 +292,8 @@ def build(now=None, fetch_thumbs=True, out=None):
         (out / rel).write_bytes(body)
     for slug in ctx["headshots"]:
         shutil.copyfile(headshots.path_for(slug), out / "headshots" / (slug + ".webp"))
+    for slug in ctx["headshots_big"]:
+        shutil.copyfile(headshots.path_for(slug, True), out / "headshots" / "320" / (slug + ".webp"))
     for vid in ctx["thumbs_big"]:
         shutil.copyfile(thumbs.path_for(vid, True), out / "thumbs" / "big" / (vid + ".webp"))
     (out / "assets" / "style.css").write_bytes(css)

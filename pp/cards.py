@@ -45,11 +45,12 @@ def host_people(show, ctx):
     return out
 
 
-def avatar(name, head_slug, size=22):
+def avatar(name, head_slug, size=22, big=False):
+    """face-fill headshot in a grey circle (the 320px copy when big), else initials."""
     from .headshots import initials
     if head_slug:
-        return ('<img class="av" src="%s/headshots/%s.webp" width="%d" height="%d" loading="lazy" alt="">'
-                % (B, e(head_slug), size, size))
+        return ('<img class="av" src="%s/headshots/%s%s.webp" width="%d" height="%d" loading="lazy" alt="">'
+                % (B, "320/" if big else "", e(head_slug), size, size))
     return '<span class="av av-i" aria-hidden="true">%s</span>' % e(initials(name))
 
 
