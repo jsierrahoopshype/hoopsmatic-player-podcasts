@@ -974,13 +974,13 @@ def weeks_svg(rows, label):
     return "".join(out)
 
 
-def talk_section(ctx, target, name, pronoun="them"):
+def talk_section(ctx, target, name, pronoun="them", min_groups=3):
     """'Talked about' for one player or team: counts, most recent, most
     viewed, the shows that talk about them most, and mentions per week."""
     from . import talk
     from .cards import talk_card
     groups = ctx["talk"].get(target) or []
-    if len(groups) < 3:
+    if len(groups) < min_groups or not groups:
         return ""
     now = ctx["now"]
     c7, v7 = talk.window(groups, now, 7)
@@ -1101,7 +1101,8 @@ def player_page(ctx, p):
     elif vids:
         body.append('<section class="block"><div class="block-head"><h2>Appearances</h2></div><div class="grid">%s</div></section>\n'
                     % "".join(video_card(it, ctx, label=role.capitalize()) for it, role in vids))
-    body.append(talk_section(ctx, ("player", p["slug"]), p["name"], "him"))
+    # A kept (sticky) page shows whatever discussions there are.
+    body.append(talk_section(ctx, ("player", p["slug"]), p["name"], "him", 1 if p.get("sticky") else 3))
     body.append('<p class="hint-below">%s</p>' % stamp(ctx))
     if talk_only:
         title = "%s on NBA Player Podcasts: Appearances and What Players Say About Him | HoopsMatic" % p["name"]
@@ -1295,7 +1296,9 @@ def methodology_page(ctx):
                 'a link to the episode in the description, the same episode number, or a clip within 10 days after a '
                 'full episode of the show that mentions the same player or team) and are listed under the episode. '
                 'Counts are distinct discussions, with how many videos they cover. Players get a page with 10 or more '
-                'discussions; all 30 teams have one. Mentions can be added or removed by hand.</p></section>\n')
+                'discussions, and once published a page stays even if the count drops later; all 30 teams have one. '
+                'A few names that almost always mean someone else are never matched (data/mention_ignore.json: '
+                'Michael Jackson). Mentions can be added or removed by hand.</p></section>\n')
     body.append(sec("Playback and privacy",
         "Thumbnails, headshots and artwork are served from hoopsmatic.com. Nothing loads from YouTube until you "
         "press play; then the video plays in YouTube's privacy-enhanced player (youtube-nocookie.com) and "

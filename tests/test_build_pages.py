@@ -30,10 +30,12 @@ def test_build_writes_player_channels_page_and_sitemap(tmp_path, monkeypatch):
         (tmp_path / "videos" / (sid + ".json")).write_text(json.dumps({"source_id": sid, "videos": vids}))
     for name in ("CHANNELS_FILE", "SUBSCRIBERS_FILE", "RANKS_FILE", "STATUS_FILE", "EXCLUDED_FILE", "SITEMAP_STATE_FILE",
                  "APPEARANCES_FILE", "APPEARANCES_REVIEW_FILE", "APPEARANCES_MANUAL_FILE", "EMBED_FILE",
-                 "MENTIONS_FILE", "MENTIONS_MANUAL_FILE"):
+                 "MENTIONS_FILE", "MENTIONS_MANUAL_FILE", "PUBLISHED_PLAYERS_FILE"):
         monkeypatch.setattr(config, name, tmp_path / getattr(config, name).name)
     monkeypatch.setattr(config, "VIDEOS_DIR", tmp_path / "videos")
     monkeypatch.setattr(config, "THUMBS_DIR", tmp_path / "thumbs")
+    # a page published earlier whose player no longer meets any threshold
+    (tmp_path / "published_players.json").write_text(json.dumps({"players": ["og-anunoby", "michael-jackson"]}))
     out = tmp_path / "site"
     ctx = build.build(now=NOW, fetch_thumbs=False, out=out)
 
@@ -82,6 +84,8 @@ def test_build_writes_player_channels_page_and_sitemap(tmp_path, monkeypatch):
     titles = set()
     for f in out.rglob("index.html"):
         html = f.read_text()
+        if 'http-equiv="refresh"' in html:
+            continue                     # a moved page's redirect stub (data/moved_pages.json)
         assert html.count("<h1>") == 1, f
         t = html.split("<title>")[1].split("</title>")[0]
         assert t not in titles, t
@@ -95,3 +99,12 @@ def test_build_writes_player_channels_page_and_sitemap(tmp_path, monkeypatch):
     assert 'href="https://hoopsmatic.com/nba-career-map/team/los-angeles-lakers.html"' in lakers
     assert "<loc>https://hoopsmatic.com/player-podcasts/teams/</loc>" in xml
     assert "<loc>https://hoopsmatic.com/player-podcasts/teams/miami-heat/</loc>" in xml
+    # sticky pages: og-anunoby kept (in the sitemap), and the published list keeps every page
+    assert (out / "players" / "og-anunoby" / "index.html").exists()
+    assert "<loc>https://hoopsmatic.com/player-podcasts/players/og-anunoby/</loc>" in xml
+    pub = json.loads(config.PUBLISHED_PLAYERS_FILE.read_text())["players"]
+    assert "og-anunoby" in pub and "al" in pub and "michael-jackson" not in pub
+    # Michael Jackson (data/mention_ignore.json): no page, a redirect to the players index, not in the sitemap
+    mj = (out / "players" / "michael-jackson" / "index.html").read_text()
+    assert 'http-equiv="refresh" content="0; url=https://hoopsmatic.com/player-podcasts/players/"' in mj
+    assert "players/michael-jackson/" not in xml

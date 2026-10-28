@@ -108,6 +108,10 @@ def compute(now=None):
         cat_videos.update(c["videos"])
     talk_map = talk.build(ments, mentions.groups(ments, items, cat_videos), item_by_id)
     people.add_talked_about(players, talk_map, names, appearances, item_by_id)
+    ignored = {sl for sl in (pindex.lookup(n)[0] for n in
+                             (load_json(config.MENTION_IGNORE_FILE, {}) or {}).get("names", [])) if sl}
+    published = (load_json(config.PUBLISHED_PLAYERS_FILE, {}) or {}).get("players", [])
+    people.keep_published(players, published, names, appearances, item_by_id, ignored)
     teams = (load_json(config.TEAMS_FILE, {}) or {}).get("teams", [])
     active_by_team, player_team = {}, {}
     for full, _, abbrev in (load_json(config.NBA_ACTIVE_FILE, {}) or {}).get("players", []):
@@ -137,7 +141,7 @@ def compute(now=None):
         "changes_day": metrics.comparable_day(history, today) if changes else None,
         "rank_metrics": rank_metrics, "metrics_have": rankmetrics.available(rank_metrics.values()),
         "show_metrics": show_metrics, "per_show": per_show, "players": players,
-        "item_by_id": item_by_id, "player_names": names,
+        "item_by_id": item_by_id, "player_names": names, "published_players": published, "ignored_players": ignored,
         "mentions": ments, "mention_review": mention_review, "talk": talk_map, "teams": teams,
         "team_by_slug": {t["slug"]: t for t in teams}, "active_by_team": active_by_team, "player_team": player_team,
         "stats_by_slug": stats_by_slug, "art": set(),
@@ -209,7 +213,7 @@ def displayed_ids(ctx):
         ids.update(it["id"] for it, _ in render.player_videos(p, ctx))
     # Talked about: the cards on player and team pages.
     for target, groups in ctx.get("talk", {}).items():
-        if (target[0] == "team" or target[1] in ctx.get("players", {})) and len(groups) >= 3:
+        if (target[0] == "team" and len(groups) >= 3) or target[1] in ctx.get("players", {}):
             for g in groups[:8] + sorted(groups, key=lambda g: -g.views)[:8]:
                 ids.add(g.lead["id"])
     return ids
@@ -335,6 +339,10 @@ def build(now=None, fetch_thumbs=True, out=None):
     })
     write_appearances(ctx)
     write_mentions(ctx)
+    # Every published player page, kept for later builds (pages are sticky).
+    doc = load_json(config.PUBLISHED_PLAYERS_FILE, {}) or {}
+    doc["players"] = sorted((set(ctx["published_players"]) | set(ctx["players"])) - set(ctx["ignored_players"]))
+    save_json(config.PUBLISHED_PLAYERS_FILE, doc, line_per_key="players")
     _log("built %d pages: %d podcasts and %d player channels ranked, %d occasional, %d dormant, %d excluded, %d thumbnails"
          % (len(pages), len(ctx["ranked"]), len(ctx["ranked_pc"]), len(ctx["occasional"]), len(ctx["dormant"]),
             len(ctx["excluded"]),

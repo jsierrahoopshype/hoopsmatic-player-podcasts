@@ -238,3 +238,26 @@ def test_defaults_file_points_at_real_players_and_skips_the_ambiguous_ones():
     assert d["Larry Johnson"]["player"] == "larry-johnson-1969"
     for name in ("Beasley", "Bogdanovic", "Wiggins", "Harris", "Johnson", "Hardaway", "Boozer", "Sabonis", "Mobley"):
         assert name not in d
+
+
+# ── sticky pages and ignored names (Oct 28) ──
+
+def test_ignored_names_are_never_a_player_nor_review():
+    idx = guests.PlayerIndex(["Michael Jackson", "Jaren Jackson Jr", "Mark Jackson (1965)", "Stephen Jackson"])
+    m = mentions.Matcher(idx, {}, TEAMS, [], ignore=["Michael Jackson"])
+    assert m.find("Kobe on Michael Jackson and Thriller") == ({}, set(), [])          # not the player, no review
+    assert m.find("MICHAEL JACKSON MOVES") == ({}, set(), [])
+    assert m.find("Stephen Jackson on the Warriors")[0] == {"stephen-jackson": "name"}
+    assert "Michael Jackson" in _real("MENTION_IGNORE_FILE")["names"]
+
+
+def test_published_pages_stay_when_a_player_falls_under_the_threshold():
+    names = {"og-anunoby": "OG Anunoby", "michael-jackson": "Michael Jackson", "a": "A"}
+    apps = {"x": {"video": "v1", "player": "og-anunoby", "show": "s", "group": "s/v:v1"}}
+    ps = {"a": {"slug": "a", "talk_only": True}, "michael-jackson": {"slug": "michael-jackson", "talk_only": True}}
+    people.keep_published(ps, ["og-anunoby", "michael-jackson", "gone-from-career-map"], names, apps, {"v1"},
+                          ignored={"michael-jackson"})
+    assert ps["og-anunoby"]["sticky"] and ps["og-anunoby"]["groups"] == 1          # kept, with what there is
+    assert "michael-jackson" not in ps                                              # ignored: removed, never kept
+    assert "gone-from-career-map" not in ps
+    assert "a" in ps

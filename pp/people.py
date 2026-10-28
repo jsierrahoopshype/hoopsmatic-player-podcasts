@@ -3,7 +3,9 @@
 A player gets a page with 3 or more confirmed guest appearances (clips of
 the same episode count once), or as a host of a show on the site with 3 or
 more videos, or (without either) when 10 or more discussions on the site
-talk about him (pp/talk.py; such a page is "talk_only"). Only players with a Career Map slug qualify (it is the page's
+talk about him (pp/talk.py; such a page is "talk_only"). Once published, a
+page stays (data/published_players.json) even if the player falls under
+these thresholds later: they only decide creation. Only players with a Career Map slug qualify (it is the page's
 address). Everywhere else on the site, a player's name links to this page
 when there is one, and to their NBA Career Map page otherwise.
 """
@@ -76,6 +78,24 @@ def add_talked_about(people, talk, names, appearances=None, on_site=()):
             people[slug] = {"slug": slug, "name": names.get(slug, slug), "hosts": [], "former": [], "guest": apps,
                             "groups": appearance_count({k: a for k, a in enumerate(apps)}, slug) if apps else 0,
                             "talk_only": True}
+    return people
+
+
+def keep_published(people, published, names, appearances=None, on_site=(), ignored=()):
+    """Pages stay once published: a player in data/published_players.json
+    who no longer meets any threshold keeps a page ("sticky"), with whatever
+    guest appearances and discussions there are. Ignored players
+    (data/mention_ignore.json) never keep a page that came from mentions."""
+    for slug in list(people):
+        if slug in ignored and people[slug].get("talk_only"):
+            del people[slug]
+    for slug in published:
+        if slug in people or slug in ignored or slug not in names:
+            continue
+        apps = [a for a in (appearances or {}).values() if a["player"] == slug and a["video"] in on_site]
+        people[slug] = {"slug": slug, "name": names[slug], "hosts": [], "former": [], "guest": apps,
+                        "groups": appearance_count({k: a for k, a in enumerate(apps)}, slug) if apps else 0,
+                        "talk_only": True, "sticky": True}
     return people
 
 
