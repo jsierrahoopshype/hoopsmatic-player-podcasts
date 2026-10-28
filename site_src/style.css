@@ -412,7 +412,6 @@ ol.minis{list-style:none;margin:0;padding:0;display:grid;gap:.6rem}
 .loadmore:disabled{opacity:.6}
 .feed-end{text-align:center}
 @media(max-width:560px){
-  .feed-bar .chip{font-size:.64rem;padding:.34rem .5rem;letter-spacing:.02em}
   .feed .vc-body{padding:.6rem .7rem .55rem}
 }
 
@@ -494,3 +493,29 @@ ol.talk-list .host{display:inline-flex;align-items:center;gap:.4rem;font-weight:
 .talk-cols{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
 .talk-toggle{margin-bottom:.4rem}
 @media(max-width:700px){.talk-cols{grid-template-columns:1fr}}
+
+/* ==== phones: the first video card in view on the first screen ==== */
+.sub-more{display:none}
+.chip .cs{display:none}
+@media(max-width:768px){
+  .jump{display:none}
+  .intro .sub-txt{display:none}
+  .intro.open .sub-txt{display:inline}
+  .intro .stamp{font-size:.7rem}
+  .intro .stamp-2{display:none}
+  .intro.open .stamp-2{display:inline}
+  .sub-more{display:inline;margin-left:.4rem;font:inherit;font-family:'JetBrains Mono',monospace;font-size:.72rem;
+    font-weight:600;color:var(--accent);background:none;border:0;padding:.2rem 0;cursor:pointer}
+  .intro.open .sub-more{display:none}
+  .subtitle.intro{margin-bottom:.6rem}
+  /* short chip labels, one line at 320px; the full label stays for screen readers */
+  .chip .cl{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  .chip .cs{display:inline}
+  .feed-bar .chip{font-size:.62rem;padding:.36rem .45rem;letter-spacing:0}
+  .feed-bar{padding:.35rem 0 .35rem;margin-bottom:.35rem}
+  .feed-note{margin-top:.25rem;font-size:.7rem}
+  .feed-filters{margin-bottom:.45rem}
+  .tabs{margin-bottom:.6rem;gap:.25rem}
+  .tabs a{font-size:.6rem;padding:.26rem .45rem;border-radius:6px}
+}
+@media(max-width:340px){.feed-bar .chip{font-size:.56rem;padding:.36rem .4rem}.feed-bar .chips{gap:.25rem}}

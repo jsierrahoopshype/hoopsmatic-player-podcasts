@@ -120,11 +120,10 @@ def page(title, desc, url, assets_v, active, body, extra_head=""):
 
 def stamp(ctx):
     """'Updated <date>' line, kept out of the sitemap hash."""
-    bits = ["Last updated " + ctx["updated_label"]]
     yd = ctx.get("listing_label")
-    if yd:
-        bits.append("lengths and subscribers from " + yd)
-    return '<!--volatile--><span class="stamp">%s</span><!--/volatile-->' % e(" · ".join(bits))
+    # The second part has its own span: the homepage folds it on phones.
+    more = ('<span class="stamp-2"> · %s</span>' % e("lengths and subscribers from " + yd)) if yd else ""
+    return '<!--volatile--><span class="stamp">%s%s</span><!--/volatile-->' % (e("Last updated " + ctx["updated_label"]), more)
 
 
 def thumb(vid, ctx, cls="th"):
@@ -357,9 +356,11 @@ def index_page(ctx):
             "rankings by YouTube views. Top right now: %s." % top_names) if top else \
         "Watch the latest NBA player podcast episodes and clips, and the rankings by YouTube views."
     body = ['<div class="hdr"><h1>NBA Player Podcasts: Rankings, Episodes and Clips</h1></div>\n'
-            '<p class="subtitle">Episodes, clips and Shorts from %d podcasts hosted by NBA players, playable right '
-            'here, with the rankings by YouTube views on full episodes (20 minutes or longer) from the last 30 days. '
-            '%s</p>\n' % (len(ctx["ranked"]), stamp(ctx)),
+            # On phones the intro sentence folds behind "More" (still in the HTML); the stamp stays.
+            '<p class="subtitle intro"><span class="sub-txt" id="intro-txt">Episodes, clips and Shorts from %d podcasts '
+            'hosted by NBA players, playable right here, with the rankings by YouTube views on full episodes (20 '
+            'minutes or longer) from the last 30 days. </span>%s<button type="button" class="sub-more" '
+            'aria-expanded="false" aria-controls="intro-txt">More</button></p>\n' % (len(ctx["ranked"]), stamp(ctx)),
             '<nav class="jump"><a href="#latest-videos">Videos</a><a href="#rankings">Rankings</a>'
             '<a href="%s/top-videos/">Top videos</a></nav>\n' % B]
     body.append(feed_html(ctx["feeds"]["home"], ctx, feed_modules(ctx), anchor="latest-videos"))
@@ -1167,7 +1168,9 @@ def methodology_page(ctx):
         "is read from its official playlist, or by its titles." % (B, B, B)))
     body.append(sec("Formats",
         "Full episode: 20 minutes or longer. Clip: 1 to 20 minutes. Short: under a minute, or anything on a "
-        "channel's Shorts tab. A video can be set by hand when the automatic format is wrong."))
+        "channel's Shorts tab. A video can be set by hand when the automatic format is wrong.",
+        "In video lists that mix formats, at most 1 Short appears in any 4 cards in a row (and the homepage "
+        "never opens with one); a Short held back moves further down, never out. The Shorts lists are unchanged."))
     body.append(sec("Rankings",
         "The rank uses full episodes only: the current views of every full episode posted in the last 30 days. "
         "A show is ranked with at least 4 full episodes in the last 90 days, or 1 to 3 in the last 90 days and "

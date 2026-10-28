@@ -58,7 +58,11 @@ def test_feed_html_has_first_12_cards_and_a_module_after_the_8th():
     assert lst.index('data-mod="talked"') > lst.index('<article', 0) and lst.split('data-mod="talked"')[0].count("<article") == 8
     assert '<template class="feed-mods">' in html and 'data-modules="1"' in html
     assert '<button class="loadmore" type="button">Load more</button>' in html      # 30 > 12: more to load
-    assert 'class="shelf"' not in html and 'aria-pressed="true">Most watched</button>' in html
+    assert 'class="shelf"' not in html
+    # full label for desktop and screen readers, short one for phones
+    assert 'aria-pressed="true"><span class="cl">Most watched</span><span class="cs" aria-hidden="true">Top</span></button>' in html
+    assert '><span class="cl">Latest</span><span class="cs" aria-hidden="true">New</span></button>' in html
+    assert 'aria-pressed="false">Episodes</button>' in html
     data = json.loads(ctx["feed_files"]["data/feed-home.json"])
     assert len(data["rows"]) == 30 and data["shows"][0][:2] == ["s", "Show S"] and data["cap"] is None
 
@@ -90,3 +94,51 @@ def test_talk_rows_carry_start_and_clips():
     ctx = ctx_for([lead])
     c = feed.card_for(lead, rows[0][1], ctx, feed.chip("latest", "", ""))
     assert 'data-start="95"' in c and "&amp;t=95s" in c and "Also from this episode" in c and ">Talked about<" in c
+
+
+def fmts(pairs):
+    return "".join({"full": "F", "clip": "C", "short": "S"}[p[0]["fmt"]] for p in pairs)
+
+
+def windows_ok(seq):
+    return all(seq[i:i + 4].count("S") <= 1 for i in range(len(seq)))
+
+
+def test_mixed_lists_hold_at_most_one_short_in_any_four():
+    # by views: 4 Shorts on top, then episodes and clips
+    items = [(it(i, 1, 1000 - i, fmt="short"), None) for i in range(4)] + \
+            [(it(10 + i, 2, 500 - i, fmt="full" if i % 2 else "clip"), None) for i in range(9)]
+    out = feed.apply(items, feed.chip("views", "Most viewed", "", "views"), NOW)
+    assert fmts(out) == "SCFCSFCFSCFCS" and windows_ok(fmts(out))
+    # nothing dropped, the Shorts keep their order among themselves, the others too
+    assert sorted(ids(out)) == sorted(ids(items))
+    assert [x for x in ids(out) if x < "v010"] == ["v000", "v001", "v002", "v003"]
+    assert [x for x in ids(out) if x >= "v010"] == ["v0%d" % (10 + i) for i in range(9)]
+
+
+def test_held_back_shorts_move_down_not_out():
+    items = [(it(i, 1, 100 - i, fmt="short"), None) for i in range(5)] + [(it(9, 1, 1), None)]
+    out = feed.apply(items, feed.chip("views", "", "", "views"), NOW)
+    assert fmts(out) == "SFSSSS" and len(out) == 6          # too few other videos: the rest go at the end
+
+
+def test_homepage_never_opens_with_a_short_and_the_shorts_chip_is_unchanged():
+    items = [it(i, 1 + i * 0.01, 1000 - i, fmt="short" if i < 3 else "full") for i in range(12)]
+    f = feed.home(ctx_for(items))
+    lists = f.lists(NOW)
+    assert fmts(lists["watched"])[0] == "F" and windows_ok(fmts(lists["watched"]))
+    assert fmts(lists["watched"]) == "FSFFFSFFFSFF"
+    assert fmts(lists["latest"])[0] == "F"
+    assert ids(lists["shorts"]) == ["v000", "v001", "v002"]    # the Shorts chip: plain order
+    assert all(c.get("m") for c in f.chips if not c["f"].get("fmt")) and not any(c.get("m") for c in f.chips if c["f"].get("fmt"))
+
+
+def test_page_feeds_cap_shorts_in_latest_and_most_viewed_but_may_open_with_one():
+    items = [it(i, i * 0.1, 1000 - i, fmt="short" if i % 4 < 2 else "clip") for i in range(16)]   # SSCC SSCC...
+    ctx = ctx_for(items, per_show={"s": items})
+    ctx["shows"]["s"]["channel_id"] = "UCx"
+    lists = feed.show(ctx, "s").lists(NOW)
+    for k in ("latest", "views"):
+        assert windows_ok(fmts(lists[k])[:11]) and fmts(lists[k])[0] == "S"
+    assert fmts(lists["latest"]) == "SCCCSCCCSCCSSSSS"            # Shorts beyond the clips: at the end
+    assert fmts(lists["shorts"]) == "S" * 8
