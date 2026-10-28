@@ -68,6 +68,8 @@ lists, not in date windows.
 - `data/teams.json`: the 30 franchises with the nicknames and former names that mean each.
 - `data/always_review.json`: names never matched automatically without their suffix.
 - `data/surname_stopwords.json`: surnames that are everyday words, never matched on their own.
+- `data/surname_defaults.json`: `{"<name>": {"player": <slug>, "why": ...}}`, the
+  default player for a shared surname or name when no team settles it.
 - `data/moved_pages.json`: old page addresses and where they moved (a stub redirects).
 - `data/appearances_manual.json`: `add` / `remove` guest appearances
   (`{"video": "<id>", "player": "<Career Map slug>"}`); wins over automatic
@@ -125,8 +127,9 @@ name means the one without a suffix, except names in
 `data/always_review.json`. A lone surname matches when exactly one Career Map
 player has it (unless it is an everyday word in
 `data/surname_stopwords.json`); a shared name or shared surname only when a
-team named in the same line settles it, otherwise it goes to the "mentions"
-list in `data/appearances_review.json`. Lone first names are ignored unless
+team named in the same line settles it, or else when `data/surname_defaults.json`
+names a default (the famous one, e.g. Tatum -> Jayson Tatum); otherwise it
+goes to the "mentions" list in `data/appearances_review.json`. Lone first names are ignored unless
 they are nicknames. Teams: by
 nickname or former franchise name (`data/teams.json`), never a city alone.
 A player's own appearance in a video, and a show's hosts on their own show,
