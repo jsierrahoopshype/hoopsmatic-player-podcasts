@@ -12,8 +12,10 @@ Players are matched
   - by a nickname in data/nicknames.json (Wemby, Giannis, SGA, KD, ...);
   - by a lone surname or a shared name ONLY when a team named in the same
     title (or chapter line) settles it: exactly one active player with that
-    name plays for that team. Otherwise the name goes to the review file
-    (data/appearances_review.json, "mentions"), not to the site.
+    name plays for that team, or, failing that, when data/surname_defaults.json
+    names a default (the famous one of the players sharing it). Otherwise the
+    name goes to the review file (data/appearances_review.json, "mentions"),
+    not to the site.
 Teams are matched by nickname only (Lakers, Sixers, Cavs, Wolves, Pels, ...)
 or a historical name of the franchise (SuperSonics, Bobcats, New Jersey
 Nets), never by a city alone. A word inside a matched player's name ("Magic"
@@ -68,9 +70,13 @@ def _cased_forms(name):
 
 
 class Matcher:
-    def __init__(self, index, nicknames, teams, active, always_review=(), stopwords=()):
+    def __init__(self, index, nicknames, teams, active, always_review=(), stopwords=(), defaults=None):
         self.index = index
         self.always_review = {norm(n) for n in always_review}
+        # name -> default player, used only where the name would go to review
+        self.defaults = {norm(n): (v["player"] if isinstance(v, dict) else v)
+                         for n, v in (defaults or {}).items()
+                         if (v["player"] if isinstance(v, dict) else v) in index.display}
         self.stopwords = {norm(w) for w in stopwords}
         # Every Career Map player's surname and first name (suffix left out).
         self.surnames, self.first_names = {}, set()
@@ -112,7 +118,8 @@ class Matcher:
                    (load_json(config.TEAMS_FILE, {}) or {}).get("teams", []),
                    (load_json(config.NBA_ACTIVE_FILE, {}) or {}).get("players", []),
                    (load_json(config.ALWAYS_REVIEW_FILE, {}) or {}).get("names", []),
-                   (load_json(config.SURNAME_STOPWORDS_FILE, {}) or {}).get("words", []))
+                   (load_json(config.SURNAME_STOPWORDS_FILE, {}) or {}).get("words", []),
+                   (load_json(config.SURNAME_DEFAULTS_FILE, {}) or {}).get("defaults", {}))
 
     def _plain_name(self, name):
         """A full name written without a suffix -> (slug or None, ambiguous,
@@ -193,6 +200,8 @@ class Matcher:
                 players.setdefault(cands[0][0], "name+team")
             elif how == "always review":
                 unresolved.append((name, "name on the always-review list (written without a suffix)"))
+            elif norm(name) in self.defaults:
+                players.setdefault(self.defaults[norm(name)], "default")
             else:
                 unresolved.append((name, "name belongs to more than one Career Map player"))
         # 5. Words on their own: first names are ignored (unless a nickname);
@@ -229,7 +238,10 @@ class Matcher:
                     continue
                 players.setdefault(next(iter(cands)), "surname (one player)")
             elif not after_cap:
-                unresolved.append((w, "surname shared by more than one Career Map player, no team settles who"))
+                if key in self.defaults:
+                    players.setdefault(self.defaults[key], "default")   # data/surname_defaults.json
+                else:
+                    unresolved.append((w, "surname shared by more than one Career Map player, no team settles who"))
         return players, teams, unresolved
 
 

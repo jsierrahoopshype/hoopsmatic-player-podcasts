@@ -22,6 +22,7 @@ MENTIONS_MANUAL_FILE = DATA / "mentions_manual.json"  # manual adds/removes, win
 MOVED_PAGES_FILE = DATA / "moved_pages.json"      # old page address -> new one (a stub redirects)
 ALWAYS_REVIEW_FILE = DATA / "always_review.json"  # names never matched automatically without a suffix
 SURNAME_STOPWORDS_FILE = DATA / "surname_stopwords.json"  # surnames that are everyday words: no lone match
+SURNAME_DEFAULTS_FILE = DATA / "surname_defaults.json"  # shared name -> default player, instead of review
 ART_DIR = DATA / "art"                # show artwork (channel avatars), committed
 EMBED_FILE = DATA / "embed.json"      # oEmbed result per video (ok / no / gone)
 CHANNELS_FILE = DATA / "channels.json"

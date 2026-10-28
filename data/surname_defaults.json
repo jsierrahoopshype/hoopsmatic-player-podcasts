@@ -1,0 +1,57 @@
+{
+  "_about": "Default player for a lone surname, or a full name shared by two players, used ONLY when the matcher would otherwise send it to review (no team in the same line settles it). Only for names where one player is clearly the famous one (All-Star or a long career against a short one); genuinely ambiguous names (Beasley, Bogdanovic, Wiggins, Hardaway...) stay out. Names on data/always_review.json never use a default. Edit freely: {\"<name>\": {\"player\": <Career Map slug>, \"why\": <reason>}}.",
+  "defaults": {
+    "Archibald": {
+      "player": "tiny-archibald",
+      "why": "Nate 'Tiny' Archibald: Hall of Famer; Robert Archibald had a short career."
+    },
+    "Barkley": {
+      "player": "charles-barkley",
+      "why": "Charles Barkley: Hall of Famer, 11-time All-Star; Erick Barkley played two seasons (2000-02)."
+    },
+    "Chalmers": {
+      "player": "mario-chalmers",
+      "why": "Mario Chalmers: nine seasons, two titles with the Heat; Lionel Chalmers had a short career."
+    },
+    "Ewing": {
+      "player": "patrick-ewing",
+      "why": "Patrick Ewing: Hall of Famer, 11-time All-Star; Daniel Ewing had a short career."
+    },
+    "Gervin": {
+      "player": "george-gervin",
+      "why": "George Gervin: Hall of Famer; Derrick Gervin had a short career."
+    },
+    "Horford": {
+      "player": "al-horford",
+      "why": "Al Horford: five-time All-Star, in the league since 2007; his brother Tito Horford played three seasons."
+    },
+    "Kidd": {
+      "player": "jason-kidd",
+      "why": "Jason Kidd: Hall of Famer, now a head coach; Warren Kidd and Stanton Kidd had short careers."
+    },
+    "Larry Johnson": {
+      "player": "larry-johnson-1969",
+      "why": "Larry Johnson (born 1969): two-time All-Star with the Hornets and Knicks; the other Larry Johnson (born 1954) played one season."
+    },
+    "Maxey": {
+      "player": "tyrese-maxey",
+      "why": "Tyrese Maxey: All-Star, 76ers since 2020; Marlon Maxey played two seasons (1992-94)."
+    },
+    "Pippen": {
+      "player": "scottie-pippen",
+      "why": "Scottie Pippen: Hall of Famer, six titles; his son Scotty Pippen Jr. is early in a short career so far (and is matched by name when the Jr. is written)."
+    },
+    "Randle": {
+      "player": "julius-randle",
+      "why": "Julius Randle: All-Star, in the league since 2014; Chasson Randle had a short career."
+    },
+    "Reaves": {
+      "player": "austin-reaves",
+      "why": "Austin Reaves: Lakers starter since 2021 (five seasons and counting); Joe Reaves and Josh Reaves each played about one season."
+    },
+    "Tatum": {
+      "player": "jayson-tatum",
+      "why": "Jayson Tatum: multiple All-Star, Celtics star since 2017; Earl Tatum played four seasons (1976-80)."
+    }
+  }
+}

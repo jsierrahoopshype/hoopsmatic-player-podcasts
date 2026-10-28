@@ -175,3 +175,66 @@ def test_mentions_file_is_written_in_a_stable_order(tmp_path, monkeypatch):
     build.write_mentions({"mentions": ms})
     assert (tmp_path / "m.json").read_text() == first
     assert json.loads(first)["items"]["v1"][0][1] == "new-york-knicks"
+
+
+# ── data files and defaults (Oct 28 follow-up) ──
+
+def _real(name):
+    import json
+    from pp import config
+    return json.load(open(getattr(config, name)))
+
+
+def test_always_review_list_keeps_jackson_and_trent_but_not_oubre():
+    names = _real("ALWAYS_REVIEW_FILE")["names"]
+    assert "Jaren Jackson" in names and "Gary Trent" in names and "Kelly Oubre" not in names
+    m = mentions.Matcher(INDEX, NICK, TEAMS, ACTIVE, always_review=names)
+    assert m.find("Kelly Oubre drops 30")[0] == {"kelly-oubre": "name"}           # the one Kelly Oubre on Career Map
+    assert m.find("Jaren Jackson on the 2022 Grizzlies")[0] == {}
+
+
+def test_wade_alone_means_dwyane_wade_but_never_on_his_own_show():
+    assert _real("NICKNAMES_FILE")["names"]["Wade"] == "dwyane-wade"
+    idx = guests.PlayerIndex(["Dwyane Wade", "Dean Wade", "Wade Baldwin", "James Harden"])
+    m = mentions.Matcher(idx, {"Wade": "dwyane-wade"}, TEAMS, [])
+    assert m.find("Jeff Teague Sparks HEATED Wade vs. Harden debate")[0] == {"dwyane-wade": "nickname",
+                                                                         "james-harden": "surname (one player)"}
+    assert m.find("Dean Wade drops 20")[0] == {"dean-wade": "name"}                 # a full name wins
+    assert m.find("Wade Baldwin on his rookie year")[0] == {"wade-baldwin": "name"}
+    show = {"slug": "dwyane-wade", "name": "Dwyane Wade", "channel_id": "UCx", "type": "player_channel",
+            "hosts": [{"name": "Dwyane Wade", "url": "https://hoopsmatic.com/nba-career-map/player/dwyane-wade.html"}]}
+    c = cat(vid(1, 100, title="Wade on the 2006 Finals and Harden"))
+    ms, _ = mentions.build([show], {"UCx": c}, items_for(c), {}, m, manual={})
+    assert [x["slug"] for x in ms["v00"]] == ["james-harden"]                        # not himself
+
+
+def test_poole_and_middleton_can_match_alone_castle_cannot():
+    words = set(_real("SURNAME_STOPWORDS_FILE")["words"])
+    assert "poole" not in words and "middleton" not in words and "castle" in words
+    idx = guests.PlayerIndex(["Jordan Poole", "Khris Middleton", "Stephon Castle"])
+    m = mentions.Matcher(idx, {}, TEAMS, [], stopwords=words)
+    assert m.find("Draymond vs Poole, Middleton to the Wizards")[0] == {"jordan-poole": "surname (one player)",
+                                                                     "khris-middleton": "surname (one player)"}
+    assert m.find("Castle's 40 piece")[0] == {}
+
+
+def test_defaults_only_where_the_name_would_go_to_review():
+    defaults = {"Tatum": {"player": "jayson-tatum", "why": "x"}, "Charles Jones": {"player": "charles-jones-1975", "why": "x"},
+                "Tim Hardaway": {"player": "tim-hardaway", "why": "x"}}
+    m = mentions.Matcher(INDEX, NICK, TEAMS, ACTIVE, always_review=["Tim Hardaway"], defaults=defaults)
+    assert m.find("Tatum a Hall of Famer?") == ({"jayson-tatum": "default"}, set(), [])
+    assert m.find("Tatum and the Celtics")[0] == {"jayson-tatum": "surname+team"}     # a team still settles it first
+    assert m.find("Charles Jones was a problem")[0] == {"charles-jones-1975": "default"}
+    players, _, unresolved = m.find("Tim Hardaway SNAPS")                            # always-review: never a default
+    assert players == {} and unresolved[0][0] == "Tim Hardaway"
+    assert m.find("Earl Tatum in 1977")[0] == {"earl-tatum": "name"}                 # a full name is not overridden
+
+
+def test_defaults_file_points_at_real_players_and_skips_the_ambiguous_ones():
+    d = _real("SURNAME_DEFAULTS_FILE")["defaults"]
+    idx = guests.PlayerIndex.load()
+    assert all(v["player"] in idx.display and v["why"] for v in d.values())
+    assert d["Tatum"]["player"] == "jayson-tatum" and d["Barkley"]["player"] == "charles-barkley"
+    assert d["Larry Johnson"]["player"] == "larry-johnson-1969"
+    for name in ("Beasley", "Bogdanovic", "Wiggins", "Harris", "Johnson", "Hardaway", "Boozer", "Sabonis", "Mobley"):
+        assert name not in d
