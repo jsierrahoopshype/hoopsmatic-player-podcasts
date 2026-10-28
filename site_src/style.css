@@ -338,9 +338,9 @@ a.host:hover{color:var(--accent);text-decoration-color:var(--accent)}
 .vc-hosts{display:flex;flex-wrap:wrap;gap:.2rem .6rem;font-size:.72rem;color:var(--text-secondary)}
 .vc-hosts .host{display:inline-flex;align-items:center;gap:.3rem;color:var(--text-secondary);text-decoration:none}
 .vc-hosts a.host:hover{color:var(--accent)}
-.av{width:22px;height:22px;border-radius:50%;object-fit:cover;background:var(--surface-hover);flex-shrink:0}
+.av{width:22px;height:22px;border-radius:50%;object-fit:cover;background:#e8e8ed;flex-shrink:0}
 .av-i{display:inline-flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:.5rem;
-  font-weight:700;color:var(--text-secondary);border:1px solid var(--border)}
+  font-weight:700;color:#55555c}
 .vc-meta{font-family:'JetBrains Mono',monospace;font-size:.66rem;color:var(--text-secondary);margin-top:auto}
 .vc-meta .gain{color:var(--green);font-weight:700}
 .vc-yt{font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--text-secondary)}
@@ -401,6 +401,9 @@ details.defs li{margin:.2rem 0}
 .art-i,.art.av-i{display:inline-flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;
   font-weight:700;font-size:1.4rem;color:var(--text-secondary);border:1px solid var(--border)}
 .rel .art{width:56px;height:56px;font-size:1rem}
+/* Player head: face-fill on the grey disc; no photo = grey initials on it. */
+.art.av{background:#e8e8ed}
+.art.av-i{color:#55555c;border:0}
 .show-desc{color:var(--text-secondary);font-size:.88rem;max-width:60rem;margin:-.4rem 0 .6rem}
 .stat-card .sub{font-size:.68rem;color:var(--text-secondary);margin-top:.2rem;line-height:1.35}
 .vc-top .role{font-family:'JetBrains Mono',monospace;font-size:.58rem;font-weight:700;text-transform:uppercase;

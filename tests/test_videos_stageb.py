@@ -99,3 +99,9 @@ def test_home_sections_hide_trending_without_snapshots():
     h = home.sections(items, NOW, {"g24": False, "g7": False})
     assert h["trending"] == [] and h["watch"]["views"] == 500          # most viewed of the last 48h (v005: exactly 2 days, included)
     assert all((NOW - __import__("pp.util", fromlist=["parse_ts"]).parse_ts(x["published"])).days <= 7 for x in h["week"])
+
+
+def test_avatar_uses_face_fill_320_copy_only_when_big():
+    assert 'src="/player-podcasts/headshots/320/jeff-teague.webp" width="88"' in cards.avatar("Jeff Teague", "jeff-teague", 88, big=True)
+    assert 'src="/player-podcasts/headshots/jeff-teague.webp" width="22"' in cards.avatar("Jeff Teague", "jeff-teague")
+    assert cards.avatar("Jason Kidd", None, 88, big=True) == '<span class="av av-i" aria-hidden="true">JK</span>'
