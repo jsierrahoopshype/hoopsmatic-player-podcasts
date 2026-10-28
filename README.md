@@ -113,7 +113,10 @@ lists, not in date windows.
   module card after the 8th) are in the HTML; the page script loads the
   rest from `data/feed-<id>.json`, 12 at a time, as the reader nears the
   bottom (4 times per chip) and with a Load more button. Shorts get a 9:16
-  thumbnail (`thumbs/v/`, from YouTube's oar2 frame).
+  thumbnail (`thumbs/v/`, from YouTube's oar2 frame). Lists that mix formats
+  hold at most 1 Short in any 4 cards in a row (held-back Shorts move down;
+  the homepage never opens with one). On phones the chips use short labels
+  (Top, New, Hot, About...) and the homepage intro folds behind "More".
 - `/player-podcasts/top-videos/`: most viewed, biggest gainers and breakouts.
 - `/player-podcasts/<show>/`: one page per show on the site.
 - `/player-podcasts/players/` and `/player-podcasts/players/<Career Map slug>/`:

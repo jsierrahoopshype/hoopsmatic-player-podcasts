@@ -8,7 +8,10 @@
 // button is pressed. At 375 it presses play on two videos: exactly one
 // youtube-nocookie.com player must be loaded afterwards; "Load more" must add
 // cards; and the homepage feed must have at least 12 cards and a module card
-// in the HTML.
+// in the HTML. On the homepage at 375x667 at least 60% of the first card must
+// be in view without scrolling, the first card must not be a Short, and no 4
+// cards in a row of the first 12 may hold more than 1 Short. At 320, a feed
+// with 5 chips or fewer must fit them on one line.
 const { chromium } = require('playwright');
 const base = (process.argv[2] || 'http://localhost:8000/player-podcasts/').replace(/\/?$/, '/');
 const paths = ['', 'top-videos/', 'players/', 'teams/', 'methodology/', 'most-watched/', 'player-channels/', 'dormant/'];
@@ -27,6 +30,24 @@ const paths = ['', 'top-videos/', 'players/', 'teams/', 'methodology/', 'most-wa
   const team = await first.$eval('ul.players a.pl', a => a.getAttribute('href')).catch(() => null);
   await first.close();
   if (html.cards < 12 || !html.mod) { console.log('FAIL homepage feed in the HTML: ' + html.cards + ' cards, module: ' + html.mod); fail++; }
+  // The homepage's first screen on a phone.
+  const ph = await b.newPage({ viewport: { width: 375, height: 667 } });
+  await ph.goto(base, { waitUntil: 'networkidle' });
+  const fs = await ph.evaluate(() => {
+    const cards = Array.from(document.querySelectorAll('.feed .feed-list > .vc'));
+    const c = cards[0].getBoundingClientRect();
+    const fmts = cards.slice(0, 12).map(x => (x.className.match(/vc-(\w+)/) || [])[1]);
+    let crowded = false;
+    for (let i = 0; i + 4 <= fmts.length; i++) if (fmts.slice(i, i + 4).filter(f => f === 'short').length > 1) crowded = true;
+    return { seen: Math.max(0, Math.min(c.bottom, innerHeight) - Math.max(c.top, 0)) / c.height, first: fmts[0], crowded: crowded, fmts: fmts.join(',') };
+  });
+  await ph.close();
+  const fp = [];
+  if (fs.seen < 0.6) fp.push(Math.round(fs.seen * 100) + '% of the first card in view (want 60%)');
+  if (fs.first === 'short') fp.push('first card is a Short');
+  if (fs.crowded) fp.push('more than 1 Short in 4 cards: ' + fs.fmts);
+  console.log((fp.length ? 'FAIL ' : 'ok   ') + '375x667 homepage first screen: ' + Math.round(fs.seen * 100) + '% of the first card in view' + (fp.length ? ': ' + fp.join(', ') : ''));
+  fail += fp.length ? 1 : 0;
   const all = paths.map(p => base + p).concat([new URL(show, base).href]).concat(player ? [new URL(player, base).href] : [])
     .concat(team ? [new URL(team, base).href] : []);
   for (const url of all) {
@@ -57,6 +78,13 @@ const paths = ['', 'top-videos/', 'players/', 'teams/', 'methodology/', 'most-wa
           return (ox === 'auto' || ox === 'scroll') && el.scrollWidth > el.clientWidth + 1;
         }).map(el => el.tagName.toLowerCase() + (el.className && typeof el.className === 'string' ? '.' + el.className.trim().split(/\s+/).join('.') : '')));
         if (scrollers.length) problems.push('scrolls sideways: ' + scrollers.slice(0, 3).join(', '));
+      }
+      if (w === 320) {
+        const rows = await p.evaluate(() => Array.from(document.querySelectorAll('.feed .chips')).map(g => {
+          const c = Array.from(g.querySelectorAll('.chip'));
+          return [c.length, new Set(c.map(x => Math.round(x.getBoundingClientRect().top))).size];
+        }));
+        if (rows.some(r => r[0] <= 5 && r[1] > 1)) problems.push('chips on more than one line');
       }
       if (w === 375) {
         const more = await p.$('.feed .loadmore:not([hidden])');

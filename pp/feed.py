@@ -7,10 +7,14 @@ screens, never a sideways carousel. The first 12 videos of the default chip
 the page script loads the rest from data/feed-<id>.json as the visitor nears
 the bottom, with a "Load more" button as the fallback.
 
-A chip is {k, label, note, f: {fmt, days, role, has}, s: sort}:
+A chip is {k, label, short, note, f: {fmt, days, role, has}, s: sort, m}:
+  short   the label on phones (so the chips fit one line at 320px)
   f.fmt   full / clip / short        f.days  posted in the last N days
   f.role  host / guest / talk        f.has   g24 / g7 / bo (that number exists)
   s       pub (newest), views, g24, g7, bo (highest first)
+  m       a chip that mixes formats: 1 = at most 1 Short in any 4 cards in a
+          row (the Shorts held back move down, never out); 2 = that, and the
+          first card is not a Short (the homepage)
 The page script applies the same rules to the same rows (pp/cards.py and
 site_src/app.js write the same card).
 
@@ -33,8 +37,42 @@ MODULE_EVERY = 8     # a module card after every 8 videos (homepage, Top videos)
 PAGE_CAP = 36        # show, player and team pages: the first 36 of each chip
 
 
-def chip(k, label, note, s="pub", **f):
-    return {"k": k, "label": label, "note": note, "f": {a: b for a, b in f.items() if b is not None}, "s": s}
+SHORT_GAP = 4        # at most 1 Short in any 4 cards in a row
+
+
+def chip(k, label, note, s="pub", short=None, first_not_short=False, **f):
+    c = {"k": k, "label": label, "short": short or label, "note": note,
+         "f": {a: b for a, b in f.items() if b is not None}, "s": s}
+    if not c["f"].get("fmt"):
+        c["m"] = 2 if first_not_short else 1
+    return c
+
+
+def mix_shorts(pairs, first_not_short=False):
+    """Reorder a sorted list so no 4 cards in a row hold more than 1 Short
+    (and, with first_not_short, the first card is not one). A Short that
+    would break the rule waits and takes the first place it may; the other
+    videos keep their order, and nothing is dropped (Shorts with nothing
+    left to space them go at the end)."""
+    out, held, last = [], [], -SHORT_GAP
+
+    def ok():
+        pos = len(out)
+        return pos - last >= SHORT_GAP and not (first_not_short and pos == 0)
+
+    for p in pairs:
+        if p[0]["fmt"] != SHORT:
+            out.append(p)
+        elif not held and ok():
+            out.append(p)
+            last = len(out) - 1
+        else:
+            held.append(p)
+        # a held Short may fit right after this card
+        while held and ok():
+            out.append(held.pop(0))
+            last = len(out) - 1
+    return out + held
 
 
 def _key(it, s):
@@ -70,6 +108,8 @@ def apply(items, c, now):
     s = c["s"]
     # Ties: newest first, to the minute (the data file keeps minutes), then id.
     out.sort(key=lambda p: (_key(p[0], s), p[0]["published"][:16], p[0]["id"]), reverse=True)
+    if c.get("m"):
+        out = mix_shorts(out, c["m"] == 2)
     return out
 
 
@@ -167,9 +207,13 @@ def feed_html(feed, ctx, modules=(), hint="", heading=None, anchor=None):
         cards.append(card_for(it, x, ctx, c))
         if mods and i == MODULE_EVERY and len(first) > MODULE_EVERY:
             cards.append(mods[0][1])
+    # Both labels are in the button; the stylesheet shows the short one on phones.
     chips = "".join('<button type="button" class="chip%s" data-chip="%s" aria-pressed="%s">%s</button>'
                     % (" active" if x["k"] == feed.default else "", e(x["k"]),
-                       "true" if x["k"] == feed.default else "false", e(x["label"])) for x in feed.chips)
+                       "true" if x["k"] == feed.default else "false",
+                       e(x["label"]) if x["short"] == x["label"] else
+                       '<span class="cl">%s</span><span class="cs" aria-hidden="true">%s</span>' % (e(x["label"]), e(x["short"])))
+                    for x in feed.chips)
     filt = ""
     if feed.filters:
         shows = sorted({it["show"] for it, _ in feed.rows_items(ctx["now"])}, key=lambda s: ctx["shows"][s]["name"].lower())
@@ -228,10 +272,12 @@ def home(ctx):
     items = [(it, None) for it in ctx["stream"]]
     n24 = sum(1 for it in ctx["stream"] if it.get("gain24") is not None)
     chips = [
-        chip("trending", "Trending", "Views gained in the last 24 hours, from our daily view counts", "g24", has="g24")
+        chip("trending", "Trending", "Views gained in the last 24 hours, from our daily view counts", "g24", short="Hot",
+             first_not_short=True, has="g24")
         if ctx["flags"].get("g24") and n24 >= 3 else None,
-        chip("watched", "Most watched", "Videos posted in the last 7 days, by views", "views", days=7),
-        chip("latest", "Latest", "Every video from the last 90 days, newest first"),
+        chip("watched", "Most watched", "Videos posted in the last 7 days, by views", "views", short="Top",
+             first_not_short=True, days=7),
+        chip("latest", "Latest", "Every video from the last 90 days, newest first", short="New", first_not_short=True),
         chip("episodes", "Episodes", "Full episodes (20 minutes or longer), newest first", fmt=FULL),
         chip("clips", "Clips", "Clips (1 to 20 minutes), newest first", fmt=CLIP),
         chip("shorts", "Shorts", "Shorts (under a minute, or from the Shorts tab), newest first", fmt=SHORT),
@@ -248,16 +294,18 @@ def top(ctx):
     items = [(it, None) for it in ctx["top_pool"]]
     f = ctx["flags"]
     chips = [
-        chip("views", "Most viewed", "The most viewed videos, all time", "views"),
-        chip("trending", "Trending", "Views gained in the last 24 hours, from our daily view counts", "g24", has="g24")
+        chip("views", "Most viewed", "The most viewed videos, all time", "views", short="Top"),
+        chip("trending", "Trending", "Views gained in the last 24 hours, from our daily view counts", "g24", short="Hot",
+             has="g24")
         if f.get("g24") else None,
-        chip("gain7", "Gained, 7 days", "Views gained in the last 7 days, from our daily view counts", "g7", has="g7")
+        chip("gain7", "Gained, 7 days", "Views gained in the last 7 days, from our daily view counts", "g7", short="7 days",
+             has="g7")
         if f.get("g7") else None,
         chip("episodes", "Episodes", "The most viewed full episodes (20 minutes or longer), all time", "views", fmt=FULL),
         chip("clips", "Clips", "The most viewed clips (1 to 20 minutes), all time", "views", fmt=CLIP),
         chip("shorts", "Shorts", "The most viewed Shorts, all time", "views", fmt=SHORT),
         chip("breakouts", "Breakouts", "Highest breakout scores: views divided by the median views of the same show's "
-             "videos of the same format from the 90 days before (at least 8 of them)", "bo", has="bo"),
+             "videos of the same format from the 90 days before (at least 8 of them)", "bo", short="Breakout", has="bo"),
     ]
     fd = Feed("top", items, _nonempty(chips, items, now), "views", modules=True, filters=("q", "show", "host", "days"))
     fd.display_cap = home.TOP_OVERALL
@@ -267,8 +315,8 @@ def top(ctx):
 
 def _page_chips(items, now, extra=()):
     chips = [
-        chip("latest", "Latest", "Newest first"),
-        chip("views", "Most viewed", "The most viewed, all time", "views"),
+        chip("latest", "Latest", "Newest first", short="New"),
+        chip("views", "Most viewed", "The most viewed, all time", "views", short="Top"),
         chip("episodes", "Episodes", "Full episodes (20 minutes or longer), newest first", fmt=FULL),
         chip("clips", "Clips", "Clips (1 to 20 minutes), newest first", fmt=CLIP),
         chip("shorts", "Shorts", "Shorts, newest first", fmt=SHORT),
@@ -301,7 +349,8 @@ def player(ctx, p):
             items.append((g.lead, talk_extra(g)))
     extra = [chip("host", "Host", "Videos from the shows he hosts, newest first", role="host"),
              chip("guest", "Guest", "Episodes and clips where he is a guest, newest first", role="guest"),
-             chip("talk", "Talked about", "Videos whose title or chapters talk about him, newest first", role="talk")]
+             chip("talk", "Talked about", "Videos whose title or chapters talk about him, newest first", short="About",
+                  role="talk")]
     return Feed("player-" + p["slug"], items, _page_chips(items, ctx["now"], extra), cap=PAGE_CAP,
                 filters=("q", "show"))
 

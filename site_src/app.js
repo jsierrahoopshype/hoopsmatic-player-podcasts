@@ -183,6 +183,17 @@
   });
 })();
 
+/* Homepage intro on phones: "More" shows the folded sentence. */
+(function () {
+  'use strict';
+  var b = document.querySelector('.sub-more');
+  if (!b) return;
+  b.addEventListener('click', function () {
+    b.closest('.intro').classList.add('open');
+    b.setAttribute('aria-expanded', 'true');
+  });
+})();
+
 /* "Most talked about" module: switch between the 7-day and 30-day lists
    (both are in the page). Works for every copy of the module in a feed. */
 (function () {
@@ -272,6 +283,20 @@
     if (s === 'g7') return r[11] || 0;
     return r[8] || 0;
   }
+  // Same as pp/feed.py mix_shorts: at most 1 Short in any 4 cards in a row;
+  // a Short that would break that waits for the first place it may take.
+  var GAP = 4;
+  function mixShorts(rows, firstNot) {
+    var out = [], held = [], last = -GAP;
+    function ok() { var pos = out.length; return pos - last >= GAP && !(firstNot && pos === 0); }
+    rows.forEach(function (r) {
+      if (r[2] !== 'short') out.push(r);
+      else if (!held.length && ok()) { out.push(r); last = out.length - 1; }
+      else held.push(r);
+      while (held.length && ok()) { out.push(held.shift()); last = out.length - 1; }
+    });
+    return out.concat(held);
+  }
   function cmp(s) {
     return function (a, b) {
       var x = key(a, s), y = key(b, s);
@@ -349,6 +374,7 @@
       // Top videos: older than the last 90 days, the file holds each show's
       // 12 most viewed of each format; one show (or host) shows no more.
       if (data.alltime && (ff.show || ff.host) && !(ff.days && +ff.days <= data.alltime.days)) out = out.slice(0, data.alltime.show);
+      if (chip.m) out = mixShorts(out, chip.m === 2);
       capped = !!data.cap && out.length > data.cap;
       return capped ? out.slice(0, data.cap) : out;
     }
