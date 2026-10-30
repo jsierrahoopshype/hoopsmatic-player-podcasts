@@ -95,7 +95,7 @@ def test_build_writes_player_channels_page_and_sitemap(tmp_path, monkeypatch):
         t = html.split("<title>")[1].split("</title>")[0]
         assert t not in titles, t
         titles.add(t)
-        assert "Anything wrong? Email us at" in html and "For business inquiries, contact us at" in html
+        assert "Anything wrong? Email us at" in html and "For any other inquiry, contact us at" in html
         assert "github.io" not in html
     # teams: a page for each of the 30, an index, all in the sitemap; titles as specified
     assert len(list((out / "teams").glob("*/index.html"))) == 30
