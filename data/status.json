@@ -1,21 +1,21 @@
 {
   "daily_listing": {
     "errors": [],
-    "last_run": "2026-11-08T22:23:32Z",
+    "last_run": "2026-11-09T17:06:10Z",
     "sources_read": 67,
     "sources_with_errors": 0
   },
   "daily_snapshot": {
-    "date": "2026-11-08",
-    "videos": 2113
+    "date": "2026-11-09",
+    "videos": 2133
   },
   "feeds": {
     "failed": 0,
-    "last_run": "2026-11-08T22:23:32Z",
+    "last_run": "2026-11-09T17:06:10Z",
     "ok": 67,
     "shorts_ok": 63
   },
-  "last_success": "2026-11-08T22:23:32Z",
+  "last_success": "2026-11-09T17:06:10Z",
   "length_fill": {
     "errors": [],
     "last_run": "2026-10-27T12:02:50Z",
@@ -25,9 +25,9 @@
   "ytdlp": {
     "blocked": false,
     "errors": [],
-    "last_attempt": "2026-11-02",
-    "last_ok": "2026-11-02",
-    "seconds": 1158,
+    "last_attempt": "2026-11-09",
+    "last_ok": "2026-11-09",
+    "seconds": 1145,
     "sources_ok": 67,
     "sources_with_errors": 0
   }
