@@ -237,8 +237,6 @@
   function dur(s) { if (!s) return ''; var h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60;
     return (h ? h + ':' + (m < 10 ? '0' : '') + m : m) + ':' + (x < 10 ? '0' : '') + x; }
   function date(iso) { var d = new Date(iso); return MON[d.getUTCMonth()] + ' ' + d.getUTCDate() + ', ' + d.getUTCFullYear(); }
-  function initials(name) { var p = name.replace(/\./g, ' ').split(/\s+/).filter(Boolean);
-    return ((p[0] || '?')[0] + (p.length > 1 ? p[p.length - 1][0] : '')).toUpperCase(); }
   function yt(id, t) { return 'https://www.youtube.com/watch?v=' + encodeURIComponent(id) + (t ? '&t=' + t + 's' : ''); }
 
   function card(B, shows, r, c) {
@@ -250,7 +248,7 @@
     var media = r[9] ? '<a class="vc-media" href="' + url + '" target="_blank" rel="noopener" data-play="' + esc(id) + '"' + st + ' aria-label="Play: ' + esc(r[6]) + '">' + img + '<span class="vc-btn" aria-hidden="true"></span>' + d + '</a>'
       : '<a class="vc-media vc-noembed" href="' + url + '" target="_blank" rel="noopener">' + img + '<span class="vc-ext">Watch on YouTube</span>' + d + '</a>';
     var hosts = show[2].map(function (h) {
-      var face = h[2] ? '<img class="av" src="' + B + '/headshots/' + esc(h[2]) + '.webp" width="22" height="22" loading="lazy" alt="">' : '<span class="av av-i" aria-hidden="true">' + esc(initials(h[0])) + '</span>';
+      var face = h[2] ? '<img class="av" src="' + B + '/headshots/' + esc(h[2]) + '.webp" width="22" height="22" loading="lazy" alt="">' : '';  // no photo: no initials circle
       return h[1] ? '<a class="host" href="' + esc(h[1]) + '">' + face + esc(h[0]) + '</a>' : '<span class="host">' + face + esc(h[0]) + '</span>';
     }).join('');
     var meta = [date(r[3]), compact(r[4]) + ' views'];

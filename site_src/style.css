@@ -443,7 +443,7 @@ details.defs li{margin:.2rem 0}
 .art-i,.art.av-i{display:inline-flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;
   font-weight:700;font-size:1.4rem;color:var(--text-secondary);border:1px solid var(--border)}
 .rel .art{width:56px;height:56px;font-size:1rem}
-/* Player head: face-fill on the grey disc; no photo = grey initials on it. */
+/* Player head: face-fill on the grey disc; no photo = no picture at all. */
 .art.av{background:#e8e8ed}
 .art.av-i{color:#55555c;border:0}
 .show-desc{color:var(--text-secondary);font-size:.88rem;max-width:60rem;margin:-.4rem 0 .6rem}
