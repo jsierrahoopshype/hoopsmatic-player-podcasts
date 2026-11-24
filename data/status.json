@@ -1,21 +1,21 @@
 {
   "daily_listing": {
     "errors": [],
-    "last_run": "2026-11-23T18:58:33Z",
+    "last_run": "2026-11-24T04:02:54Z",
     "sources_read": 67,
     "sources_with_errors": 0
   },
   "daily_snapshot": {
-    "date": "2026-11-23",
-    "videos": 2642
+    "date": "2026-11-24",
+    "videos": 2668
   },
   "feeds": {
     "failed": 0,
-    "last_run": "2026-11-23T18:58:33Z",
+    "last_run": "2026-11-24T04:02:54Z",
     "ok": 67,
     "shorts_ok": 63
   },
-  "last_success": "2026-11-23T18:58:33Z",
+  "last_success": "2026-11-24T04:02:54Z",
   "length_fill": {
     "errors": [],
     "last_run": "2026-10-27T12:02:50Z",
