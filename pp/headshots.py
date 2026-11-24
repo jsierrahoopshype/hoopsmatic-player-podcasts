@@ -7,7 +7,7 @@ the head at 88px, so those players also get the 320px copy
 
 data/headshots_index.json maps a normalised player name to that repo's file
 name; it is refreshed with the weekly listing. A player without a headshot
-gets initials on the page instead.
+gets no picture on the page, just his name.
 """
 import json
 import sys

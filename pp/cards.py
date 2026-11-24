@@ -49,12 +49,12 @@ def host_people(show, ctx):
 
 
 def avatar(name, head_slug, size=22, big=False):
-    """face-fill headshot in a grey circle (the 320px copy when big), else initials."""
-    from .headshots import initials
+    """face-fill headshot in a grey circle (the 320px copy when big); no photo: nothing at all
+    (no initials circle), the name stands alone."""
     if head_slug:
         return ('<img class="av" src="%s/headshots/%s%s.webp" width="%d" height="%d" loading="lazy" alt="">'
                 % (B, "320/" if big else "", e(head_slug), size, size))
-    return '<span class="av av-i" aria-hidden="true">%s</span>' % e(initials(name))
+    return ""
 
 
 def hosts_html(show, ctx, avatars=True):

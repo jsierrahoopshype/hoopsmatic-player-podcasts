@@ -73,7 +73,7 @@ def test_card_plays_in_page_only_on_click_and_always_links_youtube():
     assert 'src="/player-podcasts/thumbs/v001.webp"' in c
     assert ">Full episode<" in c and "1.2K views" in c and "1:00:00" in c
     assert '<img class="av" src="/player-podcasts/headshots/jeff-teague.webp"' in c
-    assert '<span class="av av-i" aria-hidden="true">BH</span>B Hen' in c
+    assert '<span class="host">B Hen' in c and "av-i" not in c   # no photo: name only, no initials
     # YouTube only behind the small icon, no "Watch on YouTube" text line
     assert 'class="vc-ytic"' in c and 'aria-label="Watch on YouTube"' in c and ">Watch on YouTube<" not in c
     assert '<h3 class="vc-t"><a href="https://www.youtube.com/watch?v=v001" target="_blank" rel="noopener" data-play="v001">' in c
@@ -94,4 +94,4 @@ def test_home_sections_hide_trending_without_snapshots():
 def test_avatar_uses_face_fill_320_copy_only_when_big():
     assert 'src="/player-podcasts/headshots/320/jeff-teague.webp" width="88"' in cards.avatar("Jeff Teague", "jeff-teague", 88, big=True)
     assert 'src="/player-podcasts/headshots/jeff-teague.webp" width="22"' in cards.avatar("Jeff Teague", "jeff-teague")
-    assert cards.avatar("Jason Kidd", None, 88, big=True) == '<span class="av av-i" aria-hidden="true">JK</span>'
+    assert cards.avatar("Jason Kidd", None, 88, big=True) == ''   # no photo: no initials circle
